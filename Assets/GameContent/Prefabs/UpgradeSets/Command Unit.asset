@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 204097d7fde7e97468104c15ccb702f1, type: 3}
+  m_Name: Command Unit
+  m_EditorClassIdentifier: 
+  moduleType: 7
+  upgradeAttributes:
+  - upgradeName: 4
+    description: Increase tower rotation speed
+    level: 0
+    maxLevel: 100
+    baseValue: 1
+    upgradeValue: 0.14
+    maxValue: 15
+    currentValue: 0
+    baseCost: 7
+    costStep: 4.8
+    cost: 0
+  - upgradeName: 5
+    description: Increase HP of all modules
+    level: 0
+    maxLevel: 100
+    baseValue: 3
+    upgradeValue: 2.47
+    maxValue: 250
+    currentValue: 0
+    baseCost: 7
+    costStep: 4.75
+    cost: 0

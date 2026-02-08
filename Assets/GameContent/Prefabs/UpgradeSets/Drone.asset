@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 204097d7fde7e97468104c15ccb702f1, type: 3}
+  m_Name: Drone
+  m_EditorClassIdentifier: 
+  moduleType: 4
+  upgradeAttributes:
+  - upgradeName: 8
+    description: Increase active drones
+    level: 0
+    maxLevel: 4
+    baseValue: 0
+    upgradeValue: 1
+    maxValue: 4
+    currentValue: 0
+    baseCost: 160
+    costStep: 200
+    cost: 0
+  - upgradeName: 9
+    description: Increase HP of all drones
+    level: 0
+    maxLevel: 100
+    baseValue: 2
+    upgradeValue: 1.13
+    maxValue: 100
+    currentValue: 0
+    baseCost: 6
+    costStep: 5.35
+    cost: 0
+  - upgradeName: 10
+    description: Decrease build time for drones
+    level: 0
+    maxLevel: 100
+    baseValue: 30
+    upgradeValue: -0.275
+    maxValue: 2.5
+    currentValue: 0
+    baseCost: 8
+    costStep: 6.28
+    cost: 0
+  - upgradeName: 11
+    description: Increase damage for all drones
+    level: 0
+    maxLevel: 100
+    baseValue: 1
+    upgradeValue: 1.19
+    maxValue: 120
+    currentValue: 0
+    baseCost: 6
+    costStep: 6.28
+    cost: 0

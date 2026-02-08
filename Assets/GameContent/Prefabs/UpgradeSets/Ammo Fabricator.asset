@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 204097d7fde7e97468104c15ccb702f1, type: 3}
+  m_Name: Ammo Fabricator
+  m_EditorClassIdentifier: 
+  moduleType: 6
+  upgradeAttributes:
+  - upgradeName: 1
+    description: Increase tower fire rate
+    level: 0
+    maxLevel: 100
+    baseValue: 0.5
+    upgradeValue: 0.11
+    maxValue: 15
+    currentValue: 0
+    baseCost: 5
+    costStep: 4.4
+    cost: 0
+  - upgradeName: 2
+    description: Increase tower damage
+    level: 0
+    maxLevel: 100
+    baseValue: 1
+    upgradeValue: 1.14
+    maxValue: 100
+    currentValue: 0
+    baseCost: 7
+    costStep: 5.3
+    cost: 0

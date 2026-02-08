@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 204097d7fde7e97468104c15ccb702f1, type: 3}
+  m_Name: Shield
+  m_EditorClassIdentifier: 
+  moduleType: 3
+  upgradeAttributes:
+  - upgradeName: 12
+    description: Increase shield points
+    level: 0
+    maxLevel: 100
+    baseValue: 5
+    upgradeValue: 2.75
+    maxValue: 280
+    currentValue: 0
+    baseCost: 10
+    costStep: 8.68
+    cost: 0
+  - upgradeName: 13
+    description: Decrease shield recharge time
+    level: 0
+    maxLevel: 100
+    baseValue: 20
+    upgradeValue: -0.155
+    maxValue: 4.5
+    currentValue: 0
+    baseCost: 9
+    costStep: 7.68
+    cost: 0
+  - upgradeName: 14
+    description: Increase chance to defelct damage on shield
+    level: 0
+    maxLevel: 80
+    baseValue: 0
+    upgradeValue: 1
+    maxValue: 80
+    currentValue: 0
+    baseCost: 8
+    costStep: 9.61
+    cost: 0
