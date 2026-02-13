@@ -84,9 +84,13 @@ public class Tower : MonoBehaviour, IResettable
         float shortestDistance = fireRange;
         Transform nearest = null;
 
-        foreach (var enemy in EnemySpawner.Instance.instantiatedEnemies.ToArray())
+        var enemies = EnemySpawner.Instance ? EnemySpawner.Instance.instantiatedEnemies : null;
+        if (enemies == null) return;
+
+        for (int i = enemies.Count - 1; i >= 0; i--)
         {
-            if (enemy == null) continue;
+            var enemy = enemies[i];
+            if (!enemy) continue;
             float dist = Vector3.Distance(transform.position, enemy.transform.position);
             if (dist < shortestDistance)
             {

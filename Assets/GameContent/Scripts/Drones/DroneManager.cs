@@ -40,7 +40,8 @@ public class DroneManager : MonoBehaviour, IResettable
     public void Init()
     {
         droneBuildCountdown = droneBuildTime;
-        spawnParent = GameObject.Find("DroneParent").transform;
+        var p = GameObject.Find("DroneParent");
+        spawnParent = p ? p.transform : transform;
 
         txtDroneCount.gameObject.SetActive(false);
         txtDroneBuildTime.gameObject.SetActive(false);
@@ -50,9 +51,10 @@ public class DroneManager : MonoBehaviour, IResettable
     {
         if (!StationModule.GetModuleByType(StationModule.eModuleType.Drone).isBuilt) return;
 
-        foreach (var drone in allDrones.ToArray())
+        for (int i = allDrones.Count - 1; i >= 0; i--)
         {
-            if (drone == null) continue;
+            var drone = allDrones[i];
+            if (!drone) continue;
             drone.UpdateNormal();
         }
 
@@ -81,9 +83,10 @@ public class DroneManager : MonoBehaviour, IResettable
         txtDroneCount.gameObject.SetActive(false);
         txtDroneBuildTime.gameObject.SetActive(false);
 
-        foreach (var drone in allDrones.ToArray())
+        for (int i = allDrones.Count - 1; i >= 0; i--)
         {
-            if (drone == null) continue;
+            var drone = allDrones[i];
+            if (!drone) continue;
             RemoveDrone(drone, Stats.eDeadBy.None);
         }
     }
@@ -131,11 +134,12 @@ public class DroneManager : MonoBehaviour, IResettable
         CheckDroneCanBuild();
     }
 
-    public void RemoveAllDrones() 
-    { 
-        foreach (var drone in allDrones.ToArray())
+    public void RemoveAllDrones()
+    {
+        for (int i = allDrones.Count - 1; i >= 0; i--)
         {
-            if (drone == null) continue;
+            var drone = allDrones[i];
+            if (!drone) continue;
             RemoveDrone(drone, Stats.eDeadBy.None);
         }
         allDrones.Clear();

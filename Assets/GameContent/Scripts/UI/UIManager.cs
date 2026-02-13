@@ -11,7 +11,6 @@ public class UIManager : MonoBehaviour, IResettable
     public GameObject stationUI;
 
     public GameObject slowPanel;
-    public float timeSpeedInUI = 0.5f;
     private float originScale = 1f;
     public float slowPanelChangeDuration = 1f;
 
@@ -26,19 +25,10 @@ public class UIManager : MonoBehaviour, IResettable
     [HideInInspector] public Color btnBuyOriginalColor;
     public TextMeshProUGUI txtBuyCost;
 
-    [Header("Time Modulation")]
-    public GameObject panelTimeModulation;
-    public Button btnIncreaseTime;
-    public Button btnDecreaseTime;
-    public TextMeshProUGUI txtTimeModulation;
-    [HideInInspector] public float currentTimeModulation = 1f;
-
-
     // --- INIT SNAPSHOT ---
-    private float inittimeSpeedInUI;
     private float initoriginScale;
     private float initslowPanelChangeDuration;
-    private float initcurrentTimeModulation;
+
 
 
 
@@ -54,10 +44,6 @@ public class UIManager : MonoBehaviour, IResettable
         slowPanel.transform.localScale = Vector3.zero;
         btnBuyOriginalColor = btnBuy.image.color;
 
-        btnIncreaseTime.onClick.AddListener(() => { OnTimeModulationChanged(true); });
-        btnDecreaseTime.onClick.AddListener(() => { OnTimeModulationChanged(false); });
-
-        RefreshTimeModulator();
     }
 
     public void UpdateNormal()
@@ -130,7 +116,7 @@ public class UIManager : MonoBehaviour, IResettable
             ModulesUI.Instance.ResetModulePanel();
             ModulesUI.Instance.RefreshPanel();
 
-            Time.timeScale = timeSpeedInUI;
+            TimeController.Instance.OnStationUIOpen();
         }
         else
         {
@@ -145,7 +131,7 @@ public class UIManager : MonoBehaviour, IResettable
             StopAllCoroutines();
             StartCoroutine(ShowSlowPanel(false));
 
-            Time.timeScale = currentTimeModulation;
+            TimeController.Instance.OnStationUIClose();
         }
     }
 
@@ -153,8 +139,7 @@ public class UIManager : MonoBehaviour, IResettable
     {
         float duration = slowPanelChangeDuration;
 
-        if (show)
-            duration /= 1.5f;
+        if (show) duration /= 1.5f;
 
         float targetScale;
         float startScale;
@@ -187,8 +172,7 @@ public class UIManager : MonoBehaviour, IResettable
 
         slowPanel.transform.localScale = new Vector3(targetScale, targetScale, targetScale);
 
-        if (!show)
-            slowPanel.SetActive(false);
+        if (!show) slowPanel.SetActive(false);
     }
 
     public void ShowInfoPanel(string title, string info, int cost, bool showBtnBuy = false)
@@ -209,62 +193,25 @@ public class UIManager : MonoBehaviour, IResettable
         if (layoutRoot != null)
             LayoutRebuilder.ForceRebuildLayoutImmediate(layoutRoot);
     }
-
-
-    public void RefreshTimeModulator()
-    {
-        if (StationModule.GetModuleByType(StationModule.eModuleType.TemporalModulator).isBuilt)
-        {
-            UpgradeAttribute upgrade = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.TimeMultiplier);
-
-            txtTimeModulation.text = $"x{(currentTimeModulation % 1 == 0 ? currentTimeModulation.ToString("F0") : currentTimeModulation.ToString("F1"))}";
-
-            panelTimeModulation.gameObject.SetActive(true);
-        }
-        else
-        {
-            panelTimeModulation.gameObject.SetActive(false);
-        }
-    }
-
-    private void OnTimeModulationChanged(bool increase)
-    {
-        if (stationUI.activeSelf) return;
-
-        float steppedValue = increase ? 0.5f : -0.5f;
-
-        float maxMultiplier = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.TimeMultiplier).currentValue;
-        currentTimeModulation = Mathf.Clamp(currentTimeModulation + steppedValue, 1f, maxMultiplier);
-        Time.timeScale = currentTimeModulation;
-
-        txtTimeModulation.text = $"x{(currentTimeModulation % 1 == 0 ? currentTimeModulation.ToString("F0") : currentTimeModulation.ToString("F1"))}";
-    }
-
+      
 
     public void StoreInit()
     {
-        inittimeSpeedInUI = timeSpeedInUI;
         initoriginScale = originScale;
         initslowPanelChangeDuration = slowPanelChangeDuration;
-        initcurrentTimeModulation = currentTimeModulation;
     }
 
     public void ResetScript()
     {
         StopAllCoroutines();
 
-        timeSpeedInUI = inittimeSpeedInUI;
         originScale = initoriginScale;
         slowPanelChangeDuration = initslowPanelChangeDuration;
-        currentTimeModulation = initcurrentTimeModulation;
 
         stationUI.SetActive(false);
         slowPanel.transform.localScale = Vector3.zero;
         slowPanel.SetActive(false);
         UIManagerInfoPanel.SetActive(false);
-
-        Time.timeScale = currentTimeModulation;
-        RefreshTimeModulator();
     }
 
 }

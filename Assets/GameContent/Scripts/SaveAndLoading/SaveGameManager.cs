@@ -1,7 +1,8 @@
 ﻿using System.IO;
-using UnityEditor;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class SaveGameManager : MonoBehaviour
 {
@@ -11,8 +12,6 @@ public class SaveGameManager : MonoBehaviour
     const string FILE = "savegame.json";
     string PathFile => Path.Combine(Application.persistentDataPath, FILE);
 
-    private bool isLoading = false;
-
 
     void Awake()
     {
@@ -20,24 +19,18 @@ public class SaveGameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-
     public void Save()
     {
-        if (isLoading) return;
-
         Data = BuildFromWorld();
         File.WriteAllText(PathFile, JsonUtility.ToJson(Data, true));
     }
 
     public void Load()
     {
-        isLoading = true;
-
         if (!File.Exists(PathFile))
         {
             // Es gibt noch keinen Save → aktueller Scene-Start ist der Default
             Data = BuildFromWorld();
-            isLoading = false;
             Save();
             return;
         }
@@ -45,13 +38,12 @@ public class SaveGameManager : MonoBehaviour
         Data = JsonUtility.FromJson<SaveGame>(File.ReadAllText(PathFile));
         ApplyToWorld(Data);
 
-        UIManager.Instance.RefreshTimeModulator();
+        TimeController.Instance.RefreshPanel();
         ModulesUI.Instance.ResetModulePanel();
         ModulesUI.Instance.RefreshPanel();
         UpgradeUI.Instance.Refresh();
         DroneManager.Instance.CheckDroneCanBuild();
-
-        isLoading = false;
+        ResourceManager.Instance.RefreshUI();
     }
 
     public void DeleteSaveData()
@@ -70,7 +62,6 @@ public class SaveGameManager : MonoBehaviour
         GameManager.Instance.ResetAll();
         Save(); // neuen Default-Save schreiben
     }
-
 
     SaveGame BuildFromWorld()
     {
@@ -155,12 +146,16 @@ public class SaveGameManager : MonoBehaviour
     }
 
 
-    // minimal Parser (Enum sicher)
     StationModule.eModuleType ParseModuleType(string v)
-        => (StationModule.eModuleType)System.Enum.Parse(typeof(StationModule.eModuleType), v);
+    {
+        return System.Enum.TryParse(v, out StationModule.eModuleType t) ? t : StationModule.eModuleType.Core;
+    }
 
     UpgradeAttribute.eUpgradeName ParseUpgradeName(string v)
-        => (UpgradeAttribute.eUpgradeName)System.Enum.Parse(typeof(UpgradeAttribute.eUpgradeName), v);
+    {
+        return System.Enum.TryParse(v, out UpgradeAttribute.eUpgradeName t) ? t : UpgradeAttribute.eUpgradeName.None;
+    }
+
 }
 
 #if UNITY_EDITOR

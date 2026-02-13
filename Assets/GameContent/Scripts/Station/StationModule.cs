@@ -77,8 +77,9 @@ public class StationModule : MonoBehaviour, IResettable
     {
         if (moduleType == eModuleType.Core)
         {
-            foreach (var module in allModules.ToArray())
+            for (int i = allModules.Count - 1; i >= 0; i--)
             {
+                var module = allModules[i];
                 if (module == null || module.moduleType == eModuleType.Core) continue;
 
                 if (module.isBuilt)
@@ -133,7 +134,7 @@ public class StationModule : MonoBehaviour, IResettable
                     //decrease tower rotation speed?
                     break;
                 case eModuleType.TemporalModulator:
-                    UIManager.Instance.RefreshTimeModulator();
+                    TimeController.Instance.RefreshPanel();
                     break;
                 default:
                     break;

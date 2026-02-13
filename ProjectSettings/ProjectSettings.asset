@@ -143,7 +143,7 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 1.0.0
+  bundleVersion: 1.2
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -177,7 +177,7 @@ PlayerSettings:
     iPhone: 0
     tvOS: 0
   overrideDefaultApplicationIdentifier: 1
-  AndroidBundleVersionCode: 1
+  AndroidBundleVersionCode: 3
   AndroidMinSdkVersion: 23
   AndroidTargetSdkVersion: 0
   AndroidPreferredInstallLocation: 1
@@ -300,44 +300,47 @@ PlayerSettings:
   - m_BuildTarget: 
     m_Icons:
     - serializedVersion: 2
-      m_Icon: {fileID: 2800000, guid: f5e50fa417c24674e9f7089a9ae58d1f, type: 3}
+      m_Icon: {fileID: 0}
       m_Width: 128
       m_Height: 128
       m_Kind: 0
   m_BuildTargetPlatformIcons:
   - m_BuildTarget: Android
     m_Icons:
-    - m_Textures: []
-      m_Width: 192
-      m_Height: 192
-      m_Kind: 1
+    - m_Textures:
+      - {fileID: 2800000, guid: 7714c31d340ac0b42a2eb74448526701, type: 3}
+      - {fileID: 2800000, guid: 7714c31d340ac0b42a2eb74448526701, type: 3}
+      m_Width: 432
+      m_Height: 432
+      m_Kind: 2
       m_SubKind: 
     - m_Textures: []
-      m_Width: 144
-      m_Height: 144
-      m_Kind: 1
+      m_Width: 324
+      m_Height: 324
+      m_Kind: 2
       m_SubKind: 
     - m_Textures: []
-      m_Width: 96
-      m_Height: 96
-      m_Kind: 1
+      m_Width: 216
+      m_Height: 216
+      m_Kind: 2
       m_SubKind: 
     - m_Textures: []
-      m_Width: 72
-      m_Height: 72
-      m_Kind: 1
+      m_Width: 162
+      m_Height: 162
+      m_Kind: 2
       m_SubKind: 
     - m_Textures: []
-      m_Width: 48
-      m_Height: 48
-      m_Kind: 1
+      m_Width: 108
+      m_Height: 108
+      m_Kind: 2
       m_SubKind: 
     - m_Textures: []
-      m_Width: 36
-      m_Height: 36
-      m_Kind: 1
+      m_Width: 81
+      m_Height: 81
+      m_Kind: 2
       m_SubKind: 
-    - m_Textures: []
+    - m_Textures:
+      - {fileID: 2800000, guid: 7714c31d340ac0b42a2eb74448526701, type: 3}
       m_Width: 192
       m_Height: 192
       m_Kind: 0
@@ -368,36 +371,35 @@ PlayerSettings:
       m_Kind: 0
       m_SubKind: 
     - m_Textures:
-      - {fileID: 2800000, guid: f5e50fa417c24674e9f7089a9ae58d1f, type: 3}
-      - {fileID: 0}
-      m_Width: 432
-      m_Height: 432
-      m_Kind: 2
+      - {fileID: 2800000, guid: 7714c31d340ac0b42a2eb74448526701, type: 3}
+      m_Width: 192
+      m_Height: 192
+      m_Kind: 1
       m_SubKind: 
     - m_Textures: []
-      m_Width: 324
-      m_Height: 324
-      m_Kind: 2
+      m_Width: 144
+      m_Height: 144
+      m_Kind: 1
       m_SubKind: 
     - m_Textures: []
-      m_Width: 216
-      m_Height: 216
-      m_Kind: 2
+      m_Width: 96
+      m_Height: 96
+      m_Kind: 1
       m_SubKind: 
     - m_Textures: []
-      m_Width: 162
-      m_Height: 162
-      m_Kind: 2
+      m_Width: 72
+      m_Height: 72
+      m_Kind: 1
       m_SubKind: 
     - m_Textures: []
-      m_Width: 108
-      m_Height: 108
-      m_Kind: 2
+      m_Width: 48
+      m_Height: 48
+      m_Kind: 1
       m_SubKind: 
     - m_Textures: []
-      m_Width: 81
-      m_Height: 81
-      m_Kind: 2
+      m_Width: 36
+      m_Height: 36
+      m_Kind: 1
       m_SubKind: 
   m_BuildTargetBatching: []
   m_BuildTargetShaderSettings: []

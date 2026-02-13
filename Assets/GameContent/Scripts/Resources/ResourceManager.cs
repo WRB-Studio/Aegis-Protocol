@@ -31,7 +31,8 @@ public class ResourceManager : MonoBehaviour, IResettable
 
     public void Init()
     {
-        spawnParent = GameObject.Find("ResourceParent").transform;
+        var p = GameObject.Find("ResourceParent");
+        spawnParent = p ? p.transform : transform;
         RefreshUI();
     }
 
@@ -48,14 +49,15 @@ public class ResourceManager : MonoBehaviour, IResettable
 
                 effect.flyToStation = true;
                 effect.setOriginScale();
-                effect.collectedManually = true;                
+                effect.collectedManually = true;
             }
         }
 
-        foreach (CollectEffect effect in collectEffects.ToArray())
+        for (int i = collectEffects.Count - 1; i >= 0; i--)
         {
-            if (effect == null) continue;
-            effect.UpdateNormal();
+            var e = collectEffects[i];
+            if (!e) { collectEffects.RemoveAt(i); continue; }
+            e.UpdateNormal();
         }
     }
 
@@ -63,11 +65,12 @@ public class ResourceManager : MonoBehaviour, IResettable
     {
         autoCollecting = true;
 
-        foreach (CollectEffect effect in collectEffects.ToArray())
+        for (int i = collectEffects.Count - 1; i >= 0; i--)
         {
-            if (effect == null) continue;
-            effect.flyToStation = true;
-            effect.setOriginScale();
+            var e = collectEffects[i];
+            if (!e) { collectEffects.RemoveAt(i); continue; }
+            e.flyToStation = true;
+            e.setOriginScale();
         }
     }
 

@@ -41,7 +41,8 @@ public class EnemySpawner : MonoBehaviour, IResettable
     {
         currentWaveIndex = 0;
         waveIsRunning = false;
-        spawnParent = GameObject.Find("EnemyParent").transform;
+        var p = GameObject.Find("EnemyParent");
+        spawnParent = p ? p.transform : transform;
     }
 
     public void UpdateNormal()
@@ -59,10 +60,11 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
     public void UpdateGameOver()
     {
-        foreach (Enemy enemy in instantiatedEnemies.ToArray())
+        for (int i = instantiatedEnemies.Count - 1; i >= 0; i--)
         {
-            if (enemy == null) continue;
-            enemy.UpdateNormal();
+            var e = instantiatedEnemies[i];
+            if (!e) { instantiatedEnemies.RemoveAt(i); continue; }
+            e.UpdateNormal();
         }
     }
 
@@ -103,7 +105,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
             {
                 for (int i = 0; i < Random.Range(waveInstruction.amount.x, waveInstruction.amount.y); i++)
                 {
-                    GameObject prefab = enemyPrefabs.Find(p => p && p.GetComponent<Enemy>() && 
+                    GameObject prefab = enemyPrefabs.Find(p => p && p.GetComponent<Enemy>() &&
                     p.GetComponent<Enemy>().enemyType == waveInstruction.type);
 
                     if (!prefab)

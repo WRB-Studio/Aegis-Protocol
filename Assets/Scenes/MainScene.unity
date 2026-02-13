@@ -4240,7 +4240,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stationUI: {fileID: 256651696}
   slowPanel: {fileID: 2050544182}
-  timeSpeedInUI: 0.4
   slowPanelChangeDuration: 0.25
   UIManagerInfoPanel: {fileID: 44411721}
   txtTitle: {fileID: 1476974003}
@@ -4250,11 +4249,6 @@ MonoBehaviour:
   btnBuy: {fileID: 3092188934291643067}
   btnBuyOriginalColor: {r: 0, g: 0, b: 0, a: 0}
   txtBuyCost: {fileID: 617209585529272648}
-  panelTimeModulation: {fileID: 1203455712}
-  btnIncreaseTime: {fileID: 284123437}
-  btnDecreaseTime: {fileID: 2549402438662896588}
-  txtTimeModulation: {fileID: 1260243015}
-  currentTimeModulation: 1
 --- !u!1 &722443789
 GameObject:
   m_ObjectHideFlags: 0
@@ -5522,6 +5516,7 @@ Transform:
   - {fileID: 1401799281}
   - {fileID: 339669525}
   - {fileID: 1540143607}
+  - {fileID: 869156469}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &854285458
@@ -5691,6 +5686,59 @@ PrefabInstance:
       addedObject: {fileID: 937580626}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
+--- !u!1 &869156468
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 869156469}
+  - component: {fileID: 869156470}
+  m_Layer: 0
+  m_Name: TimeController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &869156469
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 869156468}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 840959581}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &869156470
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 869156468}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6676df274acd30c4e95fc70da1278278, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  panelTimeModulation: {fileID: 1203455712}
+  btnTimeIncrease: {fileID: 284123437}
+  btnTimeDecrease: {fileID: 2549402438662896588}
+  txtTime: {fileID: 1260243015}
+  step: 0.5
+  minTimeModulation: 1
+  maxTimeModulation: 4
+  stationUITimeModulation: 0.5
+  currentMaxTimeModulation: 1
 --- !u!1 &870935363
 GameObject:
   m_ObjectHideFlags: 0

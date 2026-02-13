@@ -117,15 +117,15 @@ public class ModulesUI : MonoBehaviour, IResettable
 
     public void SelectModule(StationModule.eModuleType type)
     {
+        // same module -> no-op
+        if (currentSelectedModule != null && currentSelectedModule.moduleType == type)
+            return;
+        
         btnSelfDestruct.gameObject.SetActive(false);
         ResetSelfDestructButton();
 
         UpgradeUI.Instance.Hide();
         ResetSelectionVisualsOnly();
-
-        // same module -> no-op
-        if (currentSelectedModule != null && currentSelectedModule.moduleType == type)
-            return;
 
         currentSelectedModule = StationModule.GetModuleByType(type);
         currentSelectedBtnModule = btnByType[type];
@@ -213,8 +213,9 @@ public class ModulesUI : MonoBehaviour, IResettable
 
     void ResetAllModulesVisuals()
     {
-        foreach (var module in StationModule.allModules.ToArray())
+        for (int i = StationModule.allModules.Count - 1; i >= 0; i--)
         {
+            var module = StationModule.allModules[i];
             if (module == null) continue;
 
             var m = module.GetComponent<StationModule>();
@@ -262,8 +263,9 @@ public class ModulesUI : MonoBehaviour, IResettable
 
     void RefreshHpSliders()
     {
-        foreach (var module in StationModule.allModules.ToArray())
+        for (int i = StationModule.allModules.Count - 1; i >= 0; i--)
         {
+            var module = StationModule.allModules[i];
             if (module == null) continue;
 
             var stationModule = module.GetComponent<StationModule>();
@@ -367,7 +369,7 @@ public class ModulesUI : MonoBehaviour, IResettable
 
         RefreshPanel();
         UpgradeUI.Instance.Refresh();
-        UIManager.Instance.RefreshTimeModulator();
+        TimeController.Instance.RefreshPanel();
 
         SaveGameManager.Instance.Save();
     }

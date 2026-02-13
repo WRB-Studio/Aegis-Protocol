@@ -173,7 +173,7 @@ public class UpgradeUI : MonoBehaviour, IResettable
         RefreshInfoPanel(upgrade);
         RefreshAll(true);
 
-        UIManager.Instance.RefreshTimeModulator();
+        TimeController.Instance.RefreshPanel();
         DroneManager.Instance.CheckDroneCanBuild();
         DroneManager.Instance.RefreshUIDroneCount();
     }

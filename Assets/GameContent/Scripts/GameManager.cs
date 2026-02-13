@@ -21,6 +21,7 @@ public class GameManager : MonoBehaviour
 
     private readonly List<IResettable> allResettable = new();
 
+#if UNITY_EDITOR
     private void OnValidate()
     {
         ShowGameOverStats();
@@ -71,8 +72,8 @@ public class GameManager : MonoBehaviour
         sb.AppendLine($" └ total\t\t\t999 $");
 
         txtDetails.text = sb.ToString();
-
     }
+#endif
 
     private void Awake()
     {
@@ -128,6 +129,7 @@ public class GameManager : MonoBehaviour
         UIToWorldLine.Instance.Init();
         UpgradeUI.Instance.Init();
         UpgradeAttribute.ApplyAllUpgradeEffect();
+        TimeController.Instance.Init();
 
         Tower.Instance.Init();
 
@@ -283,11 +285,11 @@ public class GameManager : MonoBehaviour
 
         foreach (var resettable in allResettable) resettable.ResetScript();
 
-        UpgradeAttribute.ResetAll();
+        // UpgradeAttribute.ResetAll(); // <- RAUS, killt dir die frisch neu gebauten costs
 
         SoundManager.Instance.PlayMainMusic();
-
         isInit = true;
     }
+
 
 }
