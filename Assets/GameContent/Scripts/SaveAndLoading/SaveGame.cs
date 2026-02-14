@@ -8,6 +8,8 @@ public class SaveGame
     // Optional: für spätere Änderungen am Save-Format
     public int version = 1;
 
+    public int score = 0;
+
     // Resources
     public int material;
 

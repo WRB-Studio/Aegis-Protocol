@@ -5026,8 +5026,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 489.5, y: -504.265}
-  m_SizeDelta: {x: 449.47, y: 0}
+  m_AnchoredPosition: {x: 489.5, y: -544.505}
+  m_SizeDelta: {x: 514.1, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &810454818
 MonoBehaviour:
@@ -5049,7 +5049,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "<align=center>Played Time 00:00</align>\r\n\r\nTime\t\t\t0\r\nWaves\t\t0\r\nKills\t\t\t0\r\nUpgrades\t\t0\r\nResources\t\t0\r\n<color=#FF4D4D>Modules\t\t0</color>\r\n__________________\r\n<size=140%><b>Score</b>\t0</size>\r\n"
+  m_text: "<align=center>Played Time 00:00:00</align>\r\n\r\nTime\t\t\t999\r\nWaves\t\t999\r\nKills\t\t\t999\r\nUpgrades\t\t999\r\nResources\t\t999\r\n<color=#FF4D4D>Modules\t\t999</color>\r\n__________________\r\n<size=140%><b>Score</b>\t999999</size>\r\nBest\t\t\t999999\r\n"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -5735,9 +5735,7 @@ MonoBehaviour:
   txtTime: {fileID: 1260243015}
   step: 0.5
   minTimeModulation: 1
-  maxTimeModulation: 4
   stationUITimeModulation: 0.5
-  currentMaxTimeModulation: 1
 --- !u!1 &870935363
 GameObject:
   m_ObjectHideFlags: 0

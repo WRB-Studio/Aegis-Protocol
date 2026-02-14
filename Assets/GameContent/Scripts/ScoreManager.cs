@@ -21,18 +21,17 @@ public class ScoreManager : MonoBehaviour
         Instance = this;
     }
 
-    public ScoreBreakdown GetBreakdown()
+    public ScoreBreakdown GetBreakdown(Stats stats)
     {
-        var s = Stats.Instance;
-        if (!s) return default;
+        if (!stats) return default;
 
-        int killsCount = Mathf.Max(0, s.GetTotalKills());
-        int upgradesCount = Mathf.Max(0, s.boughtUpgrades);
-        int wavesCount = Mathf.Max(0, s.wavesCompleted);
-        int resTotal = Mathf.Max(0, s.resourcesCollectedManually + s.resourcesCollectedAutomatically);
-        int modulesLostCount = Mathf.Max(0, s.modulesDestroyed);
+        int killsCount = Mathf.Max(0, stats.GetTotalKills());
+        int upgradesCount = Mathf.Max(0, stats.boughtUpgrades);
+        int wavesCount = Mathf.Max(0, stats.wavesCompleted);
+        int resTotal = Mathf.Max(0, stats.resourcesCollectedManually + stats.resourcesCollectedAutomatically);
+        int modulesLostCount = Mathf.Max(0, stats.modulesDestroyed);
 
-        int timeScore = Mathf.RoundToInt(Mathf.Log10(Mathf.Max(0f, s.playTime) + 1f) * logTime);
+        int timeScore = Mathf.RoundToInt(Mathf.Log10(Mathf.Max(0f, stats.playTime) + 1f) * logTime);
 
         int wavesScore = wavesCount * waves;
         int killsScore = killsCount * kills;
@@ -45,7 +44,7 @@ public class ScoreManager : MonoBehaviour
 
         return new ScoreBreakdown
         {
-            playTimeSeconds = s.playTime,
+            playTimeSeconds = stats.playTime,
             timeScore = timeScore,
 
             wavesCount = wavesCount,

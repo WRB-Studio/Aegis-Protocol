@@ -25,9 +25,27 @@ public class GameManager : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        ShowGameOverStats();
-
         var sb = new System.Text.StringBuilder(256);
+
+        sb.AppendLine($"<align=center>Played Time 00:00:00</align>");
+        sb.AppendLine();
+
+        sb.AppendLine($"Time\t\t\t999");
+        sb.AppendLine($"Waves\t\t999");
+        sb.AppendLine($"Kills\t\t\t999");
+        sb.AppendLine($"Upgrades\t\t999");
+        sb.AppendLine($"Resources\t\t999");
+
+        // modules penalty in red, as negative
+        sb.AppendLine($"<color=#FF4D4D>Modules\t\t999</color>");
+        sb.AppendLine("__________________");
+        sb.AppendLine($"<size=140%><b>Score</b>\t999999</size>");
+        sb.AppendLine($"Best\t\t\t999999");
+
+        txtGameOverStats.text = sb.ToString();
+
+
+        sb = new System.Text.StringBuilder(256);
 
         sb.AppendLine($"<align=center>Played Time: 00:00:00</align>");
         sb.AppendLine();
@@ -176,12 +194,13 @@ public class GameManager : MonoBehaviour
 
         txtDetails.text = BuildAllStatsText();
 
+        SaveGameManager.Instance.TrySaveBestScore(ScoreManager.Instance.GetBreakdown(Stats.Instance).totalScore);
         SaveGameManager.Instance.DeleteSaveData();
     }
 
     private void ShowGameOverStats()
     {
-        var b = FindAnyObjectByType<ScoreManager>().GetBreakdown(); // ScoreManager.Instance.GetBreakdown();
+        var b = FindAnyObjectByType<ScoreManager>().GetBreakdown(Stats.Instance);
         var sb = new System.Text.StringBuilder(256);
 
         sb.AppendLine($"<align=center>Played Time {FormatTimeSmart(b.playTimeSeconds)}</align>");
@@ -197,6 +216,8 @@ public class GameManager : MonoBehaviour
         sb.AppendLine($"<color=#FF4D4D>Modules\t\t{b.modulesPenalty}</color>");
         sb.AppendLine("__________________");
         sb.AppendLine($"<size=140%><b>Score</b>\t{b.totalScore}</size>");
+        if (SaveGameManager.Instance.bestSaveGame.score != 0 && SaveGameManager.Instance.bestSaveGame.score > b.totalScore)
+            sb.AppendLine($"Best\t\t\t{SaveGameManager.Instance.bestSaveGame.score}");
 
         txtGameOverStats.text = sb.ToString();
 

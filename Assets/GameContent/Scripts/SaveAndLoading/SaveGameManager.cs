@@ -7,22 +7,24 @@ using UnityEditor;
 public class SaveGameManager : MonoBehaviour
 {
     public static SaveGameManager Instance;
-    public SaveGame Data { get; private set; }
+    public SaveGame currentSaveGame { get; private set; }
 
-    const string FILE = "savegame.json";
-    string PathFile => Path.Combine(Application.persistentDataPath, FILE);
+    public SaveGame bestSaveGame { get; private set; }
 
+    string PathFile => Path.Combine(Application.persistentDataPath, "savegame.json");
+    string PathBestFile => Path.Combine(Application.persistentDataPath, "bestscore.json");
 
     void Awake()
     {
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        LoadBestScore();
     }
 
     public void Save()
     {
-        Data = BuildFromWorld();
-        File.WriteAllText(PathFile, JsonUtility.ToJson(Data, true));
+        currentSaveGame = BuildFromWorld();
+        File.WriteAllText(PathFile, JsonUtility.ToJson(currentSaveGame, true));
     }
 
     public void Load()
@@ -30,13 +32,13 @@ public class SaveGameManager : MonoBehaviour
         if (!File.Exists(PathFile))
         {
             // Es gibt noch keinen Save → aktueller Scene-Start ist der Default
-            Data = BuildFromWorld();
+            currentSaveGame = BuildFromWorld();
             Save();
             return;
         }
 
-        Data = JsonUtility.FromJson<SaveGame>(File.ReadAllText(PathFile));
-        ApplyToWorld(Data);
+        currentSaveGame = JsonUtility.FromJson<SaveGame>(File.ReadAllText(PathFile));
+        ApplyToWorld(currentSaveGame);
 
         TimeController.Instance.RefreshPanel();
         ModulesUI.Instance.ResetModulePanel();
@@ -99,6 +101,8 @@ public class SaveGameManager : MonoBehaviour
         // Stats
         data.stats = Stats.Instance.GetStatsData();
 
+        data.score = ScoreManager.Instance.GetBreakdown(Stats.Instance).totalScore;
+
         return data;
     }
 
@@ -146,6 +150,45 @@ public class SaveGameManager : MonoBehaviour
     }
 
 
+    void LoadBestScore()
+    {
+        if (!File.Exists(PathBestFile))
+        {
+            bestSaveGame = new SaveGame();
+            bestSaveGame.score = 0;
+            SaveBestScoredSaveGame();
+            return;
+        }
+
+        bestSaveGame = JsonUtility.FromJson<SaveGame>(File.ReadAllText(PathBestFile));
+        if (bestSaveGame == null) bestSaveGame = new SaveGame();
+    }
+
+    void SaveBestScoredSaveGame()
+    {
+        if (bestSaveGame == null) bestSaveGame = new SaveGame();
+        File.WriteAllText(PathBestFile, JsonUtility.ToJson(bestSaveGame, true));
+    }
+
+    public void TrySaveBestScore(int score)
+    {
+        score = Mathf.Max(0, score);
+
+        if (bestSaveGame != null && score <= bestSaveGame.score)
+            return;
+
+        // currentSaveGame ist der neue Best
+        currentSaveGame.score = score;
+
+        // Deep Copy erstellen (wichtig!)
+        bestSaveGame = JsonUtility.FromJson<SaveGame>(
+            JsonUtility.ToJson(currentSaveGame)
+        );
+
+        File.WriteAllText(PathBestFile, JsonUtility.ToJson(bestSaveGame, true));
+    }
+
+
     StationModule.eModuleType ParseModuleType(string v)
     {
         return System.Enum.TryParse(v, out StationModule.eModuleType t) ? t : StationModule.eModuleType.Core;
@@ -155,11 +198,9 @@ public class SaveGameManager : MonoBehaviour
     {
         return System.Enum.TryParse(v, out UpgradeAttribute.eUpgradeName t) ? t : UpgradeAttribute.eUpgradeName.None;
     }
-
 }
 
 #if UNITY_EDITOR
-
 [CustomEditor(typeof(SaveGameManager))]
 public class SaveGameManagerEditor : Editor
 {
