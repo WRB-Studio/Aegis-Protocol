@@ -20,6 +20,11 @@ public class UpgradeUI : MonoBehaviour, IResettable
     [SerializeField] string infoTitlePath = "TextGrp/txtTitle";
     [SerializeField] string infoDescPath = "TextGrp/txtInfo";
 
+    [Header("Colors")]
+    public Color colorBtnFrameSelected;
+    public Color colorBtnFrameUnselected;
+    public Color colorBtnFrameCantBuy;
+
     UpgradeSet currentUpgradeSet;
 
     [HideInInspector] public eUpgradeName currentSelectedUpgrade;
@@ -125,6 +130,18 @@ public class UpgradeUI : MonoBehaviour, IResettable
 
             UpdateButtonUI(ui, upgrade);
             ui.marker.enabled = holdSelection && currentSelectedUpgrade == upgrade.upgradeName;
+
+            if (ui.marker.enabled)
+            {
+                if(ui.button.interactable)
+                    ui.marker.color = colorBtnFrameSelected;
+                else
+                    ui.marker.color = colorBtnFrameCantBuy;
+            }
+            else
+            {
+                ui.marker.color = colorBtnFrameUnselected;
+            }
         }
 
         UpdateFireRangePreview();
@@ -146,6 +163,7 @@ public class UpgradeUI : MonoBehaviour, IResettable
 
         int cost = Mathf.RoundToInt(upgrade.cost);
         ui.costText.text = cost.ToString("0.##") + " $";
+
         ui.button.interactable = cost <= ResourceManager.Instance.curMaterials;
     }
 

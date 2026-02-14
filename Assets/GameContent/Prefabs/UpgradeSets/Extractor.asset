@@ -22,8 +22,8 @@ MonoBehaviour:
     upgradeValue: 1
     maxValue: 1
     currentValue: 0
-    baseCost: 620
-    costStep: 0.9
+    baseCost: 496
+    costStep: 0.7
     cost: 0
   - upgradeName: 7
     description: Increase resource per collect
@@ -33,6 +33,6 @@ MonoBehaviour:
     upgradeValue: 1.25
     maxValue: 100
     currentValue: 0
-    baseCost: 7
-    costStep: 8.9154
+    baseCost: 5.6
+    costStep: 6.97
     cost: 0

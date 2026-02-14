@@ -66,15 +66,14 @@ public class CollectEffect : MonoBehaviour
 
     public void UpdateNormal()
     {
-        if (!ResourceManager.Instance.autoCollecting)
+        if (!ResourceManager.Instance.autoCollecting || !flyToStation)
         {
             lífeTime -= Time.deltaTime;
             if (lífeTime <= 0f || GameManager.gameOver)
                 ResourceManager.RemoveCollectEffect(this);
         }
 
-        if (!flyToStation)
-            return;
+        if (!flyToStation) return;
 
         if (target == null)
         {

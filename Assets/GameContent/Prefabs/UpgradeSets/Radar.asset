@@ -22,6 +22,6 @@ MonoBehaviour:
     upgradeValue: 0.025
     maxValue: 5
     currentValue: 0
-    baseCost: 6
-    costStep: 5.778
+    baseCost: 4.8
+    costStep: 4.52
     cost: 0

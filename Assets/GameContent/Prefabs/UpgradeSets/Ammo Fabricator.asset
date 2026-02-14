@@ -22,8 +22,8 @@ MonoBehaviour:
     upgradeValue: 0.11
     maxValue: 15
     currentValue: 0
-    baseCost: 5
-    costStep: 3.96
+    baseCost: 4
+    costStep: 3.1
     cost: 0
   - upgradeName: 2
     description: Increase tower damage
@@ -33,6 +33,6 @@ MonoBehaviour:
     upgradeValue: 1.14
     maxValue: 100
     currentValue: 0
-    baseCost: 7
-    costStep: 4.77
+    baseCost: 5.6
+    costStep: 3.73
     cost: 0

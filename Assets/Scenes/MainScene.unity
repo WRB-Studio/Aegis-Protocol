@@ -2441,6 +2441,9 @@ MonoBehaviour:
   fireRangeCircle: {fileID: 1256045459}
   infoTitlePath: TextGrp/txtTitle
   infoDescPath: TextGrp/txtInfo
+  colorBtnFrameSelected: {r: 0, g: 1, b: 0.45098042, a: 1}
+  colorBtnFrameUnselected: {r: 1, g: 1, b: 1, a: 1}
+  colorBtnFrameCantBuy: {r: 0.6039216, g: 0.34117648, b: 0.34117648, a: 1}
   currentSelectedUpgrade: 0
 --- !u!1001 &350473878
 PrefabInstance:

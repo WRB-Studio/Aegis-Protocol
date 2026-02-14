@@ -93,7 +93,7 @@ public class UpgradeAttribute : IResettable
             case eUpgradeName.RotationSpeed:
                 if (Tower.Instance) { baseValue = Mathf.Max(0.1f, Tower.Instance.rotationSpeed); filled = true; }
                 break;
-
+                
             case eUpgradeName.StructuralIntegrity:
                 {
                     var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);

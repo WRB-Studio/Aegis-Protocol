@@ -263,7 +263,10 @@ public class UpgradeSetEditorWindow : EditorWindow
                     if (baseCost.propertyType == SerializedPropertyType.Integer)
                         baseCost.intValue = Mathf.RoundToInt(baseCost.intValue * baseCostMultiplier);
                     else if (baseCost.propertyType == SerializedPropertyType.Float)
-                        baseCost.floatValue *= baseCostMultiplier;
+                    {
+                        float v = baseCost.floatValue * baseCostMultiplier;
+                        baseCost.floatValue = Mathf.Round(v * 100f) / 100f;
+                    }
                 }
 
                 if (costStep != null)
@@ -271,8 +274,12 @@ public class UpgradeSetEditorWindow : EditorWindow
                     if (costStep.propertyType == SerializedPropertyType.Integer)
                         costStep.intValue = Mathf.RoundToInt(costStep.intValue * costStepMultiplier);
                     else if (costStep.propertyType == SerializedPropertyType.Float)
-                        costStep.floatValue *= costStepMultiplier;
+                    {
+                        float v = costStep.floatValue * costStepMultiplier;
+                        costStep.floatValue = Mathf.Round(v * 100f) / 100f;
+                    }
                 }
+
             }
 
             if (so.ApplyModifiedProperties())

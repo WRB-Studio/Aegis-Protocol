@@ -22,8 +22,8 @@ MonoBehaviour:
     upgradeValue: 0.14
     maxValue: 15
     currentValue: 0
-    baseCost: 7
-    costStep: 4.32
+    baseCost: 5.6
+    costStep: 3.38
     cost: 0
   - upgradeName: 5
     description: Increase HP of all modules
@@ -33,6 +33,6 @@ MonoBehaviour:
     upgradeValue: 2.47
     maxValue: 250
     currentValue: 0
-    baseCost: 7
-    costStep: 4.275
+    baseCost: 5.6
+    costStep: 3.34
     cost: 0
