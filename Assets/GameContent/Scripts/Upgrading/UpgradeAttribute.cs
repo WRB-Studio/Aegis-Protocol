@@ -46,9 +46,9 @@ public class UpgradeAttribute : IResettable
     public float currentValue;
 
     [Header("Cost")]
-    public float baseCost;
+    [SerializeField] public float baseCost;
     [SerializeField] public float costStep;
-    public float cost;
+    [SerializeField] public float cost;
 
     public static List<UpgradeAttribute> allUpgradeAttributes = new List<UpgradeAttribute>();
 

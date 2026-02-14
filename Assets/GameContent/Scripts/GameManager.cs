@@ -19,6 +19,7 @@ public class GameManager : MonoBehaviour
     public Button btnCloseDetails;
     public Button btnReplay;
 
+
     private readonly List<IResettable> allResettable = new();
 
 #if UNITY_EDITOR
@@ -74,7 +75,6 @@ public class GameManager : MonoBehaviour
         txtDetails.text = sb.ToString();
     }
 #endif
-
     private void Awake()
     {
         Instance = this;

@@ -1,0 +1,44 @@
+{
+    "modules": [
+        {
+            "moduleName": "Shield",
+            "typeName": "StationModule",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":3,\"description\":\"Activates the station's shield system.\",\"maxHP\":3,\"currentHP\":0,\"cost\":90,\"isBuilt\":false,\"upgradeSet\":{\"fileID\":11400000,\"guid\":\"7de33a00927865f4598b0d4242f73c24\",\"type\":2},\"linePoint\":{\"instanceID\":0}}}"
+        },
+        {
+            "moduleName": "Ammo Fabricator",
+            "typeName": "StationModule",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":6,\"description\":\"Unlocks firepower upgrades for turrets.\",\"maxHP\":3,\"currentHP\":0,\"cost\":40,\"isBuilt\":false,\"upgradeSet\":{\"fileID\":11400000,\"guid\":\"135797b7083413f429a898cdd86fb967\",\"type\":2},\"linePoint\":{\"instanceID\":0}}}"
+        },
+        {
+            "moduleName": "Command Unit",
+            "typeName": "StationModule",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":7,\"description\":\"Enables technical upgrades for turrets and modules.\",\"maxHP\":3,\"currentHP\":0,\"cost\":30,\"isBuilt\":false,\"upgradeSet\":{\"fileID\":11400000,\"guid\":\"6d1010bdaab1f5b4c84b74e22666f7d2\",\"type\":2},\"linePoint\":{\"instanceID\":0}}}"
+        },
+        {
+            "moduleName": "Radar",
+            "typeName": "StationModule",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":5,\"description\":\"Enables enemy detection and analysis.\",\"maxHP\":3,\"currentHP\":0,\"cost\":30,\"isBuilt\":false,\"upgradeSet\":{\"fileID\":11400000,\"guid\":\"6009812f17a1e794494112bd6f5c5afb\",\"type\":2},\"linePoint\":{\"instanceID\":0}}}"
+        },
+        {
+            "moduleName": "Core",
+            "typeName": "StationModule",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":1,\"description\":\"The station center.\",\"maxHP\":3,\"currentHP\":0,\"cost\":0,\"isBuilt\":true,\"upgradeSet\":{\"instanceID\":0},\"linePoint\":{\"instanceID\":0}}}"
+        },
+        {
+            "moduleName": "Drone",
+            "typeName": "StationModule",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":4,\"description\":\"Deploys autonomous combat drones.\",\"maxHP\":3,\"currentHP\":0,\"cost\":120,\"isBuilt\":false,\"upgradeSet\":{\"fileID\":11400000,\"guid\":\"be009294b5b8cdd4e9cfe9299de86e08\",\"type\":2},\"linePoint\":{\"instanceID\":0}}}"
+        },
+        {
+            "moduleName": "Extractor",
+            "typeName": "StationModule",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":2,\"description\":\"Enables upgrades for material collection.\",\"maxHP\":3,\"currentHP\":0,\"cost\":75,\"isBuilt\":false,\"upgradeSet\":{\"fileID\":11400000,\"guid\":\"379df8c9d8e3e3c4a8436dbabe87f95c\",\"type\":2},\"linePoint\":{\"instanceID\":0}}}"
+        },
+        {
+            "moduleName": "Temporal Modulator",
+            "typeName": "StationModule",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":8,\"description\":\"Activates time control functionality.\",\"maxHP\":3,\"currentHP\":0,\"cost\":65,\"isBuilt\":false,\"upgradeSet\":{\"fileID\":11400000,\"guid\":\"7958fa04a5fc94c418d9448def581cb2\",\"type\":2},\"linePoint\":{\"instanceID\":0}}}"
+        }
+    ]
+}
