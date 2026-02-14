@@ -23,5 +23,5 @@ MonoBehaviour:
     maxValue: 4
     currentValue: 0
     baseCost: 85
-    costStep: 120
+    costStep: 108
     cost: 0

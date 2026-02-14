@@ -1,0 +1,36 @@
+{
+    "sets": [
+        {
+            "assetPath": "Assets/GameContent/Prefabs/UpgradeSets/Ammo Fabricator.asset",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"Ammo Fabricator\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":6,\"upgradeAttributes\":[{\"upgradeName\":1,\"description\":\"Increase tower fire rate\",\"level\":0,\"maxLevel\":100,\"baseValue\":0.5,\"upgradeValue\":0.10999999940395355,\"maxValue\":15.0,\"currentValue\":0.0,\"baseCost\":5.0,\"costStep\":3.9600000381469728,\"cost\":0.0},{\"upgradeName\":2,\"description\":\"Increase tower damage\",\"level\":0,\"maxLevel\":100,\"baseValue\":1.0,\"upgradeValue\":1.1399999856948853,\"maxValue\":100.0,\"currentValue\":0.0,\"baseCost\":7.0,\"costStep\":4.769999980926514,\"cost\":0.0}]}}"
+        },
+        {
+            "assetPath": "Assets/GameContent/Prefabs/UpgradeSets/Command Unit.asset",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"Command Unit\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":7,\"upgradeAttributes\":[{\"upgradeName\":4,\"description\":\"Increase tower rotation speed\",\"level\":0,\"maxLevel\":100,\"baseValue\":1.0,\"upgradeValue\":0.14000000059604646,\"maxValue\":15.0,\"currentValue\":0.0,\"baseCost\":7.0,\"costStep\":4.320000171661377,\"cost\":0.0},{\"upgradeName\":5,\"description\":\"Increase HP of all modules\",\"level\":0,\"maxLevel\":100,\"baseValue\":3.0,\"upgradeValue\":2.4700000286102297,\"maxValue\":250.0,\"currentValue\":0.0,\"baseCost\":7.0,\"costStep\":4.275000095367432,\"cost\":0.0}]}}"
+        },
+        {
+            "assetPath": "Assets/GameContent/Prefabs/UpgradeSets/Core.asset",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"Core\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":1,\"upgradeAttributes\":[]}}"
+        },
+        {
+            "assetPath": "Assets/GameContent/Prefabs/UpgradeSets/Drone.asset",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"Drone\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":4,\"upgradeAttributes\":[{\"upgradeName\":8,\"description\":\"Increase active drones\",\"level\":0,\"maxLevel\":4,\"baseValue\":0.0,\"upgradeValue\":1.0,\"maxValue\":4.0,\"currentValue\":0.0,\"baseCost\":160.0,\"costStep\":180.0,\"cost\":0.0},{\"upgradeName\":9,\"description\":\"Increase HP of all drones\",\"level\":0,\"maxLevel\":100,\"baseValue\":2.0,\"upgradeValue\":1.1299999952316285,\"maxValue\":100.0,\"currentValue\":0.0,\"baseCost\":6.0,\"costStep\":4.814999580383301,\"cost\":0.0},{\"upgradeName\":10,\"description\":\"Decrease build time for drones\",\"level\":0,\"maxLevel\":100,\"baseValue\":30.0,\"upgradeValue\":-0.2750000059604645,\"maxValue\":2.5,\"currentValue\":0.0,\"baseCost\":8.0,\"costStep\":5.6519999504089359,\"cost\":0.0},{\"upgradeName\":11,\"description\":\"Increase damage for all drones\",\"level\":0,\"maxLevel\":100,\"baseValue\":1.0,\"upgradeValue\":1.190000057220459,\"maxValue\":120.0,\"currentValue\":0.0,\"baseCost\":6.0,\"costStep\":5.6519999504089359,\"cost\":0.0}]}}"
+        },
+        {
+            "assetPath": "Assets/GameContent/Prefabs/UpgradeSets/Extractor.asset",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"Extractor\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":2,\"upgradeAttributes\":[{\"upgradeName\":6,\"description\":\"Collecting resources automatically\",\"level\":0,\"maxLevel\":1,\"baseValue\":0.0,\"upgradeValue\":1.0,\"maxValue\":1.0,\"currentValue\":0.0,\"baseCost\":620.0,\"costStep\":0.8999999761581421,\"cost\":0.0},{\"upgradeName\":7,\"description\":\"Increase resource per collect\",\"level\":0,\"maxLevel\":100,\"baseValue\":1.0,\"upgradeValue\":1.25,\"maxValue\":100.0,\"currentValue\":0.0,\"baseCost\":7.0,\"costStep\":8.915399551391602,\"cost\":0.0}]}}"
+        },
+        {
+            "assetPath": "Assets/GameContent/Prefabs/UpgradeSets/Radar.asset",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"Radar\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":5,\"upgradeAttributes\":[{\"upgradeName\":3,\"description\":\"Increase tower fire range\",\"level\":0,\"maxLevel\":100,\"baseValue\":2.5,\"upgradeValue\":0.02500000037252903,\"maxValue\":5.0,\"currentValue\":0.0,\"baseCost\":6.0,\"costStep\":5.7779998779296879,\"cost\":0.0}]}}"
+        },
+        {
+            "assetPath": "Assets/GameContent/Prefabs/UpgradeSets/Shield.asset",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"Shield\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":3,\"upgradeAttributes\":[{\"upgradeName\":12,\"description\":\"Increase shield points\",\"level\":0,\"maxLevel\":100,\"baseValue\":5.0,\"upgradeValue\":2.75,\"maxValue\":280.0,\"currentValue\":0.0,\"baseCost\":10.0,\"costStep\":7.812000274658203,\"cost\":0.0},{\"upgradeName\":13,\"description\":\"Decrease shield recharge time\",\"level\":0,\"maxLevel\":100,\"baseValue\":20.0,\"upgradeValue\":-0.1550000011920929,\"maxValue\":4.5,\"currentValue\":0.0,\"baseCost\":9.0,\"costStep\":6.911999702453613,\"cost\":0.0},{\"upgradeName\":14,\"description\":\"Increase chance to defelct damage on shield\",\"level\":0,\"maxLevel\":80,\"baseValue\":0.0,\"upgradeValue\":1.0,\"maxValue\":80.0,\"currentValue\":0.0,\"baseCost\":8.0,\"costStep\":8.648999214172364,\"cost\":0.0}]}}"
+        },
+        {
+            "assetPath": "Assets/GameContent/Prefabs/UpgradeSets/Temporal Modulator.asset",
+            "json": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"Temporal Modulator\",\"m_EditorClassIdentifier\":\"\",\"moduleType\":3,\"upgradeAttributes\":[{\"upgradeName\":15,\"description\":\"Increase maximum game speed factor.\",\"level\":0,\"maxLevel\":6,\"baseValue\":1.0,\"upgradeValue\":0.5,\"maxValue\":4.0,\"currentValue\":0.0,\"baseCost\":85.0,\"costStep\":108.0,\"cost\":0.0}]}}"
+        }
+    ]
+}

@@ -23,7 +23,7 @@ MonoBehaviour:
     maxValue: 4
     currentValue: 0
     baseCost: 160
-    costStep: 200
+    costStep: 180
     cost: 0
   - upgradeName: 9
     description: Increase HP of all drones
@@ -34,7 +34,7 @@ MonoBehaviour:
     maxValue: 100
     currentValue: 0
     baseCost: 6
-    costStep: 5.35
+    costStep: 4.8149996
     cost: 0
   - upgradeName: 10
     description: Decrease build time for drones
@@ -45,7 +45,7 @@ MonoBehaviour:
     maxValue: 2.5
     currentValue: 0
     baseCost: 8
-    costStep: 6.28
+    costStep: 5.652
     cost: 0
   - upgradeName: 11
     description: Increase damage for all drones
@@ -56,5 +56,5 @@ MonoBehaviour:
     maxValue: 120
     currentValue: 0
     baseCost: 6
-    costStep: 6.28
+    costStep: 5.652
     cost: 0
