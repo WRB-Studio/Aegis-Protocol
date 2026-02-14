@@ -15,9 +15,7 @@ public class TimeController : MonoBehaviour, IResettable
     [Header("Config")]
     public float step = 0.5f;
     public float minTimeModulation = 1f;
-    public float maxTimeModulation = 4f;
     public float stationUITimeModulation = 0.5f;
-    public float currentMaxTimeModulation = 1f;
 
     float current = 1f;
     float storedBeforeStationUI = 1f;
@@ -48,7 +46,8 @@ public class TimeController : MonoBehaviour, IResettable
 
     void Change(int dir)
     {
-        current = Mathf.Clamp(current + dir * step, minTimeModulation, maxTimeModulation);
+        float max = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.TimeMultiplier).currentValue;
+        current = Mathf.Clamp(current + dir * step, minTimeModulation, max) ;
         Apply();
         UpdateText();
     }
@@ -66,12 +65,16 @@ public class TimeController : MonoBehaviour, IResettable
     // === Station UI ===
     public void OnStationUIOpen()
     {
+        btnTimeIncrease.interactable = false;
+        btnTimeDecrease.interactable = false;
         storedBeforeStationUI = current;
         Time.timeScale = stationUITimeModulation;
     }
 
     public void OnStationUIClose()
     {
+        btnTimeIncrease.interactable = true;
+        btnTimeDecrease.interactable = true;
         Time.timeScale = storedBeforeStationUI;
     }
 
