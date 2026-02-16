@@ -41,6 +41,7 @@ public class UpgradeUI : MonoBehaviour, IResettable
     const string PATH_SYMBOL_IMG = "ImgSymbol";
     const string PATH_MARKER_IMG = "SelectionMarker";
 
+
     void Awake()
     {
         Instance = this;
@@ -147,6 +148,21 @@ public class UpgradeUI : MonoBehaviour, IResettable
         UpdateFireRangePreview();
     }
 
+    void RefreshInfoPanel(UpgradeAttribute upgrade)
+    {
+        if (!infoPanel) return;
+
+        infoPanel.SetActive(true);
+
+        var title = infoPanel.transform.Find(infoTitlePath)?.GetComponent<TextMeshProUGUI>();
+        var desc = infoPanel.transform.Find(infoDescPath)?.GetComponent<TextMeshProUGUI>();
+
+        if (title) title.text = upgrade.upgradeName.ToString();
+        if (desc) desc.text = upgrade.description;
+
+        StartCoroutine(DelayedLayoutRebuild());
+    }
+
     void UpdateButtonUI(ButtonRefs ui, UpgradeAttribute upgrade)
     {
         string valueText = GetValueWithUnit(upgrade);
@@ -194,21 +210,6 @@ public class UpgradeUI : MonoBehaviour, IResettable
         TimeController.Instance.RefreshPanel();
         DroneManager.Instance.CheckDroneCanBuild();
         DroneManager.Instance.RefreshUIDroneCount();
-    }
-
-    void RefreshInfoPanel(UpgradeAttribute upgrade)
-    {
-        if (!infoPanel) return;
-
-        infoPanel.SetActive(true);
-
-        var title = infoPanel.transform.Find(infoTitlePath)?.GetComponent<TextMeshProUGUI>();
-        var desc = infoPanel.transform.Find(infoDescPath)?.GetComponent<TextMeshProUGUI>();
-
-        if (title) title.text = upgrade.upgradeName.ToString();
-        if (desc) desc.text = upgrade.description;
-
-        StartCoroutine(DelayedLayoutRebuild());
     }
 
     void UpdateFireRangePreview()

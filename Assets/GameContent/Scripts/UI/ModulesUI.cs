@@ -23,6 +23,10 @@ public class ModulesUI : MonoBehaviour, IResettable
     [SerializeField] Button btnTemporalModulator;
     [SerializeField] Button btnSelfDestruct;
 
+    [Header("Repair")]
+    public Button btnRepair;
+    TextMeshProUGUI txtRepairCost;
+
     public StationModule currentSelectedModule { get; private set; }
     public Button currentSelectedBtnModule { get; private set; }
 
@@ -40,14 +44,16 @@ public class ModulesUI : MonoBehaviour, IResettable
 
     public void Init()
     {
+        txtRepairCost = btnRepair.GetComponentInChildren<TextMeshProUGUI>();
+
         BuildButtonMaps();
         HookButtonClicks();
         CacheHpSliders();
 
         DisableAllSelectionMarkers();
 
-        UIManager.Instance.btnRepair.onClick.AddListener(RepairSelectedModule);
-        UIManager.Instance.btnRepair.gameObject.SetActive(false);
+        btnRepair.onClick.AddListener(RepairSelectedModule);
+        btnRepair.gameObject.SetActive(false);
 
         btnSelfDestruct.onClick.AddListener(OnClickSelfDestruct);
         btnSelfDestruct.gameObject.SetActive(false);
@@ -183,7 +189,7 @@ public class ModulesUI : MonoBehaviour, IResettable
         );
 
         RefreshBuyButton();
-        UIManager.Instance.btnRepair.gameObject.SetActive(false);
+        btnRepair.gameObject.SetActive(false);
     }
 
     public void ResetModulePanel()
@@ -243,6 +249,7 @@ public class ModulesUI : MonoBehaviour, IResettable
     public void RefreshPanel()
     {
         RefreshHpSliders();
+        RefreshRepairButton();
 
         // re-show selection if one exists
         if (currentSelectedBtnModule != null)
@@ -312,8 +319,6 @@ public class ModulesUI : MonoBehaviour, IResettable
 
     public void RefreshRepairButton()
     {
-        var btnRepair = UIManager.Instance.btnRepair;
-
         bool canRepair = currentSelectedModule != null
                          && currentSelectedModule.isBuilt
                          && currentSelectedModule.currentHP < currentSelectedModule.maxHP;
@@ -325,7 +330,7 @@ public class ModulesUI : MonoBehaviour, IResettable
         }
 
         int repairCost = currentSelectedModule.GetModuleRepairCost();
-        btnRepair.GetComponentInChildren<TextMeshProUGUI>().text = $"Repair\n{repairCost} $";
+        txtRepairCost.text = $"Repair\n{repairCost} $";
         btnRepair.interactable = ResourceManager.Instance.curMaterials >= repairCost;
         btnRepair.gameObject.SetActive(true);
     }
@@ -427,6 +432,7 @@ public class ModulesUI : MonoBehaviour, IResettable
 
         label.text = "Self-Destruct";
     }
+
 
     public void StoreInit()
     {

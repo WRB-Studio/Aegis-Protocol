@@ -17,7 +17,6 @@ public class ResourceManager : MonoBehaviour, IResettable
 
     [HideInInspector] public List<CollectEffect> collectEffects = new List<CollectEffect>();
 
-
     // --- INIT SNAPSHOT ---
     private int initcurMaterials;
     private float initcollectingEffeciency;
@@ -114,8 +113,8 @@ public class ResourceManager : MonoBehaviour, IResettable
 
         if (UIManager.Instance.stationUI.activeSelf)
         {
-            UpgradeUI.Instance.Refresh();
             ModulesUI.Instance.RefreshPanel();
+            UpgradeUI.Instance.Refresh();
         }
 
         RefreshUI();
@@ -158,4 +157,5 @@ public class ResourceManager : MonoBehaviour, IResettable
 
         RefreshUI();
     }
+
 }

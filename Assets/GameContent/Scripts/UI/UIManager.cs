@@ -8,28 +8,28 @@ public class UIManager : MonoBehaviour, IResettable
 {
     public static UIManager Instance;
 
+    [Header("Root")]
     public GameObject stationUI;
 
-    public GameObject slowPanel;
+    [Header("Slow Panel")]
+    [SerializeField] private GameObject slowPanel;
+    [SerializeField] private float slowPanelChangeDuration = 1f;
+
     private float originScale = 1f;
-    public float slowPanelChangeDuration = 1f;
 
+    [Header("Info Panel")]
     public GameObject UIManagerInfoPanel;
-    public TextMeshProUGUI txtTitle;
-    public TextMeshProUGUI txtInfo;
+    [SerializeField] private TextMeshProUGUI txtTitle;
+    [SerializeField] private TextMeshProUGUI txtInfo;
 
-    public Button btnRepair;
-    public TextMeshProUGUI txtRepairCost;
-
+    [Header("Buy")]
     public Button btnBuy;
+    [SerializeField] private TextMeshProUGUI txtBuyCost;
     [HideInInspector] public Color btnBuyOriginalColor;
-    public TextMeshProUGUI txtBuyCost;
 
     // --- INIT SNAPSHOT ---
     private float initoriginScale;
     private float initslowPanelChangeDuration;
-
-
 
 
     private void Awake()

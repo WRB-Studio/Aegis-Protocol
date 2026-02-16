@@ -206,23 +206,24 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
     EnemyWave GenerateProceduralWave(int waveIndex)
     {
-        // repeats: alle ~7 Wellen steigt max um 1
+        // repeats: 0-5 mindestens 2x, danach steigt max ~alle 7 Wellen um 1
         int maxRepeats = Mathf.RoundToInt(1 + waveIndex / 7f);
+        int minRepeats = (waveIndex <= 5) ? 2 : 1;
 
-        // Anzahl SpawnInstructions in der Wave (Cap 50)
+        // Sicherheit: max darf nicht unter min fallen
+        if (maxRepeats < minRepeats) maxRepeats = minRepeats;
+
         int enemyCount = Mathf.Min(Mathf.RoundToInt(2 + waveIndex * 1.2f), 50);
 
-        // Delay zwischen Typen / innerhalb Typ
         Vector2 typeDelay = new Vector2(0.4f, 0.8f);
         Vector2 spawnDelay = new Vector2(0.5f, 1f);
 
-        // pro Instruction: 1..(2+wave)
         Vector2Int amountRange = new Vector2Int(1, 2 + waveIndex);
 
         var wave = new EnemyWave
         {
             enemies = new List<SpawnInstruction>(enemyCount),
-            repeats = new Vector2Int(1, maxRepeats),
+            repeats = new Vector2Int(minRepeats, maxRepeats),
             delayBetweenSpawnsTypes = typeDelay
         };
 
@@ -231,7 +232,6 @@ public class EnemySpawner : MonoBehaviour, IResettable
             var type = GetEnemyTypeByWave(waveIndex);
             bool isSwarm = type == Enemy.eEnemyType.Swarm;
 
-            // Swarm skaliert langsam (du willst ggf. später noch cap setzen)
             Vector2Int swarmSize = isSwarm
                 ? new Vector2Int(3 + waveIndex / 4, 5 + waveIndex / 4)
                 : Vector2Int.one;
@@ -247,6 +247,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
         return wave;
     }
+
 
     Enemy.eEnemyType GetEnemyTypeByWave(int waveIndex)
     {
