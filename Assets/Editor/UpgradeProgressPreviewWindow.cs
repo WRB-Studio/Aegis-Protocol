@@ -14,7 +14,6 @@ public class UpgradeProgressPreviewWindow : EditorWindow
     const string F_NAME = "upgradeName";
     const string F_MAX = "maxLevel";
     const string F_BASE_COST = "baseCost";
-    const string F_COST_STEP = "costStep";
     const string F_COST_MULT = "costMultiplier";
     const string F_BASE_VAL = "baseValue";
     const string F_VAL_STEP = "upgradeValue"; // bei dir so
@@ -130,7 +129,6 @@ public class UpgradeProgressPreviewWindow : EditorWindow
                         int levels = Mathf.Min(showLevels, maxLevel);
 
                         float baseCost = TryGetFloat(entry, F_BASE_COST, 0f);
-                        float costStep = TryGetFloat(entry, F_COST_STEP, 0f);
                         float costMult = TryGetFloat(entry, F_COST_MULT, 1f);
 
                         float baseVal = TryGetFloat(entry, F_BASE_VAL, 0f);
@@ -142,11 +140,11 @@ public class UpgradeProgressPreviewWindow : EditorWindow
 
                         for (int l = 1; l <= levels; l++)
                         {
-                            float c = baseCost + costStep * (l - 1);
-                            if (!Mathf.Approximately(costMult, 1f)) c *= Mathf.Pow(costMult, (l - 1));
+                            float c = baseCost * Mathf.Pow(costMult, (l - 1));
 
                             float v = baseVal + valStep * (l - 1);
-                            if (!Mathf.Approximately(valMult, 1f)) v *= Mathf.Pow(valMult, (l - 1));
+                            if (!Mathf.Approximately(valMult, 1f))
+                                v *= Mathf.Pow(valMult, (l - 1));
 
                             costs[l - 1] = c;
                             vals[l - 1] = v;
@@ -173,19 +171,26 @@ public class UpgradeProgressPreviewWindow : EditorWindow
         {
             GUILayout.Label("Lvl", mini, GUILayout.Width(26));
             GUILayout.Label("Cost", mini, GUILayout.Width(60));
+            GUILayout.Label("Total", mini, GUILayout.Width(70));
             GUILayout.Label("Val", mini, GUILayout.Width(60));
         }
 
+        float total = 0f;
+
         for (int i = 0; i < costs.Length; i++)
         {
+            total += costs[i];
+
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUILayout.Label((i + 1).ToString(), mini, GUILayout.Width(26));
                 GUILayout.Label(Mathf.RoundToInt(costs[i]).ToString(), mini, GUILayout.Width(60));
+                GUILayout.Label(Mathf.RoundToInt(total).ToString(), mini, GUILayout.Width(70));
                 GUILayout.Label(vals[i].ToString("0.###"), mini, GUILayout.Width(60));
             }
         }
     }
+
 
     SerializedObject GetSO(UnityEngine.Object obj)
     {

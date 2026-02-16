@@ -47,7 +47,7 @@ public class UpgradeAttribute : IResettable
 
     [Header("Cost")]
     [SerializeField] public float baseCost;
-    [SerializeField] public float costStep;
+    [SerializeField] public float costMultiplier;
     [SerializeField] public float cost;
 
     public static List<UpgradeAttribute> allUpgradeAttributes = new List<UpgradeAttribute>();
@@ -93,7 +93,7 @@ public class UpgradeAttribute : IResettable
             case eUpgradeName.RotationSpeed:
                 if (Tower.Instance) { baseValue = Mathf.Max(0.1f, Tower.Instance.rotationSpeed); filled = true; }
                 break;
-                
+
             case eUpgradeName.StructuralIntegrity:
                 {
                     var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
@@ -141,7 +141,9 @@ public class UpgradeAttribute : IResettable
     public static void ApplyAllUpgradeEffect()
     {
         foreach (UpgradeAttribute upgradeAttribute in allUpgradeAttributes)
+        {
             upgradeAttribute.ApplyUpgradeEffect();
+        }
     }
 
     public void ApplyUpgradeEffect()
@@ -243,7 +245,7 @@ public class UpgradeAttribute : IResettable
         }
     }
 
-    public void Upgrade(bool save = true)
+    public void Upgrade()
     {
         if (level >= maxLevel) return;
 
@@ -253,8 +255,40 @@ public class UpgradeAttribute : IResettable
 
         ApplyUpgradeEffect();
 
-        if (save)
-            SaveGameManager.Instance.Save();
+        SaveGameManager.Instance.Save();
+    }
+
+    public void OnModulDestruction()
+    {
+        switch (upgradeName)
+        {
+            case eUpgradeName.FireRate:
+            case eUpgradeName.Damage:
+            case eUpgradeName.FireRange:
+            case eUpgradeName.RotationSpeed:
+            case eUpgradeName.StructuralIntegrity:
+            case eUpgradeName.CollectingEfficiency:
+                currentValue = Mathf.Max(baseValue, currentValue * 0.5f);
+                break;
+        }
+
+        ApplyUpgradeEffect();
+
+        SaveGameManager.Instance.Save();
+    }
+
+    public static void OnModulRebuildAll()
+    {
+        foreach (UpgradeAttribute upgradeAttribute in allUpgradeAttributes)
+        {
+            upgradeAttribute.OnModulRebuild();
+        }
+    }
+
+    public void OnModulRebuild()
+    {
+        RecalculateFromLevel();
+        ApplyUpgradeEffect();
     }
 
     public void RecalculateFromLevel()
@@ -271,7 +305,7 @@ public class UpgradeAttribute : IResettable
 
     public float CalculateCost()
     {
-        return baseCost + level * costStep;
+        return baseCost * Mathf.Pow(costMultiplier, level);
     }
 
     public static UpgradeAttribute GetUpgradeByName(eUpgradeName upgradeName)

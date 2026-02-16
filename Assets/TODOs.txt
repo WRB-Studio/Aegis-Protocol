@@ -1,0 +1,14 @@
+- testing: modul destroy upgrade value -> close app -> load and check values not basevalue or modul isbuild value
+- bosse früher
+- boss mit viel HP und wenig damage
+- mehr enemys mit fernangriff
+
+
+Testing:
+- Moduls teurer
+-- shield, drone
+- upgrades exponentiell
+- upgrades teurer
+--time, drone, auto resources
+- modul destroy => upgrade value to base value
+

@@ -18,7 +18,7 @@ public class UpgradeSetEditorWindow : EditorWindow
 
     string presetName = "Preset_01";
     float baseCostMultiplier = 1f;
-    float costStepMultiplier = 1f;
+    float costMultiplier = 1f;
     string droppedPath;
 
     [MenuItem("Tools/Aegis/UpgradeSets Editor")]
@@ -218,13 +218,13 @@ public class UpgradeSetEditorWindow : EditorWindow
 
             GUILayout.Space(10);
 
-            GUILayout.Label("CostStep x", GUILayout.Width(75));
-            costStepMultiplier = EditorGUILayout.FloatField(costStepMultiplier, GUILayout.Width(60));
+            GUILayout.Label("CostMultiplier x", GUILayout.Width(75));
+            costMultiplier = EditorGUILayout.FloatField(costMultiplier, GUILayout.Width(60));
 
             using (new EditorGUI.DisabledScope(
                 sets.Count == 0 ||
                 (Mathf.Approximately(baseCostMultiplier, 1f) &&
-                 Mathf.Approximately(costStepMultiplier, 1f))))
+                 Mathf.Approximately(costMultiplier, 1f))))
             {
                 if (GUILayout.Button("Apply", GUILayout.Width(70)))
                     ApplyCostMultipliers();
@@ -272,10 +272,10 @@ public class UpgradeSetEditorWindow : EditorWindow
                 if (costStep != null)
                 {
                     if (costStep.propertyType == SerializedPropertyType.Integer)
-                        costStep.intValue = Mathf.RoundToInt(costStep.intValue * costStepMultiplier);
+                        costStep.intValue = Mathf.RoundToInt(costStep.intValue * costMultiplier);
                     else if (costStep.propertyType == SerializedPropertyType.Float)
                     {
-                        float v = costStep.floatValue * costStepMultiplier;
+                        float v = costStep.floatValue * costMultiplier;
                         costStep.floatValue = Mathf.Round(v * 100f) / 100f;
                     }
                 }
@@ -287,7 +287,7 @@ public class UpgradeSetEditorWindow : EditorWindow
         }
 
         baseCostMultiplier = 1f;
-        costStepMultiplier = 1f;
+        costMultiplier = 1f;
 
         AssetDatabase.SaveAssets();
         Repaint();

@@ -363,6 +363,11 @@ public class ModulesUI : MonoBehaviour, IResettable
         currentSelectedModule.GetComponent<SpriteRenderer>().color = builtColor;
         currentSelectedModule.isBuilt = true;
 
+        currentSelectedModule.currentHP = currentSelectedModule.maxHP;
+        UpgradeAttribute.ApplyAllUpgradeEffect();
+        if(currentSelectedModule.wasDestroyed)
+            UpgradeAttribute.OnModulRebuildAll();
+
         if (currentSelectedModule.moduleType == StationModule.eModuleType.Shield)
         {
             Shield.Instance.activateShield();

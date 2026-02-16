@@ -17,11 +17,11 @@ MonoBehaviour:
   - upgradeName: 15
     description: Increase maximum game speed factor.
     level: 0
-    maxLevel: 6
+    maxLevel: 5
     baseValue: 1
     upgradeValue: 0.5
     maxValue: 4
     currentValue: 0
-    baseCost: 68
-    costStep: 84.48
+    baseCost: 100
+    costMultiplier: 2.5
     cost: 0

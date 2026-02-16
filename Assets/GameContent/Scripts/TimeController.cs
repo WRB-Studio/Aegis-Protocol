@@ -41,13 +41,25 @@ public class TimeController : MonoBehaviour, IResettable
             .isBuilt;
 
         panelTimeModulation.SetActive(unlocked);
+
         UpdateText();
+    }
+
+    public void OnModulDestroy()
+    {
+        current = UIManager.Instance.stationUI.activeSelf
+            ? stationUITimeModulation
+            : minTimeModulation;
+
+        Apply();
+
+        RefreshPanel();
     }
 
     void Change(int dir)
     {
         float max = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.TimeMultiplier).currentValue;
-        current = Mathf.Clamp(current + dir * step, minTimeModulation, max) ;
+        current = Mathf.Clamp(current + dir * step, minTimeModulation, max);
         Apply();
         UpdateText();
     }
@@ -86,6 +98,5 @@ public class TimeController : MonoBehaviour, IResettable
     public void ResetScript()
     {
         RefreshPanel();
-
     }
 }

@@ -25,6 +25,7 @@ public class StationModule : MonoBehaviour, IResettable
     public int currentHP;
     public int cost;
     public bool isBuilt = false;
+    public bool wasDestroyed = false;
 
     public UpgradeSet upgradeSet;
 
@@ -46,6 +47,8 @@ public class StationModule : MonoBehaviour, IResettable
 
     public void Init()
     {
+        wasDestroyed = false;
+
         currentHP = maxHP;
 
         linePoint = transform.Find("LinePoint");
@@ -75,6 +78,8 @@ public class StationModule : MonoBehaviour, IResettable
 
     public void Die()
     {
+        wasDestroyed = true;
+
         if (moduleType == eModuleType.Core)
         {
             for (int i = allModules.Count - 1; i >= 0; i--)
@@ -107,6 +112,7 @@ public class StationModule : MonoBehaviour, IResettable
             Stats.Instance.modulesDestroyed++;
             isBuilt = false;
 
+            //TODO: handle upgrade values after destroying
             switch (moduleType)
             {
                 case eModuleType.None:
@@ -115,6 +121,7 @@ public class StationModule : MonoBehaviour, IResettable
                     break;
                 case eModuleType.Extractor:
                     ResourceManager.Instance.disableAutoCollecting();
+                    UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.CollectingEfficiency).OnModulDestruction();
                     break;
                 case eModuleType.Shield:
                     Shield.Instance.deactivateShield();
@@ -124,17 +131,22 @@ public class StationModule : MonoBehaviour, IResettable
                     break;
                 case eModuleType.Radar:
                     //handled in Tower.cs
+                    UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.FireRange).OnModulDestruction();
                     break;
                 case eModuleType.AmmoFabricator:
+                    UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.FireRate).OnModulDestruction();
+                    UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.Damage).OnModulDestruction();
                     //handled in Tower.cs
                     break;
                 case eModuleType.CommandUnit:
                     //Maybe later!?
                     //decrease all modules HP?
                     //decrease tower rotation speed?
+                    UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.StructuralIntegrity).OnModulDestruction();
+                    UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.RotationSpeed).OnModulDestruction();
                     break;
                 case eModuleType.TemporalModulator:
-                    TimeController.Instance.RefreshPanel();
+                    TimeController.Instance.OnModulDestroy();
                     break;
                 default:
                     break;
@@ -171,6 +183,7 @@ public class StationModule : MonoBehaviour, IResettable
 
     public void ResetScript()
     {
+        wasDestroyed = false;
         maxHP = initmaxHP;
         currentHP = initcurrentHP;
         cost = initcost;

@@ -36,6 +36,7 @@ public class SaveGame
         // als string, damit es robust bleibt (JsonUtility + Enum-Änderungen)
         public string moduleType;   // module.moduleType.ToString()
         public bool isBuilt;
+        public bool wasDestroyed;
         public int currentHP;
     }
 

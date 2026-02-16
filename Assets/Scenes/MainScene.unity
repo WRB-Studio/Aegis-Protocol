@@ -1593,8 +1593,9 @@ MonoBehaviour:
   description: Unlocks firepower upgrades for turrets.
   maxHP: 3
   currentHP: 0
-  cost: 40
+  cost: 35
   isBuilt: 0
+  wasDestroyed: 0
   upgradeSet: {fileID: 11400000, guid: 135797b7083413f429a898cdd86fb967, type: 2}
   linePoint: {fileID: 0}
 --- !u!1 &231714365
@@ -2503,15 +2504,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8239461039157810827, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8239461039157810827, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8239461039157810827, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8349313002505898274, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_Pivot.x
@@ -2706,7 +2707,7 @@ MonoBehaviour:
   - {fileID: 600174475038239713, guid: f1aef9d5aa1341947a592ec1c8f3c3f5, type: 3}
   - {fileID: 8138643798955235728, guid: 39c81695ba45ba044a7115315cc0d395, type: 3}
   - {fileID: 1657425260252085685, guid: 79c79616f491bb946a44a067d22cb59b, type: 3}
-  timeBetweenWaves: 1
+  timeBetweenWaves: 0.5
   currentWaveIndex: 0
   waves:
   - enemies:
@@ -2715,7 +2716,6 @@ MonoBehaviour:
       delayBetweenSpawns: {x: 0.1, y: 0.3}
       swarmGroupSize: {x: 1, y: 1}
     delayBetweenSpawnsTypes: {x: 1, y: 1}
-    repeats: {x: 2, y: 4}
   swarmSpawnRadius: 1
   topArea: {fileID: 1391323683}
   bottomArea: {fileID: 1608624869}
@@ -3111,6 +3111,7 @@ MonoBehaviour:
   currentHP: 0
   cost: 0
   isBuilt: 1
+  wasDestroyed: 0
   upgradeSet: {fileID: 0}
   linePoint: {fileID: 0}
 --- !u!1 &395734472
@@ -4247,11 +4248,9 @@ MonoBehaviour:
   UIManagerInfoPanel: {fileID: 44411721}
   txtTitle: {fileID: 1476974003}
   txtInfo: {fileID: 812585190}
-  btnRepair: {fileID: 623912413}
-  txtRepairCost: {fileID: 617209585529272648}
   btnBuy: {fileID: 3092188934291643067}
-  btnBuyOriginalColor: {r: 0, g: 0, b: 0, a: 0}
   txtBuyCost: {fileID: 617209585529272648}
+  btnBuyOriginalColor: {r: 0, g: 0, b: 0, a: 0}
 --- !u!1 &722443789
 GameObject:
   m_ObjectHideFlags: 0
@@ -5579,15 +5578,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8239461039157810827, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8239461039157810827, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8239461039157810827, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8349313002505898274, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_Pivot.x
@@ -5738,7 +5737,7 @@ MonoBehaviour:
   txtTime: {fileID: 1260243015}
   step: 0.5
   minTimeModulation: 1
-  stationUITimeModulation: 0.5
+  stationUITimeModulation: 0.4
 --- !u!1 &870935363
 GameObject:
   m_ObjectHideFlags: 0
@@ -5916,8 +5915,9 @@ MonoBehaviour:
   description: Deploys autonomous combat drones.
   maxHP: 3
   currentHP: 0
-  cost: 120
+  cost: 1500
   isBuilt: 0
+  wasDestroyed: 0
   upgradeSet: {fileID: 11400000, guid: be009294b5b8cdd4e9cfe9299de86e08, type: 2}
   linePoint: {fileID: 0}
 --- !u!1 &872157373
@@ -6411,8 +6411,9 @@ MonoBehaviour:
   description: Activates the station's shield system.
   maxHP: 3
   currentHP: 0
-  cost: 90
+  cost: 800
   isBuilt: 0
+  wasDestroyed: 0
   upgradeSet: {fileID: 11400000, guid: 7de33a00927865f4598b0d4242f73c24, type: 2}
   linePoint: {fileID: 0}
 --- !u!1 &937580625
@@ -6794,15 +6795,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8239461039157810827, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8239461039157810827, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8239461039157810827, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8349313002505898274, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_Pivot.x
@@ -7968,6 +7969,7 @@ MonoBehaviour:
   currentHP: 0
   cost: 1
   isBuilt: 0
+  wasDestroyed: 0
   upgradeSet: {fileID: 0}
   linePoint: {fileID: 0}
 --- !u!1 &1256045459
@@ -10080,8 +10082,9 @@ MonoBehaviour:
   description: Activates time control functionality.
   maxHP: 3
   currentHP: 0
-  cost: 65
+  cost: 200
   isBuilt: 0
+  wasDestroyed: 0
   upgradeSet: {fileID: 11400000, guid: 7958fa04a5fc94c418d9448def581cb2, type: 2}
   linePoint: {fileID: 0}
 --- !u!1 &1591490612
@@ -10748,8 +10751,9 @@ MonoBehaviour:
   description: Enables enemy detection and analysis.
   maxHP: 3
   currentHP: 0
-  cost: 30
+  cost: 350
   isBuilt: 0
+  wasDestroyed: 0
   upgradeSet: {fileID: 11400000, guid: 6009812f17a1e794494112bd6f5c5afb, type: 2}
   linePoint: {fileID: 0}
 --- !u!1 &1668434048
@@ -11299,8 +11303,9 @@ MonoBehaviour:
   description: Enables technical upgrades for turrets and modules.
   maxHP: 3
   currentHP: 0
-  cost: 30
+  cost: 40
   isBuilt: 0
+  wasDestroyed: 0
   upgradeSet: {fileID: 11400000, guid: 6d1010bdaab1f5b4c84b74e22666f7d2, type: 2}
   linePoint: {fileID: 0}
 --- !u!1 &1803191805
@@ -12276,8 +12281,9 @@ MonoBehaviour:
   description: Enables upgrades for material collection.
   maxHP: 3
   currentHP: 0
-  cost: 75
+  cost: 60
   isBuilt: 0
+  wasDestroyed: 0
   upgradeSet: {fileID: 11400000, guid: 379df8c9d8e3e3c4a8436dbabe87f95c, type: 2}
   linePoint: {fileID: 0}
 --- !u!1 &2021309294
@@ -12784,6 +12790,7 @@ MonoBehaviour:
   btnCommandUnit: {fileID: 996044507}
   btnTemporalModulator: {fileID: 350473881}
   btnSelfDestruct: {fileID: 2085861612}
+  btnRepair: {fileID: 623912413}
 --- !u!1001 &2137577905
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13366,15 +13373,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8239461039157810827, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8239461039157810827, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8239461039157810827, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8349313002505898274, guid: ebac5715532dd2047a4d4a0c20cee7b3, type: 3}
       propertyPath: m_Pivot.x

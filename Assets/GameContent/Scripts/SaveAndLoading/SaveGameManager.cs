@@ -86,6 +86,7 @@ public class SaveGameManager : MonoBehaviour
             {
                 moduleType = module.moduleType.ToString(),
                 isBuilt = module.isBuilt,
+                wasDestroyed = module.wasDestroyed,
                 currentHP = module.currentHP
             });
 
@@ -119,6 +120,7 @@ public class SaveGameManager : MonoBehaviour
             if (!module) continue;
 
             module.isBuilt = loadedModule.isBuilt;
+            module.wasDestroyed = loadedModule.wasDestroyed;
             module.currentHP = loadedModule.currentHP;
         }
 

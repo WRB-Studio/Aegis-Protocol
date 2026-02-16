@@ -22,8 +22,8 @@ MonoBehaviour:
     upgradeValue: 2.75
     maxValue: 280
     currentValue: 0
-    baseCost: 8
-    costStep: 6.11
+    baseCost: 9
+    costMultiplier: 1.25
     cost: 0
   - upgradeName: 13
     description: Decrease shield recharge time
@@ -34,7 +34,7 @@ MonoBehaviour:
     maxValue: 4.5
     currentValue: 0
     baseCost: 7.2
-    costStep: 5.4
+    costMultiplier: 1.15
     cost: 0
   - upgradeName: 14
     description: Increase chance to defelct damage on shield
@@ -45,5 +45,5 @@ MonoBehaviour:
     maxValue: 80
     currentValue: 0
     baseCost: 6.4
-    costStep: 6.77
+    costMultiplier: 1.15
     cost: 0

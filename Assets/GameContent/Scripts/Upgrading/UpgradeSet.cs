@@ -37,7 +37,7 @@ public class UpgradeSet : ScriptableObject
                 currentValue = upgrade.currentValue,
 
                 baseCost = upgrade.baseCost,
-                costStep = upgrade.costStep,
+                costMultiplier = upgrade.costMultiplier,
                 cost = upgrade.cost,
             };
 

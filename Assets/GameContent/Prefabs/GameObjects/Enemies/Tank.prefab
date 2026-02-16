@@ -103,7 +103,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyType: 3
-  maxHP: 3
+  maxHP: 2
   speed: 0.35
   damage: 3
   fireRange: 0

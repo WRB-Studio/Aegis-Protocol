@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour, IResettable
@@ -7,19 +8,20 @@ public class EnemySpawner : MonoBehaviour, IResettable
     public static EnemySpawner Instance;
 
     [Header("Spawning")]
-    public bool enableSpawning = true;
-    public bool proceduralWave = true;
-    public List<GameObject> enemyPrefabs = new List<GameObject>();
-    public float timeBetweenWaves = 5f;
-    [HideInInspector] public int currentWaveIndex = 0;
-    public List<EnemyWave> waves = new List<EnemyWave>();
-    public float swarmSpawnRadius = 0.5f;
+    [SerializeField] bool enableSpawning = true;
+    [SerializeField] bool proceduralWave = true;
+    [SerializeField] List<GameObject> enemyPrefabs = new List<GameObject>();
+    [SerializeField] float timeBetweenWaves = 5f;
+    public int currentWaveIndex = 0;
+    [SerializeField] List<EnemyWave> waves = new List<EnemyWave>();
+    [SerializeField] float swarmSpawnRadius = 0.5f;
 
     [Header("Spawn Areas")]
-    public Collider2D topArea;
-    public Collider2D bottomArea;
+    [SerializeField] Collider2D topArea;
+    [SerializeField] Collider2D bottomArea;
 
-    [HideInInspector] public List<Enemy> instantiatedEnemies = new List<Enemy>();
+    [Header("Runtime")]
+    public List<Enemy> instantiatedEnemies = new List<Enemy>();
 
     bool waveIsRunning;
     Transform spawnParent;
@@ -30,6 +32,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
     float inittimeBetweenWaves, initswarmSpawnRadius;
     int initcurrentWaveIndex;
 
+
     void Awake() => Instance = this;
 
     public void Init()
@@ -37,26 +40,20 @@ public class EnemySpawner : MonoBehaviour, IResettable
         currentWaveIndex = 0;
         waveIsRunning = false;
 
-        // Parent für Ordnung in der Hierarchie
         var p = GameObject.Find("EnemyParent");
         spawnParent = p ? p.transform : transform;
 
-        // Cache: EnemyType -> Prefab (spart Find/GetComponent im Spawn-Loop)
         BuildPrefabCache();
     }
 
     public void UpdateNormal()
     {
-        // Enemies updaten + Nulls aus Liste entfernen
         UpdateInstantiatedEnemies();
-
-        // Neue Welle starten, wenn nichts mehr lebt
         StartNextWaveIfReady();
     }
 
     public void UpdateGameOver()
     {
-        // Verhalten bleibt gleich, nur kein neues Spawning
         UpdateInstantiatedEnemies();
     }
 
@@ -72,10 +69,8 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
     void StartNextWaveIfReady()
     {
-        // keine neue Wave, wenn: schon läuft / noch Gegner da / Spawning aus
         if (waveIsRunning || instantiatedEnemies.Count > 0 || !enableSpawning) return;
 
-        // completed zählt erst ab Wave 1 (nach der ersten)
         if (currentWaveIndex > 0)
             Stats.Instance.wavesCompleted++;
 
@@ -86,10 +81,8 @@ public class EnemySpawner : MonoBehaviour, IResettable
     {
         waveIsRunning = true;
 
-        // Pause zwischen Wellen
         yield return new WaitForSeconds(timeBetweenWaves);
 
-        // Non-procedural: wenn Liste durch ist -> Ende
         if (!proceduralWave && currentWaveIndex >= waves.Count)
         {
             enableSpawning = false;
@@ -97,54 +90,39 @@ public class EnemySpawner : MonoBehaviour, IResettable
             yield break;
         }
 
-        // Wave holen/generieren
         EnemyWave wave = proceduralWave ? GenerateProceduralWave(currentWaveIndex) : waves[currentWaveIndex];
 
-        // repeats ist (min..max) inklusiv gedacht -> +1 wegen int Range exklusiv
-        int repeatWaves = Random.Range(wave.repeats.x, wave.repeats.y + 1);
-
-        for (int waveRepeat = 0; waveRepeat < repeatWaves; waveRepeat++)
+        foreach (var instr in wave.enemies)
         {
-            foreach (var instr in wave.enemies)
+            int amount = Random.Range(instr.amount.x, instr.amount.y + 1);
+
+            for (int i = 0; i < amount; i++)
             {
-                // wie viele "Pakete" dieses Typs in dieser Wave
-                int amount = Random.Range(instr.amount.x, instr.amount.y + 1);
-
-                for (int i = 0; i < amount; i++)
+                if (!prefabByType.TryGetValue(instr.type, out var prefab) || !prefab)
                 {
-                    // Prefab aus Cache holen
-                    if (!prefabByType.TryGetValue(instr.type, out var prefab) || !prefab)
-                    {
-                        Debug.LogWarning($"Missing enemy prefab for type {instr.type}");
-                        continue;
-                    }
-
-                    // Basispunkt für den Spawn (Area)
-                    Vector2 basePos = GetRandomPointInArea();
-
-                    // Swarm: wie viele Einheiten auf einmal (inkl.)
-                    int groupSize = Random.Range(instr.swarmGroupSize.x, instr.swarmGroupSize.y + 1);
-
-                    for (int s = 0; s < groupSize; s++)
-                    {
-                        // Variation immer, damit nicht alle exakt stacken
-                        Vector2 pos = basePos + Random.insideUnitCircle * swarmSpawnRadius;
-
-                        var go = Instantiate(prefab, pos, Quaternion.identity, spawnParent);
-                        var enemy = go.GetComponent<Enemy>(); // ok: nur 1x pro Spawn
-                        enemy.InitWithLevel(currentWaveIndex);
-
-                        instantiatedEnemies.Add(enemy);
-                        Stats.Instance.enemiesSpawned++;
-                    }
-
-                    // Delay zwischen Spawns dieses Typs
-                    yield return new WaitForSeconds(Random.Range(instr.delayBetweenSpawns.x, instr.delayBetweenSpawns.y));
+                    Debug.LogWarning($"Missing enemy prefab for type {instr.type}");
+                    continue;
                 }
 
-                // Delay zwischen unterschiedlichen Typen
-                yield return new WaitForSeconds(Random.Range(wave.delayBetweenSpawnsTypes.x, wave.delayBetweenSpawnsTypes.y));
+                Vector2 basePos = GetRandomPointInArea();
+                int groupSize = Random.Range(instr.swarmGroupSize.x, instr.swarmGroupSize.y + 1);
+
+                for (int s = 0; s < groupSize; s++)
+                {
+                    Vector2 pos = basePos + Random.insideUnitCircle * swarmSpawnRadius;
+
+                    var go = Instantiate(prefab, pos, Quaternion.identity, spawnParent);
+                    var enemy = go.GetComponent<Enemy>();
+                    enemy.InitWithLevel(currentWaveIndex);
+
+                    instantiatedEnemies.Add(enemy);
+                    Stats.Instance.enemiesSpawned++;
+                }
+
+                yield return new WaitForSeconds(Random.Range(instr.delayBetweenSpawns.x, instr.delayBetweenSpawns.y));
             }
+
+            yield return new WaitForSeconds(Random.Range(wave.delayBetweenSpawnsTypes.x, wave.delayBetweenSpawnsTypes.y));
         }
 
         currentWaveIndex++;
@@ -161,7 +139,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
             var e = p.GetComponent<Enemy>();
             if (!e) continue;
 
-            prefabByType[e.enemyType] = p; // letzter gewinnt, ist ok
+            prefabByType[e.enemyType] = p;
         }
     }
 
@@ -187,43 +165,32 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
     Vector2 GetRandomPointInArea()
     {
-        // Fallbacks, falls Areas nicht gesetzt sind
         Collider2D area = (Random.value < 0.5f ? topArea : bottomArea) ?? topArea ?? bottomArea;
         if (!area) return Vector2.zero;
 
         Bounds b = area.bounds;
 
-        // bis zu 100 Versuche: zufälliger Punkt innerhalb Collider-Form
         for (int i = 0; i < 100; i++)
         {
             Vector2 p = new Vector2(Random.Range(b.min.x, b.max.x), Random.Range(b.min.y, b.max.y));
             if (area.OverlapPoint(p)) return p;
         }
 
-        // Notfall: Center
         return area.bounds.center;
     }
 
     EnemyWave GenerateProceduralWave(int waveIndex)
     {
-        // repeats: 0-5 mindestens 2x, danach steigt max ~alle 7 Wellen um 1
-        int maxRepeats = Mathf.RoundToInt(1 + waveIndex / 7f);
-        int minRepeats = (waveIndex <= 5) ? 2 : 1;
-
-        // Sicherheit: max darf nicht unter min fallen
-        if (maxRepeats < minRepeats) maxRepeats = minRepeats;
-
         int enemyCount = Mathf.Min(Mathf.RoundToInt(2 + waveIndex * 1.2f), 50);
 
-        Vector2 typeDelay = new Vector2(0.4f, 0.8f);
-        Vector2 spawnDelay = new Vector2(0.5f, 1f);
+        Vector2 typeDelay = new Vector2(0.3f, 0.6f);
+        Vector2 spawnDelay = new Vector2(0.4f, 0.8f);
 
-        Vector2Int amountRange = new Vector2Int(1, 2 + waveIndex);
+        Vector2Int amountRange = new Vector2Int(1, 3 + waveIndex);
 
         var wave = new EnemyWave
         {
             enemies = new List<SpawnInstruction>(enemyCount),
-            repeats = new Vector2Int(minRepeats, maxRepeats),
             delayBetweenSpawnsTypes = typeDelay
         };
 
@@ -233,7 +200,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
             bool isSwarm = type == Enemy.eEnemyType.Swarm;
 
             Vector2Int swarmSize = isSwarm
-                ? new Vector2Int(3 + waveIndex / 4, 5 + waveIndex / 4)
+                ? new Vector2Int(3 + waveIndex / 6, 5 + waveIndex / 6)
                 : Vector2Int.one;
 
             wave.enemies.Add(new SpawnInstruction
@@ -248,19 +215,19 @@ public class EnemySpawner : MonoBehaviour, IResettable
         return wave;
     }
 
-
     Enemy.eEnemyType GetEnemyTypeByWave(int waveIndex)
     {
         float roll = Random.value;
 
-        if (waveIndex > 15 && roll < 0.1f) return Enemy.eEnemyType.Boss;
-        if (waveIndex > 12 && roll < 0.25f) return Enemy.eEnemyType.Ranged;
-        if (waveIndex > 8 && roll < 0.4f) return Enemy.eEnemyType.Swarm;
-        if (waveIndex > 6 && roll < 0.5f) return Enemy.eEnemyType.Tank;
-        if (waveIndex > 3 && roll < 0.7f) return Enemy.eEnemyType.Fast;
+        if (waveIndex > 16 && roll < 0.1f) return Enemy.eEnemyType.Boss;
+        if (waveIndex > 13 && roll < 0.25f) return Enemy.eEnemyType.Swarm;
+        if (waveIndex > 9 && roll < 0.4f) return Enemy.eEnemyType.Ranged;
+        if (waveIndex > 7 && roll < 0.5f) return Enemy.eEnemyType.Tank;
+        if (waveIndex > 4 && roll < 0.7f) return Enemy.eEnemyType.Fast;
 
         return Enemy.eEnemyType.Normal;
     }
+
 
     public void StoreInit()
     {
@@ -274,7 +241,6 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
     public void ResetScript()
     {
-        // runtime clear
         StopAllCoroutines();
         RemoveAllEnemies();
         instantiatedEnemies.Clear();
@@ -286,7 +252,6 @@ public class EnemySpawner : MonoBehaviour, IResettable
         swarmSpawnRadius = initswarmSpawnRadius;
         waveIsRunning = initwaveIsRunning;
 
-        // Cache nach Reset neu bauen (falls Prefab-Liste verändert wurde)
         BuildPrefabCache();
     }
 }
@@ -296,7 +261,6 @@ public class EnemyWave
 {
     public List<SpawnInstruction> enemies;
     public Vector2 delayBetweenSpawnsTypes = new Vector2(0.5f, 1f);
-    public Vector2Int repeats = new Vector2Int(2, 4);
 }
 
 [System.Serializable]
