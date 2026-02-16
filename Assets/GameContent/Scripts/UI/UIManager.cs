@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -178,7 +179,10 @@ public class UIManager : MonoBehaviour, IResettable
     public void ShowInfoPanel(string title, string info, int cost, bool showBtnBuy = false)
     {
         UIManagerInfoPanel.SetActive(true);
-        txtTitle.text = title;
+
+        string formatted = Regex.Replace(title, "([a-z])([A-Z])", "$1 $2");
+        txtTitle.text = char.ToUpper(formatted[0]) + formatted.Substring(1);
+
         txtInfo.text = info;
         txtBuyCost.text = cost.ToString() + " $";
         btnBuy.gameObject.SetActive(showBtnBuy);

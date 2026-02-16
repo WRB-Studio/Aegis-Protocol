@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -157,7 +158,12 @@ public class UpgradeUI : MonoBehaviour, IResettable
         var title = infoPanel.transform.Find(infoTitlePath)?.GetComponent<TextMeshProUGUI>();
         var desc = infoPanel.transform.Find(infoDescPath)?.GetComponent<TextMeshProUGUI>();
 
-        if (title) title.text = upgrade.upgradeName.ToString();
+        if (title)
+        {
+            string formatted = Regex.Replace(upgrade.upgradeName.ToString(), "([a-z])([A-Z])", "$1 $2");
+            title.text = char.ToUpper(formatted[0]) + formatted.Substring(1);
+        }
+
         if (desc) desc.text = upgrade.description;
 
         StartCoroutine(DelayedLayoutRebuild());

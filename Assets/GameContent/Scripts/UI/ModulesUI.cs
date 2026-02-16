@@ -40,6 +40,7 @@ public class ModulesUI : MonoBehaviour, IResettable
 
     bool confirmSelfDestruct = false;
 
+
     void Awake() => Instance = this;
 
     public void Init()
