@@ -2707,7 +2707,11 @@ MonoBehaviour:
   - {fileID: 600174475038239713, guid: f1aef9d5aa1341947a592ec1c8f3c3f5, type: 3}
   - {fileID: 8138643798955235728, guid: 39c81695ba45ba044a7115315cc0d395, type: 3}
   - {fileID: 1657425260252085685, guid: 79c79616f491bb946a44a067d22cb59b, type: 3}
-  timeBetweenWaves: 0.5
+  timeBetweenWaves: 2
+  firstWaveDelay: 5
+  earlyWaveDelay: 2.5
+  backgroundGrid: {fileID: 1591490613}
+  gridDistortionShader: {fileID: 4800000, guid: c378fd3020a34a7b85621719cc35d5ce, type: 3}
   currentWaveIndex: 0
   waves:
   - enemies:

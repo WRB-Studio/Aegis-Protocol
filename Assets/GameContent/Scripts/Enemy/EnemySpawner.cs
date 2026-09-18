@@ -11,7 +11,11 @@ public class EnemySpawner : MonoBehaviour, IResettable
     [SerializeField] bool enableSpawning = true;
     [SerializeField] bool proceduralWave = true;
     [SerializeField] List<GameObject> enemyPrefabs = new List<GameObject>();
-    [SerializeField] float timeBetweenWaves = 5f;
+    [SerializeField] float timeBetweenWaves = 2f;
+    [SerializeField] float firstWaveDelay = 5f;
+    [SerializeField] float earlyWaveDelay = 2.5f;
+    [SerializeField] Transform backgroundGrid;
+    [SerializeField] Shader gridDistortionShader;
     public int currentWaveIndex = 0;
     [SerializeField] List<EnemyWave> waves = new List<EnemyWave>();
     [SerializeField] float swarmSpawnRadius = 0.5f;
@@ -28,6 +32,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
         ((waveIsRunning || instantiatedEnemies.Count == 0) ? 1 : 0));
     Transform spawnParent;
     Dictionary<Enemy.eEnemyType, GameObject> prefabByType;
+    WaveWarningEffect waveWarning;
 
     // --- INIT SNAPSHOT ---
     bool initenableSpawning, initproceduralWave, initwaveIsRunning;
@@ -37,6 +42,8 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
     void Awake() => Instance = this;
 
+    void OnDestroy() => waveWarning?.Dispose();
+
     public void Init()
     {
         currentWaveIndex = 0;
@@ -44,6 +51,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
         var p = GameObject.Find("EnemyParent");
         spawnParent = p ? p.transform : transform;
+        waveWarning ??= new WaveWarningEffect(transform, backgroundGrid, gridDistortionShader);
 
         BuildPrefabCache();
     }
@@ -86,7 +94,33 @@ public class EnemySpawner : MonoBehaviour, IResettable
     {
         waveIsRunning = true;
 
-        yield return new WaitForSeconds(timeBetweenWaves);
+        float delay = currentWaveIndex == 0 ? firstWaveDelay :
+            currentWaveIndex < 10 ? earlyWaveDelay : timeBetweenWaves;
+        if (delay > 0f)
+        {
+            const float fadeInDuration = 2f;
+            waveWarning?.Show(0f, 0f);
+            float elapsed = 0f;
+            while (elapsed < delay)
+            {
+                yield return null;
+                if (GameManager.gameOver)
+                {
+                    waveWarning?.Hide();
+                    waveIsRunning = false;
+                    yield break;
+                }
+                elapsed += Time.deltaTime;
+                float fade = Mathf.SmoothStep(0f, 1f, elapsed / fadeInDuration);
+                waveWarning?.Show(Mathf.Clamp01(elapsed / delay), fade);
+            }
+            float finalVisibility = Mathf.SmoothStep(0f, 1f, elapsed / fadeInDuration);
+            StartCoroutine(FadeOutWarning(finalVisibility));
+        }
+        else
+        {
+            yield return new WaitForSeconds(0f);
+        }
 
         if (!proceduralWave && currentWaveIndex >= waves.Count)
         {
@@ -136,6 +170,20 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
         currentWaveIndex++;
         waveIsRunning = false;
+    }
+
+    IEnumerator FadeOutWarning(float initialVisibility)
+    {
+        const float duration = 2f;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            yield return null;
+            if (GameManager.gameOver) break;
+            elapsed += Time.deltaTime;
+            waveWarning?.ShowExit(elapsed, initialVisibility);
+        }
+        waveWarning?.Hide();
     }
 
     void BuildPrefabCache()
@@ -250,6 +298,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
     public void ResetScript()
     {
         StopAllCoroutines();
+        waveWarning?.Hide();
         RemoveAllEnemies();
         instantiatedEnemies.Clear();
 

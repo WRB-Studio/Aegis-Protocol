@@ -881,8 +881,12 @@ public class GameFlowTests
         spawner.ResetScript();
         var delay = typeof(EnemySpawner).GetField("timeBetweenWaves",
             BindingFlags.Instance | BindingFlags.NonPublic);
+        var earlyDelay = typeof(EnemySpawner).GetField("earlyWaveDelay",
+            BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.That(delay, Is.Not.Null);
+        Assert.That(earlyDelay, Is.Not.Null);
         delay.SetValue(spawner, 0f);
+        earlyDelay.SetValue(spawner, 0f);
         spawner.currentWaveIndex = 2;
         Stats.Instance.wavesCompleted = 1;
         ResourceManager.Instance.curMaterials = 80;
@@ -908,6 +912,7 @@ public class GameFlowTests
         spawner.ResetScript();
         spawner.currentWaveIndex = 2;
         delay.SetValue(spawner, 0f);
+        earlyDelay.SetValue(spawner, 0f);
         spawner.UpdateNormal();
         yield return null;
         Assert.That(Stats.Instance.wavesCompleted, Is.EqualTo(2));

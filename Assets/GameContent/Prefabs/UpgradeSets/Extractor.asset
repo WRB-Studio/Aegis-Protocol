@@ -30,9 +30,9 @@ MonoBehaviour:
     level: 0
     maxLevel: 80
     baseValue: 1
-    upgradeValue: 1.25
+    upgradeValue: 1
     maxValue: 100
     currentValue: 0
-    baseCost: 6
+    baseCost: 25
     costMultiplier: 1.8
     cost: 0
