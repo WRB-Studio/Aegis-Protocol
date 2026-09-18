@@ -15,16 +15,39 @@ public class Utils : MonoBehaviour
 
     public static bool IsPointerOverUI()
     {
-#if UNITY_ANDROID || UNITY_IOS
+        if (EventSystem.current == null) return false;
+
         if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
             return EventSystem.current.IsPointerOverGameObject(touch.fingerId);
         }
-        return false;
-#else
+
+#if UNITY_EDITOR || UNITY_STANDALONE
         return EventSystem.current.IsPointerOverGameObject();
+#else
+        return false;
 #endif
+    }
+
+    public static bool TryGetPointerDown(out Vector2 screenPosition)
+    {
+        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+        {
+            screenPosition = Input.GetTouch(0).position;
+            return true;
+        }
+
+#if UNITY_EDITOR || UNITY_STANDALONE
+        if (Input.GetMouseButtonDown(0))
+        {
+            screenPosition = Input.mousePosition;
+            return true;
+        }
+#endif
+
+        screenPosition = default;
+        return false;
     }
 
     public static bool IsOutOfView(Vector3 worldPosition)

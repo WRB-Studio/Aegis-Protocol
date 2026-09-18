@@ -37,10 +37,10 @@ public class ResourceManager : MonoBehaviour, IResettable
 
     public void UpdateNormal()
     {
-        if (!autoCollecting && Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+        if (!autoCollecting && Utils.TryGetPointerDown(out var screenPosition) && !Utils.IsPointerOverUI())
         {
-            Vector2 touchPos = Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position);
-            RaycastHit2D hit = Physics2D.Raycast(touchPos, Vector2.zero);
+            Vector2 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
+            RaycastHit2D hit = Physics2D.Raycast(worldPosition, Vector2.zero);
 
             if (hit.collider != null && hit.collider.CompareTag("Material"))
             {

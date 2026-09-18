@@ -49,59 +49,18 @@ public class UIManager : MonoBehaviour, IResettable
 
     public void UpdateNormal()
     {
-#if UNITY_ANDROID
-        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
-        {
-            // UI prüfen
-            if (Utils.IsPointerOverUI())
-                return;
+        if (!Utils.TryGetPointerDown(out var screenPosition) || Utils.IsPointerOverUI()) return;
 
-            Vector2 touchPos = Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position);
+        Vector2 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
+        RaycastHit2D hit = Physics2D.Raycast(worldPosition, Vector2.zero);
 
-            RaycastHit2D hit = Physics2D.Raycast(touchPos, Vector2.zero);
+        bool hitStation = hit.collider != null &&
+                          (hit.collider.CompareTag("Tower") || hit.collider.CompareTag("Station"));
 
-            if (hit.collider != null &&
-               (hit.collider.CompareTag("Tower") || hit.collider.CompareTag("Station")) &&
-               !stationUI.activeSelf)
-            {
-                Show(true);
-            }
-            else
-            {
-                Show(false);
-                UIToWorldLine.Instance.HideLine();
-                UpgradeUI.Instance.Hide();
-            }
-        }
-#endif
-
-#if UNITY_STANDALONE
-
-        // Linksklick erkannt
-        if (Input.GetMouseButtonDown(0))
-        {
-            // Wenn auf UI geklickt → nichts tun
-            if (IsPointerOverUI())
-            {
-                return;
-            }
-
-            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
-
-            // Tower angeklickt → UI anzeigen
-            if (hit.collider != null && 
-               (hit.collider.CompareTag("Tower") || hit.collider.CompareTag("Station")))
-            {
-                Show(tower, tower.transform.position);
-            }
-            else
-            {
-                // Klick ins Leere → UI schließen
-                Show(null, Vector3.zero);
-            }
-        }
-#endif
+        if (hitStation && !stationUI.activeSelf)
+            Show(true);
+        else if (!hitStation && stationUI.activeSelf)
+            Show(false);
     }
 
     public void Show(bool show)
