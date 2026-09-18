@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class ExplosionManager : MonoBehaviour
+public class ExplosionManager : MonoBehaviour, IResettable
 {
     public static ExplosionManager Instance;
 
@@ -76,5 +76,15 @@ public class ExplosionManager : MonoBehaviour
         }
 
         Destroy(newExplosion, lifetime);
+    }
+
+    public void StoreInit() { }
+
+    public void ResetScript()
+    {
+        if (!explosionParent) return;
+
+        foreach (Transform explosion in explosionParent)
+            Destroy(explosion.gameObject);
     }
 }

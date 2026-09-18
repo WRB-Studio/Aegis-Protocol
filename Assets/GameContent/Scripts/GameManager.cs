@@ -304,11 +304,19 @@ public class GameManager : MonoBehaviour
         gameOverPanel.SetActive(false);
         DetailPanel.gameObject.SetActive(false);
 
-        foreach (var resettable in allResettable) resettable.ResetScript();
+        ResetAll();
         UpgradeAttribute.ApplyAllUpgradeEffect();
+
+        TimeController.Instance.RefreshPanel();
+        ModulesUI.Instance.ResetModulePanel();
+        ModulesUI.Instance.RefreshPanel();
+        UpgradeUI.Instance.Refresh();
+        DroneManager.Instance.CheckDroneCanBuild();
+        ResourceManager.Instance.RefreshUI();
 
         SoundManager.Instance.PlayMainMusic();
         isInit = true;
+        SaveGameManager.Instance.Save();
     }
 
 

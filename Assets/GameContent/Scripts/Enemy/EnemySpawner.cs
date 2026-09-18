@@ -149,7 +149,8 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
         if (Instance.instantiatedEnemies.Contains(enemy))
         {
-            Stats.Instance.RegisterKill(enemy.enemyType, deadBy);
+            if (deadBy != Stats.eDeadBy.None)
+                Stats.Instance.RegisterKill(enemy.enemyType, deadBy);
             Instance.instantiatedEnemies.Remove(enemy);
             Destroy(enemy.gameObject, delay);
         }

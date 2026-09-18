@@ -86,17 +86,6 @@ public class SaveGameManager : MonoBehaviour
     {
         if (File.Exists(PathFile))
             File.Delete(PathFile);
-
-#if UNITY_EDITOR
-        // Im Editor: NUR Datei löschen
-        // kein Reset, kein Save
-        if (!Application.isPlaying)
-            return;
-#endif
-
-        // Runtime (Play Mode)
-        GameManager.Instance.ResetAll();
-        Save(); // neuen Default-Save schreiben
     }
 
     SaveGame BuildFromWorld()

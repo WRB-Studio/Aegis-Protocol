@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class UpgradeManager : MonoBehaviour, IResettable
+public class UpgradeManager : MonoBehaviour
 {
     public static UpgradeManager Instance;
     readonly Dictionary<StationModule, UpgradeSet> sourceSets = new();
@@ -32,15 +32,4 @@ public class UpgradeManager : MonoBehaviour, IResettable
             module.upgradeSet = runtimeCopy;
         }
     }
-
-    public void StoreInit()
-    {
-        // nichts zu speichern
-    }
-
-    public void ResetScript()
-    {
-        Init();
-    }
-
 }

@@ -253,6 +253,150 @@ public class GameFlowTests
         yield break;
     }
 
+    [UnityTest]
+    public IEnumerator ShortRunSurvivesSaveAndLoad()
+    {
+        int initialMaterials = ResourceManager.Instance.curMaterials;
+        var extractor = StationModule.GetModuleByType(StationModule.eModuleType.Extractor);
+        var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
+        var damage = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.Damage);
+        var owner = StationModule.allModules.Single(m =>
+            m.upgradeSet && m.upgradeSet.upgradeAttributes.Contains(damage));
+        int initialLevel = damage.level;
+
+        ResourceManager.Instance.curMaterials = extractor.cost + owner.cost + Mathf.RoundToInt(damage.cost) + 50;
+        ModulesUI.Instance.SelectModule(StationModule.eModuleType.Extractor);
+        ModulesUI.Instance.BuySelectedModule();
+        Assert.That(extractor.isBuilt, Is.True);
+
+        ModulesUI.Instance.SelectModule(owner.moduleType);
+        ModulesUI.Instance.BuySelectedModule();
+        Assert.That(owner.isBuilt, Is.True);
+        UpgradeUI.Instance.Show(owner.upgradeSet);
+        UpgradeUI.Instance.currentSelectedUpgrade = damage.upgradeName;
+        var click = typeof(UpgradeUI).GetMethod("OnUpgradeClicked",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(click, Is.Not.Null);
+        click.Invoke(UpgradeUI.Instance, new object[] { damage });
+        Assert.That(damage.level, Is.EqualTo(initialLevel + 1));
+
+        core.TakeDamage(2);
+        int materials = ResourceManager.Instance.curMaterials;
+        int coreHP = core.currentHP;
+        SaveGameManager.Instance.Save();
+
+        yield return ReloadMainScene();
+
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(materials));
+        Assert.That(StationModule.GetModuleByType(StationModule.eModuleType.Extractor).isBuilt, Is.True);
+        Assert.That(StationModule.GetModuleByType(owner.moduleType).isBuilt, Is.True);
+        Assert.That(UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.Damage).level,
+            Is.EqualTo(initialLevel + 1));
+        Assert.That(StationModule.GetModuleByType(StationModule.eModuleType.Core).currentHP,
+            Is.EqualTo(coreHP));
+        Assert.That(Stats.Instance.modulesBuilt, Is.EqualTo(2));
+        Assert.That(Stats.Instance.boughtUpgrades, Is.EqualTo(1));
+        Assert.That(Stats.Instance.modulesDamageTaken, Is.EqualTo(2));
+
+        var loadedCore = StationModule.GetModuleByType(StationModule.eModuleType.Core);
+        loadedCore.TakeDamage(loadedCore.currentHP);
+        Assert.That(GameManager.gameOver, Is.True);
+        GameManager.Instance.Replay();
+        GameManager.isInit = false;
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(initialMaterials));
+        Assert.That(StationModule.GetModuleByType(StationModule.eModuleType.Extractor).isBuilt, Is.False);
+        Assert.That(Stats.Instance.boughtUpgrades, Is.Zero);
+    }
+
+    [UnityTest]
+    public IEnumerator CoreDeathKeepsResultAndReplayStartsCleanThreeTimes()
+    {
+        int initialMaterials = ResourceManager.Instance.curMaterials;
+        int initialCost = StationModule.GetModuleByType(StationModule.eModuleType.Extractor).cost;
+        Vector3 initialCameraPosition = Camera.main.transform.position;
+        var initialDamage = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.Damage);
+        int initialLevel = initialDamage.level;
+        float initialUpgradeCost = initialDamage.cost;
+        float initialUpgradeValue = initialDamage.currentValue;
+        int initialTowerDamage = Tower.Instance.damage;
+
+        for (int i = 0; i < 3; i++)
+        {
+            var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
+            var extractor = StationModule.GetModuleByType(StationModule.eModuleType.Extractor);
+            var damage = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.Damage);
+            ResourceManager.Instance.curMaterials += 200;
+            extractor.isBuilt = true;
+            extractor.gameObject.SetActive(true);
+            extractor.cost += 5;
+            damage.level++;
+            damage.RecalculateFromLevel();
+            Stats.Instance.wavesCompleted = i + 3;
+            SaveGameManager.Instance.Save();
+
+            var droneModule = StationModule.GetModuleByType(StationModule.eModuleType.Drone);
+            droneModule.isBuilt = true;
+            droneModule.gameObject.SetActive(true);
+            DroneManager.Instance.AfterModulInit();
+            Assert.That(DroneManager.Instance.SpawnDrone(true), Is.Not.Null);
+            Assert.That(ProjectileManager.Instance.spawnProjectile(
+                Tower.Instance.projectilePrefab, Vector2.zero), Is.Not.Null);
+            ResourceManager.Instance.SpawnMaterial(5, Vector3.zero);
+            var enemy = new GameObject("Replay test enemy").AddComponent<Enemy>();
+            enemy.enemyType = Enemy.eEnemyType.Normal;
+            EnemySpawner.Instance.instantiatedEnemies.Add(enemy);
+
+            core.TakeDamage(core.currentHP);
+            int score = ScoreManager.Instance.GetBreakdown(Stats.Instance).totalScore;
+
+            Assert.That(GameManager.gameOver, Is.True);
+            Assert.That(GameManager.Instance.gameOverPanel.activeSelf, Is.True);
+            Assert.That(Stats.Instance.wavesCompleted, Is.EqualTo(i + 3));
+            Assert.That(GameObject.Find("ExplosionParent").transform.childCount, Is.GreaterThan(0));
+            Assert.That(File.Exists(Path.Combine(saveDirectory, "savegame.json")), Is.False);
+            Assert.That(score, Is.GreaterThan(0));
+            Assert.That(SaveGameManager.Instance.bestSaveGame.score, Is.EqualTo(score));
+            var savedBest = JsonUtility.FromJson<SaveGame>(
+                File.ReadAllText(Path.Combine(saveDirectory, "bestscore.json")));
+            Assert.That(savedBest.score, Is.EqualTo(score));
+
+            GameManager.Instance.Replay();
+            GameManager.isInit = false;
+
+            Assert.That(GameManager.gameOver, Is.False);
+            Assert.That(GameManager.Instance.gameOverPanel.activeSelf, Is.False);
+            Assert.That(core.gameObject.activeSelf, Is.True);
+            Assert.That(core.currentHP, Is.EqualTo(core.maxHP));
+            Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(initialMaterials));
+            Assert.That(extractor.isBuilt, Is.False);
+            Assert.That(extractor.cost, Is.EqualTo(initialCost));
+            var resetDamage = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.Damage);
+            Assert.That(resetDamage.level, Is.EqualTo(initialLevel));
+            Assert.That(resetDamage.cost, Is.EqualTo(initialUpgradeCost));
+            Assert.That(resetDamage.currentValue, Is.EqualTo(initialUpgradeValue));
+            Assert.That(Tower.Instance.damage, Is.EqualTo(initialTowerDamage));
+            Assert.That(Stats.Instance.wavesCompleted, Is.Zero);
+            Assert.That(Stats.Instance.modulesDestroyed, Is.Zero);
+            Assert.That(Stats.Instance.GetTotalKills(), Is.Zero);
+            Assert.That(DroneManager.Instance.allDrones, Is.Empty);
+            Assert.That(ProjectileManager.Instance.allProjectiles, Is.Empty);
+            Assert.That(ResourceManager.Instance.collectEffects, Is.Empty);
+            Assert.That(EnemySpawner.Instance.instantiatedEnemies, Is.Empty);
+            Assert.That(File.Exists(Path.Combine(saveDirectory, "savegame.json")), Is.True);
+            var newRunSave = JsonUtility.FromJson<SaveGame>(
+                File.ReadAllText(Path.Combine(saveDirectory, "savegame.json")));
+            Assert.That(newRunSave.material, Is.EqualTo(initialMaterials));
+            Assert.That(newRunSave.upgrades.Single(u => u.upgradeName == "Damage").level,
+                Is.EqualTo(initialLevel));
+            yield return null;
+            Assert.That(enemy == null, Is.True);
+            Assert.That(GameObject.Find("ExplosionParent").transform.childCount, Is.Zero);
+            Assert.That(Camera.main.transform.position, Is.EqualTo(initialCameraPosition));
+        }
+
+        yield break;
+    }
+
     IEnumerator ReloadMainScene()
     {
         GameManager.isInit = false;

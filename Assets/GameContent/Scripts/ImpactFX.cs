@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-public class ImpactFX : MonoBehaviour
+public class ImpactFX : MonoBehaviour, IResettable
 {
     public static ImpactFX Instance;
 
@@ -48,6 +48,14 @@ public class ImpactFX : MonoBehaviour
             yield return null;
         }
 
+        cam.transform.position = originPosition;
+    }
+
+    public void StoreInit() { }
+
+    public void ResetScript()
+    {
+        StopAllCoroutines();
         cam.transform.position = originPosition;
     }
 
