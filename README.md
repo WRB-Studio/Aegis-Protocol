@@ -24,11 +24,11 @@
 
 ## Technical details
 
-- **Engine:** Unity `6000.0.59f2`
+- **Engine:** Unity `6000.3.15f1`
 - **Status:** On hold
 
 ## Run locally
 
 1. Clone the repository.
-2. Open it in Unity Hub with Unity `6000.0.59f2`.
+2. Open it in Unity Hub with Unity `6000.3.15f1`.
 3. Open a gameplay scene in `Assets/GameContent/Scenes` and press Play.

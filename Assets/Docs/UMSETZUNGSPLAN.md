@@ -1,0 +1,99 @@
+# Aegis Protocol – TODO und Umsetzungsplan
+
+Stand: 18.09.2026 · Ziel: Das vorhandene Spiel für Android im Hochformat fertigstellen.
+
+Grundlage: [Projektanalyse](E:/GitHub/UnityProjects/Aktiv/Aegis-Protocol/Assets/Docs/PROJEKTANALYSE.md). Die Kennungen A01–A22 verweisen auf deren Befunde. Die Analyse und isolierten Compilerprüfungen sind bereits erfolgt. Das Projekt wurde anschließend vom Entwickler auf Unity `6000.3.15f1` aktualisiert; ein vollständiger Android-Build und Gerätetest sind noch nicht bestätigt.
+
+## Arbeitsregeln
+
+- Die Pakete in der angegebenen Reihenfolge bearbeiten. Einzelne Änderungen klein und überprüfbar halten.
+- Erst Fehler und widersprüchliche Spielregeln beheben, anschließend Bedienung und Balancing verbessern.
+- Vorhandenen Look, Spielumfang und grundlegende Klassenstruktur erhalten.
+- Eine Aufgabe erst abhaken, wenn ihr Abnahmekriterium geprüft wurde. Bei Gerätetests Gerät und Buildversion notieren.
+- Keine neuen Spielmodi, keinen PC-Port und keinen vollständigen Architekturumbau einplanen.
+
+## 1. Reproduzierbaren Ausgangspunkt herstellen
+
+Aufwand: etwa 0,5–1 Tag. Voraussetzung für belastbare Laufzeitprüfungen.
+
+- [x] **Unity-Version aktualisiert:** `6000.3.15f1` ist in `ProjectSettings/ProjectVersion.txt` eingetragen. Dieser Teil von U01 ist erledigt.
+- [ ] **U01 – Android-Buildumgebung und Start prüfen.** Unter Unity `6000.3.15f1` die benötigten Android-Werkzeuge prüfen, einen Development-Build erstellen und auf einem Gerät starten. **Abnahme:** Buildschritte und verwendetes Gerät sind dokumentiert; das Spiel startet.
+- [ ] **U02 – Einfachen Editor-Eingabepfad reparieren.** Fehlerhaften Standalone-Zweig in `UIManager` korrigieren und Mausbedienung auch für Ressourcen ermöglichen. Touch und Maus sollen dieselben Aktionen auslösen. **Abnahme:** Station öffnen, Modul kaufen und Material sammeln funktionieren im Editor und auf Android. Bezug: A19.
+- [ ] **U03 – Ausgangsverhalten festhalten.** Kurzen Run mit Bau, Upgrade, Schaden, Laden und Replay durchführen; Fehler und relevante Console-Meldungen notieren. **Abnahme:** Die wichtigsten Analysebefunde sind reproduziert oder ausdrücklich als noch ungeprüft markiert.
+
+## 2. Run-Zustand und Spielregeln stabilisieren
+
+Gemeinsam mit Paket 3 etwa 3–5 Tage. Vor neuem Balancing abschließen.
+
+- [ ] **U04 – Einen eindeutigen NewRun-Ablauf einführen.** GameOver beendet den Run und hält dessen Ergebnis fest. Neustart entfernt Laufzeitobjekte, setzt Anfangswerte in fester Reihenfolge und aktualisiert zuletzt die UI. Verdeckten Welt-Reset aus `DeleteSaveData` entfernen. **Abnahme:** Drei aufeinanderfolgende Replays starten mit identischen Ressourcen, Preisen, Leveln und Statistiken. Bezug: A05.
+- [ ] **U05 – Upgrade-Vorlagen und Laufzeitzustand trennen.** Neue Runs aus unveränderten Vorlagen initialisieren; keine bereits veränderten Runtime-Sets erneut als Ausgangskonfiguration verwenden. Widersprüchliche Snapshot-Resets ersetzen. **Abnahme:** Ein ausgebauter Run beeinflusst die Anfangswerte des nächsten Runs nicht. Bezug: A05.
+- [ ] **U06 – Statische Registrierungen und Bereinigung korrigieren.** Modulregistrierungen und GameManager-Flags sauber initialisieren beziehungsweise bereinigen. Entfernen alter Gegner darf keine Kampf-Kills erzeugen. **Abnahme:** Wiederholter Spielstart erzeugt keine doppelten Module, veralteten Referenzen oder künstlichen Kills. Bezug: A20, A21.
+- [ ] **U07 – Regeln bei Modulverlust festlegen und zentral anwenden.** Für jedes Modul festhalten, welche Grundfunktion erhalten bleibt und welche Upgrades ohne Modul wirken. Effekte aus Vorlage, Level und Modulstatus ableiten. Fremder Wiederaufbau darf andere zerstörte Module nicht reparieren. **Abnahme:** Zerstörung, Wiederaufbau und Laden ergeben dieselben wirksamen Werte; AutoCollecting bleibt ohne Extractor entsprechend der festgelegten Regel aus. Bezug: A04.
+- [ ] **U08 – Modulvorschau vom Kampf ausschließen.** Vorschau-Collider deaktivieren; Schaden an ungebaute oder bereits zerstörte Module abweisen. **Abnahme:** Ein ausgewähltes, nicht gekauftes Modul fängt keine Treffer ab und verändert keine Verluststatistik. Bezug: A06.
+- [ ] **U09 – Bau, Reparatur und Upgrades als vollständige Aktionen behandeln.** Voraussetzungen und Preis unmittelbar bei Ausführung prüfen. Nur bei erfolgreicher Zahlung ändern; anschließend Statistik und UI aktualisieren und Speichern anfordern. **Abnahme:** Keine kostenlosen Käufe bei veraltetem Buttonzustand; Zahlung und Ergebnis bleiben zusammen erhalten. Bezug: A07, A17.
+- [ ] **U10 – Zeitsteuerung vereinheitlichen.** Nur echte Menü-Übergänge verarbeiten; gewünschtes und effektives Tempo eindeutig verwalten. Modulverlust und Neustart setzen alle zugehörigen Werte korrekt. **Abnahme:** Nach Tempoänderung, Tippen ins Leere, Menüwechsel und Replay stimmen Anzeige und tatsächliche Geschwindigkeit überein. Bezug: A11.
+- [ ] **U11 – Schildzustand an Modulzustand koppeln.** Bei Modulverlust Recharge abbrechen; Aktivierung an ein gebautes Modul binden. **Abnahme:** Ein verlorenes Schildmodul wird nach Ablauf eines alten Countdowns nicht wieder aktiv. Bezug: A12.
+
+## 3. Speichern und Fortsetzen zuverlässig machen
+
+Auf Paket 2 aufbauen; insbesondere dieselben abgeleiteten Werte und Modulregeln verwenden.
+
+- [ ] **U12 – Android-Lifecycle-Speicherung korrigieren.** Pause-/Quit-Callbacks aus der Datenklasse in den SaveGameManager verlegen. Initialisierung und beendete Runs berücksichtigen. **Abnahme:** Hintergrundwechsel speichert einen gültigen Zustand; Rückkehr oder Neustart verliert keinen zuvor bestätigten Fortschritt. Bezug: A01.
+- [ ] **U13 – Ladeablauf ohne Seiteneffekte implementieren.** Erst Module und Upgradelevel, dann abgeleitete Maximalwerte, danach aktuelle HP wiederherstellen. Drohnen explizit initialisieren. Währenddessen keine Saves oder Bau-Statistiken erzeugen. **Abnahme:** Beschädigte Module und Drohnen besitzen nach Laden exakt dieselben HP und Maximalwerte. Bezug: A02.
+- [ ] **U14 – Statistik vollständig speichern.** Kill-Einträge serialisierbar ablegen sowie fehlende Ressourcen- und Modulkostenzähler ergänzen. **Abnahme:** Statistik und berechneter Score sind vor und nach Laden identisch. Bezug: A03.
+- [ ] **U15 – Dateizugriff absichern und bündeln.** Häufige Änderungen bündeln; vollständigen Zustand über temporäre Datei und atomaren Austausch sichern. JSON, Version und Werte validieren; beschädigte Dateien und Schreibfehler behandeln. **Abnahme:** Defekte Save-Datei blockiert den Start nicht; einzelne Drops und Treffer schreiben nicht mehr jeweils den gesamten Save. Bezug: A07.
+- [ ] **U16 – Verbindlichen Wellen-Checkpoint festlegen.** Empfohlener kleiner Umfang: vollständigen Zustand zu Beginn einer Welle sichern und beim Fortsetzen diese Welle wiederholen. Ressourcen, Käufe und Statistik müssen zum selben Checkpoint gehören. **Abnahme:** Kein übersprungener Restkampf und keine doppelte Belohnung durch Laden. Bezug: A08.
+- [ ] **U17 – Gezielte Regressionstests ergänzen.** Roundtrip-Speicherung, NewRun, Modulverlust/Wiederaufbau und vollständige Kaufaktionen abdecken. **Abnahme:** Die Tests prüfen die Spielregeln und erkennen die zuvor gefundenen Fehler.
+
+## 4. Upgrade-Daten, Wellen und Wirtschaft überarbeiten
+
+Aufwand: etwa 2–3 Tage. Erst nach stabilen Zuständen Preise fein abstimmen.
+
+- [ ] **U18 – Upgrade-Grenzen und Kosten korrigieren.** Steigende und fallende Werte wirksam begrenzen; Endwerte, Maximallevel und Preise aufeinander abstimmen. Zahlenbereichsüberschreitungen verhindern. **Abnahme:** Alle erlaubten Level haben gültige Preise und Werte; keine negativen Bauzeiten oder Abweichungen zwischen Anzeige und Wirkung. Bezug: A09.
+- [ ] **U19 – Balancing-Werkzeuge und Metadaten reparieren.** `costStep` durch das tatsächliche Feld ersetzen; Levelvorschau an Laufzeitformeln angleichen. Modulzuordnung des Temporal Modulator und Kopieren von `moduleType` korrigieren; inaktive Module im Editor berücksichtigen. **Abnahme:** Vorschau und Spiel liefern für Stichproben dieselben Werte und Kosten. Bezug: A18 und Zusatzbefunde.
+- [ ] **U20 – Wellen auf ein Gesamtbudget begrenzen.** Tatsächliche Gegnerzahl, Schwarmgrößen und Spawnzeit berücksichtigen. Neue Gegnertypen nachvollziehbar einführen; Bosswellen ausdrücklich definieren. **Abnahme:** Späte Wellen bleiben im vorgesehenen Budget; die vermeintliche 50er-Grenze erzeugt keine Tausende Gegner mehr. Bezug: A10.
+- [ ] **U21 – Frühe Wirtschaft und Gegnerrollen abstimmen.** Startkäufe, Sammelautomatik, Schild und erste Drohne inklusive Slotkosten testen. Schildinteraktion mit Tanks/Bossen bewusst festlegen. **Abnahme:** Die ersten Minuten bieten verständliche Entscheidungen; Modulkäufe vermitteln ihren tatsächlichen Nutzen und ihre Gesamtkosten.
+
+## 5. Kampf- und Darstellungsfehler schließen
+
+Zusammen mit Paket 6 etwa 2–3 Tage; Umfang nach Gerätetest begrenzen.
+
+- [ ] **U22 – Ablenkung und Trefferstatistik korrigieren.** `isDeflected` beim Ablenken setzen; Schutz gegen mehrfach verarbeitete Treffer prüfen. **Abnahme:** Abgelenkte Treffer und Kills landen in der richtigen Kategorie und zählen nur einmal. Bezug: A13.
+- [ ] **U23 – Manuellen Sammelflug reparieren.** Ursprungsskalierung unabhängig von AutoCollecting initialisieren. **Abnahme:** Manuell eingesammelte Drops fliegen sichtbar zur Station und werden einmal gutgeschrieben. Bezug: A14.
+- [ ] **U24 – Zielgültigkeit für Turm und Drohnen prüfen.** Tote, verschwundene und außer Reichweite geratene Ziele freigeben; erneut suchen. **Abnahme:** Keine Schüsse außerhalb der erlaubten Reichweite und keine untätigen Drohnen wegen eines veralteten Ziels. Bezug: A15.
+- [ ] **U25 – Drohnen-Upgrades konsistent anwenden.** Festlegen, ob vorhandene Drohnen profitieren; bevorzugt entsprechend der bestehenden Beschreibung alle aktiven Drohnen aktualisieren. HP-Anpassung eindeutig definieren. **Abnahme:** Beschreibung, bestehende Drohnen und neu gebaute Drohnen entsprechen derselben Regel. Bezug: A16.
+
+## 6. Android-Bedienung und Feedback vervollständigen
+
+- [ ] **U26 – HUD und Pause ergänzen.** Welle, Core-HP, Ressourcen und Pause klar anzeigen; Android-Zurück sinnvoll behandeln. **Abnahme:** Fortschritt und akute Gefahr sind ohne Öffnen des Modulmenüs erkennbar.
+- [ ] **U27 – Kaufoberfläche verständlich machen.** Informationen auch bei Geldmangel zugänglich lassen; Kaufaktion und „aktuell → danach“ zeigen. MAX-Zustand, Rotationseinheit und negatives Vorzeichen beim Modulabzug korrigieren. Material-/Währungsbegriff vereinheitlichen. **Abnahme:** Ein neuer Spieler erkennt Wirkung und Kosten vor dem Kauf.
+- [ ] **U28 – Touch, UI-Abgrenzung und Safe Area prüfen.** Sammelradius verbessern, UI-Touches nicht an die Welt weiterreichen und zielgerichtete Raycasts verwenden. Bedienung bei aktivem Schild und auf schmalen Displays testen. **Abnahme:** Keine unbeabsichtigten Weltaktionen, verdeckten Buttons oder unzugänglichen Stationselemente.
+- [ ] **U29 – Kurze Einführung und visuelle Rückmeldung ergänzen.** Station antippen, bauen und sammeln kontextbezogen erklären. Textfarben beruhigen, dunkle Gegner besser abheben und Bau/Upgrade kurz hervorheben. **Abnahme:** Ein Erstspieler kann ohne mündliche Anleitung einen Run beginnen und ausbauen; der bestehende Look bleibt erhalten.
+- [ ] **U30 – Audioeinstellungen und Audiolaufzeit korrigieren.** Musik und Effekte getrennt regeln und Einstellungen speichern. Audioobjekte unabhängig vom Spieltempo erst nach Wiedergabe entfernen. Hörtest durchführen. **Abnahme:** Keine abgeschnittenen Sounds bei hohem Tempo; Einstellungen bleiben nach Neustart erhalten.
+
+## 7. Gemessen optimieren und gezielt aufräumen
+
+Teil der abschließenden 2–4 Tage. Erst messen, dann die nachgewiesenen Engpässe bearbeiten.
+
+- [ ] **U31 – Android-Profil erstellen.** Frühe und späte Wellen auf einem schwächeren Gerät untersuchen: Frametimes, Speicher, Garbage Collection, Save-Zugriffe und längere Belastung. Zielwerte festlegen. **Abnahme:** Gerät, Szene/Welle, Tempo, Messwerte und relevante Engpässe sind dokumentiert.
+- [ ] **U32 – Nötige Optimierungen umsetzen.** Je nach Messung Projektile/Effekte/Audio wiederverwenden, Physik-Layer eingrenzen und Musikimport anpassen. Upgrade-Symbole einmalig laden. **Abnahme:** Erneute Messung bestätigt die Verbesserung; Kampfverhalten bleibt korrekt.
+- [ ] **U33 – Bildimporte und ungenutzte Assets prüfen.** Android-Texturgrößen und gegebenenfalls SpriteAtlas prüfen. Pivots bei transparenten Rändern erhalten. Alte Grafiken, Dummy und unbenutzte Dateien erst nach Referenzprüfung archivieren. **Abnahme:** Keine fehlenden Referenzen oder veränderten Stationspositionen.
+- [ ] **U34 – Projektkonfiguration und Dokumentation bereinigen.** Verwaiste Google-Adaptive-Performance-Assets behandeln; unnötige Pakete nur nach Prüfung entfernen. README-Szenenpfad korrigieren und Buildanleitung aktualisieren. **Abnahme:** Projekt und Build funktionieren mit dokumentiertem Setup. Bezug: A22.
+
+## 8. Release-Kandidat abnehmen
+
+- [ ] **U35 – Gesamte Testmatrix ausführen.** Abnahmefälle der Projektanalyse prüfen: insbesondere Speichern/Laden, drei Replays, Modulverlust, Schildaufladung, Tempo, Upgradegrenzen und beschädigte Saves. **Abnahme:** Keine offenen P1-Fehler; verbleibende Einschränkungen sind dokumentiert.
+- [ ] **U36 – Geräte- und Unterbrechungstests abschließen.** Unterschiedliche Seitenverhältnisse, Aussparungen, Hintergrundwechsel, App-Neustart, Android-Zurück und längeren Run testen. **Abnahme:** Bedienung bleibt erreichbar; Fortsetzen folgt der dokumentierten Checkpoint-Regel.
+- [ ] **U37 – Veröffentlichungsmaterial vervollständigen.** Aktuelle Gameplay-Screenshots, kurze Beschreibung und Medienherkunft/Nutzungsnachweise zusammenstellen. Aktuelle Store-Vorgaben und vorhandenen Eintrag prüfen. **Abnahme:** Präsentation entspricht dem tatsächlichen Spiel und alle erforderlichen Angaben liegen vor.
+- [ ] **U38 – Signierten Release-Kandidaten erstellen und prüfen.** Versionsnummer/Versioncode festlegen, Release-AAB bauen und über den vorgesehenen Testweg installieren. **Abnahme:** Der tatsächliche Release-Build besteht Start, Ausbau, Speichern/Fortsetzen und Replay.
+
+## Abschlusskriterien
+
+- [ ] Alle P1-Befunde aus der Analyse sind behoben und überprüft.
+- [ ] Ein neuer Spieler versteht Start, Ausbau, Sammeln und Run-Ende ohne zusätzliche Erklärung.
+- [ ] Spielstände, Score und Modulwirkungen bleiben über Unterbrechungen konsistent.
+- [ ] Balancing und Darstellung enthalten keine ungültigen Werte oder ungebremsten Wellenmengen.
+- [ ] Performance und Bedienung wurden auf echten Android-Geräten geprüft.
+- [ ] Ein getesteter signierter Release-Kandidat samt aktueller Dokumentation liegt vor.
+
+Planungsrahmen: ungefähr **10–16 konzentrierte Arbeitstage** bei unverändertem Umfang. Geräteprobleme oder zusätzliche Designwünsche können den Aufwand erhöhen. Erster Umsetzungsschritt: **U01**, danach **U02–U03** und der zusammenhängende Zustands-/Speicherblock **U04–U17**.
