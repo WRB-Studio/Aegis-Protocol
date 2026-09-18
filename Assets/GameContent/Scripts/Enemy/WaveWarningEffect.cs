@@ -61,20 +61,17 @@ public sealed class WaveWarningEffect
 
     public void Show(float progress, float visibility = 1f)
     {
-        float radius = Mathf.Lerp(1.3f, 2.15f, progress);
+        float radius = Mathf.Lerp(2.15f, 1.3f, progress);
         Render(progress, visibility, visibility, radius);
     }
 
     public void ShowExit(float elapsed, float initialVisibility)
     {
-        const float inwardTime = 0.12f;
         const float outwardTime = 0.7f;
         const float fadeTime = 2f;
 
-        float blast = Mathf.Clamp01((elapsed - inwardTime) / outwardTime);
-        float radius = elapsed < inwardTime
-            ? Mathf.Lerp(2.15f, 1.85f, elapsed / inwardTime)
-            : Mathf.Lerp(1.85f, 3.7f, 1f - Mathf.Pow(1f - blast, 3f));
+        float blast = Mathf.Clamp01(elapsed / outwardTime);
+        float radius = Mathf.Lerp(1.3f, 3.7f, 1f - Mathf.Pow(1f - blast, 3f));
         float ringVisibility = initialVisibility * (1f - Mathf.SmoothStep(0f, 1f, blast));
         float gridVisibility = initialVisibility *
             (1f - Mathf.SmoothStep(0f, 1f, elapsed / fadeTime));

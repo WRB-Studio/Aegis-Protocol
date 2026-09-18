@@ -8,6 +8,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 public class GameFlowTests
 {
@@ -192,6 +193,42 @@ public class GameFlowTests
         toggle.Invoke(menu, null);
         Assert.That(Time.timeScale, Is.EqualTo(1f));
         GameManager.isInit = false;
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator PauseMenu_AudioButtonsChangeTheirIcons()
+    {
+        var menu = UnityEngine.Object.FindFirstObjectByType<PauseMenu>();
+        Assert.That(menu, Is.Not.Null);
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var musicButton = (Button)typeof(PauseMenu).GetField("musicButton", flags).GetValue(menu);
+        var effectsButton = (Button)typeof(PauseMenu).GetField("effectsButton", flags).GetValue(menu);
+        var musicIcon = (Image)typeof(PauseMenu).GetField("musicIcon", flags).GetValue(menu);
+        var effectsIcon = (Image)typeof(PauseMenu).GetField("effectsIcon", flags).GetValue(menu);
+        var originalMusic = PlayerPrefs.GetInt("Aegis.MusicEnabled", 1);
+        var originalEffects = PlayerPrefs.GetInt("Aegis.EffectsEnabled", 1);
+
+        try
+        {
+            Assert.That(musicIcon.sprite, Is.Not.Null);
+            Assert.That(effectsIcon.sprite, Is.Not.Null);
+            var firstMusicIcon = musicIcon.sprite;
+            var firstEffectsIcon = effectsIcon.sprite;
+
+            musicButton.onClick.Invoke();
+            effectsButton.onClick.Invoke();
+
+            Assert.That(musicIcon.sprite, Is.Not.SameAs(firstMusicIcon));
+            Assert.That(effectsIcon.sprite, Is.Not.SameAs(firstEffectsIcon));
+            Assert.That(PlayerPrefs.GetInt("Aegis.MusicEnabled", 1), Is.Not.EqualTo(originalMusic));
+            Assert.That(PlayerPrefs.GetInt("Aegis.EffectsEnabled", 1), Is.Not.EqualTo(originalEffects));
+        }
+        finally
+        {
+            SoundManager.Instance.ToggleMusic(originalMusic != 0);
+            SoundManager.Instance.ToggleEffects(originalEffects != 0);
+        }
         yield break;
     }
 

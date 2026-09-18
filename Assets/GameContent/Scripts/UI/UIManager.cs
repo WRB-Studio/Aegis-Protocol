@@ -11,6 +11,7 @@ public class UIManager : MonoBehaviour, IResettable
 
     [Header("Root")]
     public GameObject stationUI;
+    [SerializeField] private PauseMenu pauseMenu;
 
     [Header("Slow Panel")]
     [SerializeField] private GameObject slowPanel;
@@ -44,7 +45,7 @@ public class UIManager : MonoBehaviour, IResettable
         originScale = slowPanel.transform.localScale.x;
         slowPanel.transform.localScale = Vector3.zero;
         btnBuyOriginalColor = btnBuy.image.color;
-        gameObject.AddComponent<PauseMenu>().Init();
+        pauseMenu.Init();
 
     }
 
