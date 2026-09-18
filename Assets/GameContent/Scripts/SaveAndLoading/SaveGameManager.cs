@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections;
+using System.IO;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -11,6 +13,9 @@ public class SaveGameManager : MonoBehaviour
 
     public SaveGame bestSaveGame { get; private set; }
     bool isLoading;
+    SaveGame waveCheckpoint;
+    Coroutine pendingSave;
+    public bool HasWaveCheckpoint => waveCheckpoint != null;
 
 #if UNITY_EDITOR
     // Allows Play Mode tests to use an isolated save directory.
@@ -30,6 +35,7 @@ public class SaveGameManager : MonoBehaviour
 
     string PathFile => Path.Combine(SaveDirectory, "savegame.json");
     string PathBestFile => Path.Combine(SaveDirectory, "bestscore.json");
+    string PathBackupFile => PathFile + ".bak";
 
     void Awake()
     {
@@ -63,19 +69,68 @@ public class SaveGameManager : MonoBehaviour
     public void Save()
     {
         if (isLoading) return;
+        if (pendingSave != null)
+        {
+            StopCoroutine(pendingSave);
+            pendingSave = null;
+        }
+
         currentSaveGame = BuildFromWorld();
-        File.WriteAllText(PathFile, JsonUtility.ToJson(currentSaveGame, true));
+        WriteFile(PathFile, waveCheckpoint ?? currentSaveGame);
+    }
+
+    public void RequestSave()
+    {
+        if (!isLoading && !GameManager.gameOver && pendingSave == null)
+            pendingSave = StartCoroutine(SaveAfterDelay());
+    }
+
+    IEnumerator SaveAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(1f);
+        pendingSave = null;
+        Save();
+    }
+
+    public void CaptureWaveCheckpoint()
+    {
+        waveCheckpoint = BuildFromWorld();
+        currentSaveGame = waveCheckpoint;
+        WriteFile(PathFile, waveCheckpoint);
+    }
+
+    public void ClearWaveCheckpoint()
+    {
+        waveCheckpoint = null;
     }
 
     public void Load()
     {
+        ClearWaveCheckpoint();
         if (!File.Exists(PathFile))
         {
             Save();
             return;
         }
 
-        currentSaveGame = JsonUtility.FromJson<SaveGame>(File.ReadAllText(PathFile));
+        if (!TryReadSave(PathFile, out var loaded))
+        {
+            try { File.Move(PathFile, PathFile + ".corrupt-" + DateTime.UtcNow.Ticks); }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"Could not quarantine corrupt save: {exception.Message}");
+            }
+
+            if (!TryReadSave(PathBackupFile, out loaded))
+            {
+                Save();
+                return;
+            }
+
+            WriteFile(PathFile, loaded);
+        }
+
+        currentSaveGame = loaded;
         isLoading = true;
         try
         {
@@ -96,8 +151,75 @@ public class SaveGameManager : MonoBehaviour
 
     public void DeleteSaveData()
     {
+        ClearWaveCheckpoint();
         if (File.Exists(PathFile))
             File.Delete(PathFile);
+    }
+
+    bool TryReadSave(string path, out SaveGame data)
+    {
+        data = null;
+        if (!File.Exists(path)) return false;
+
+        try
+        {
+            data = JsonUtility.FromJson<SaveGame>(File.ReadAllText(path));
+            if (!IsValidSave(data))
+            {
+                Debug.LogWarning($"Invalid save data in {path}");
+                return false;
+            }
+            return true;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"Could not read save {path}: {exception.Message}");
+            return false;
+        }
+    }
+
+    bool IsValidSave(SaveGame data)
+    {
+        if (data == null || data.version < 1 || data.version > 2 ||
+            data.material < 0 || data.currentWaveIndex < 0 ||
+            data.modules == null || data.upgrades == null || data.drones == null ||
+            !data.modules.Exists(module => module != null && module.moduleType == "Core") ||
+            float.IsNaN(data.currentShieldPoints) || float.IsInfinity(data.currentShieldPoints))
+            return false;
+
+        foreach (var module in data.modules)
+            if (module == null || module.currentHP < 0 ||
+                !Enum.TryParse(module.moduleType, out StationModule.eModuleType type) ||
+                !Enum.IsDefined(typeof(StationModule.eModuleType), type)) return false;
+
+        foreach (var upgrade in data.upgrades)
+        {
+            if (upgrade == null ||
+                !Enum.TryParse(upgrade.upgradeName, out UpgradeAttribute.eUpgradeName name)) return false;
+            var runtimeUpgrade = UpgradeAttribute.GetUpgradeByName(name);
+            if (runtimeUpgrade == null || upgrade.level < 0 || upgrade.level > runtimeUpgrade.maxLevel)
+                return false;
+        }
+
+        return true;
+    }
+
+    void WriteFile(string path, SaveGame data)
+    {
+        string tempPath = path + ".tmp";
+        try
+        {
+            Directory.CreateDirectory(SaveDirectory);
+            File.WriteAllText(tempPath, JsonUtility.ToJson(data, true));
+            if (File.Exists(path)) File.Replace(tempPath, path, path == PathFile ? PathBackupFile : null);
+            else File.Move(tempPath, path);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"Could not write save {path}: {exception.Message}");
+            try { if (File.Exists(tempPath)) File.Delete(tempPath); }
+            catch (IOException) { }
+        }
     }
 
     SaveGame BuildFromWorld()
@@ -218,22 +340,26 @@ public class SaveGameManager : MonoBehaviour
 
     void LoadBestScore()
     {
-        if (!File.Exists(PathBestFile))
+        try
         {
-            bestSaveGame = new SaveGame();
-            bestSaveGame.score = 0;
-            SaveBestScoredSaveGame();
-            return;
+            if (File.Exists(PathBestFile))
+                bestSaveGame = JsonUtility.FromJson<SaveGame>(File.ReadAllText(PathBestFile));
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"Could not read best score: {exception.Message}");
         }
 
-        bestSaveGame = JsonUtility.FromJson<SaveGame>(File.ReadAllText(PathBestFile));
-        if (bestSaveGame == null) bestSaveGame = new SaveGame();
+        if (bestSaveGame != null && bestSaveGame.score >= 0) return;
+
+        bestSaveGame = new SaveGame();
+        SaveBestScoredSaveGame();
     }
 
     void SaveBestScoredSaveGame()
     {
         if (bestSaveGame == null) bestSaveGame = new SaveGame();
-        File.WriteAllText(PathBestFile, JsonUtility.ToJson(bestSaveGame, true));
+        WriteFile(PathBestFile, bestSaveGame);
     }
 
     public void TrySaveBestScore(int score)
@@ -244,6 +370,7 @@ public class SaveGameManager : MonoBehaviour
             return;
 
         // currentSaveGame ist der neue Best
+        if (currentSaveGame == null) currentSaveGame = BuildFromWorld();
         currentSaveGame.score = score;
 
         // Deep Copy erstellen (wichtig!)
@@ -251,7 +378,7 @@ public class SaveGameManager : MonoBehaviour
             JsonUtility.ToJson(currentSaveGame)
         );
 
-        File.WriteAllText(PathBestFile, JsonUtility.ToJson(bestSaveGame, true));
+        WriteFile(PathBestFile, bestSaveGame);
     }
 
 

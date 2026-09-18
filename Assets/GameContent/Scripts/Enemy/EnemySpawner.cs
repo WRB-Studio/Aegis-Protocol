@@ -49,6 +49,12 @@ public class EnemySpawner : MonoBehaviour, IResettable
     public void UpdateNormal()
     {
         UpdateInstantiatedEnemies();
+        if (!waveIsRunning && instantiatedEnemies.Count == 0 &&
+            SaveGameManager.Instance.HasWaveCheckpoint)
+        {
+            SaveGameManager.Instance.ClearWaveCheckpoint();
+            SaveGameManager.Instance.Save();
+        }
         StartNextWaveIfReady();
     }
 
@@ -71,9 +77,6 @@ public class EnemySpawner : MonoBehaviour, IResettable
     {
         if (waveIsRunning || instantiatedEnemies.Count > 0 || !enableSpawning) return;
 
-        if (currentWaveIndex > 0)
-            Stats.Instance.wavesCompleted++;
-
         StartCoroutine(SpawnWave());
     }
 
@@ -89,6 +92,10 @@ public class EnemySpawner : MonoBehaviour, IResettable
             waveIsRunning = false;
             yield break;
         }
+
+        SaveGameManager.Instance.CaptureWaveCheckpoint();
+        if (currentWaveIndex > 0)
+            Stats.Instance.wavesCompleted++;
 
         EnemyWave wave = proceduralWave ? GenerateProceduralWave(currentWaveIndex) : waves[currentWaveIndex];
 

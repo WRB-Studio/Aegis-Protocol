@@ -326,6 +326,7 @@ public class GameManager : MonoBehaviour
 
         SoundManager.Instance.PlayMainMusic();
         isInit = true;
+        SaveGameManager.Instance.ClearWaveCheckpoint();
         SaveGameManager.Instance.Save();
     }
 

@@ -39,6 +39,7 @@ public class GameFlowTests
 
         Assert.That(GameManager.isInit, Is.True);
         GameManager.isInit = false;
+        SaveGameManager.Instance.ClearWaveCheckpoint();
     }
 
     [UnityTearDown]
@@ -63,6 +64,14 @@ public class GameFlowTests
         var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
         var droneModule = StationModule.GetModuleByType(StationModule.eModuleType.Drone);
         var drones = DroneManager.Instance;
+        var command = StationModule.GetModuleByType(StationModule.eModuleType.CommandUnit);
+        command.isBuilt = true;
+        command.gameObject.SetActive(true);
+        var integrity = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.StructuralIntegrity);
+        integrity.level = 1;
+        integrity.RecalculateFromLevel();
+        UpgradeAttribute.ApplyAllUpgradeEffect();
+        int upgradedCoreMaxHP = core.maxHP;
         int damagedCoreHP = core.maxHP - 2;
         int damagedDroneModuleHP = droneModule.maxHP - 1;
 
@@ -77,6 +86,11 @@ public class GameFlowTests
         droneObject.GetComponent<Drone>().currentHP = 2;
         Stats.Instance.dronesBuilt = 7;
         Stats.Instance.resourcesSpawned = 19;
+        Stats.Instance.resourcesCollectedManually = 23;
+        Stats.Instance.modulesCost = 44;
+        Stats.Instance.RegisterKill(Enemy.eEnemyType.Normal, Stats.eDeadBy.towerProjectile);
+        float playTime = Stats.Instance.playTime;
+        int score = ScoreManager.Instance.GetBreakdown(Stats.Instance).totalScore;
         SaveGameManager.Instance.Save();
 
         yield return ReloadMainScene();
@@ -84,6 +98,8 @@ public class GameFlowTests
         Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(137));
         Assert.That(StationModule.GetModuleByType(StationModule.eModuleType.Core).currentHP,
             Is.EqualTo(damagedCoreHP));
+        Assert.That(StationModule.GetModuleByType(StationModule.eModuleType.Core).maxHP,
+            Is.EqualTo(upgradedCoreMaxHP));
         var restoredModule = StationModule.GetModuleByType(StationModule.eModuleType.Drone);
         Assert.That(restoredModule.isBuilt, Is.True);
         Assert.That(restoredModule.currentHP, Is.EqualTo(damagedDroneModuleHP));
@@ -91,6 +107,12 @@ public class GameFlowTests
         Assert.That(DroneManager.Instance.allDrones[0].currentHP, Is.EqualTo(2));
         Assert.That(Stats.Instance.dronesBuilt, Is.EqualTo(7));
         Assert.That(Stats.Instance.resourcesSpawned, Is.EqualTo(19));
+        Assert.That(Stats.Instance.resourcesCollectedManually, Is.EqualTo(23));
+        Assert.That(Stats.Instance.modulesCost, Is.EqualTo(44));
+        Assert.That(Stats.Instance.GetTotalKills(), Is.EqualTo(1));
+        Assert.That(Stats.Instance.playTime, Is.EqualTo(playTime).Within(0.1f));
+        Stats.Instance.playTime = playTime;
+        Assert.That(ScoreManager.Instance.GetBreakdown(Stats.Instance).totalScore, Is.EqualTo(score));
     }
 
     [UnityTest]
@@ -652,6 +674,146 @@ public class GameFlowTests
         yield break;
     }
 
+    [UnityTest]
+    public IEnumerator PauseFlushesPendingSaveButGameOverDoesNot()
+    {
+        var manager = SaveGameManager.Instance;
+        string path = Path.Combine(saveDirectory, "savegame.json");
+        var pause = typeof(SaveGameManager).GetMethod("OnApplicationPause",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(pause, Is.Not.Null);
+        ResourceManager.Instance.curMaterials = 123;
+        manager.RequestSave();
+        Assert.That(JsonUtility.FromJson<SaveGame>(File.ReadAllText(path)).material, Is.Not.EqualTo(123));
+
+        GameManager.isInit = true;
+        pause.Invoke(manager, new object[] { true });
+        GameManager.isInit = false;
+        Assert.That(JsonUtility.FromJson<SaveGame>(File.ReadAllText(path)).material, Is.EqualTo(123));
+
+        ResourceManager.Instance.curMaterials = 321;
+        GameManager.gameOver = true;
+        GameManager.isInit = true;
+        pause.Invoke(manager, new object[] { true });
+        GameManager.isInit = false;
+        GameManager.gameOver = false;
+        Assert.That(JsonUtility.FromJson<SaveGame>(File.ReadAllText(path)).material, Is.EqualTo(123));
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator CorruptSaveRestoresBackupOrStartsFresh()
+    {
+        string path = Path.Combine(saveDirectory, "savegame.json");
+        int initialMaterials = ResourceManager.Instance.curMaterials;
+        ResourceManager.Instance.curMaterials = 41;
+        SaveGameManager.Instance.Save();
+        ResourceManager.Instance.curMaterials = 52;
+        SaveGameManager.Instance.Save();
+        File.WriteAllText(path, "{broken json");
+
+        yield return ReloadMainScene();
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(41));
+
+        File.WriteAllText(path, "{broken json");
+        File.WriteAllText(path + ".bak", "{broken backup");
+        yield return ReloadMainScene();
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(initialMaterials));
+    }
+
+    [UnityTest]
+    public IEnumerator WaveCheckpointKeepsResourcesPurchasesAndStatsTogether()
+    {
+        var resources = ResourceManager.Instance;
+        var stats = Stats.Instance;
+        var spawner = EnemySpawner.Instance;
+        var extractor = StationModule.GetModuleByType(StationModule.eModuleType.Extractor);
+        var command = StationModule.GetModuleByType(StationModule.eModuleType.CommandUnit);
+        resources.curMaterials = 80;
+        extractor.isBuilt = true;
+        extractor.gameObject.SetActive(true);
+        stats.modulesBuilt = 1;
+        stats.resourcesCollectedManually = 7;
+        spawner.currentWaveIndex = 2;
+        SaveGameManager.Instance.CaptureWaveCheckpoint();
+
+        resources.curMaterials = 30;
+        command.isBuilt = true;
+        command.gameObject.SetActive(true);
+        stats.modulesBuilt = 2;
+        stats.resourcesCollectedManually = 22;
+        spawner.currentWaveIndex = 3;
+        SaveGameManager.Instance.Save();
+        var checkpoint = JsonUtility.FromJson<SaveGame>(
+            File.ReadAllText(Path.Combine(saveDirectory, "savegame.json")));
+        Assert.That(checkpoint.material, Is.EqualTo(80));
+        Assert.That(checkpoint.currentWaveIndex, Is.EqualTo(2));
+        Assert.That(checkpoint.stats.modulesBuilt, Is.EqualTo(1));
+        Assert.That(checkpoint.stats.resourcesCollectedManually, Is.EqualTo(7));
+        Assert.That(checkpoint.modules.Single(m => m.moduleType == "Extractor").isBuilt, Is.True);
+        Assert.That(checkpoint.modules.Single(m => m.moduleType == "CommandUnit").isBuilt, Is.False);
+
+        yield return ReloadMainScene();
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(80));
+        Assert.That(EnemySpawner.Instance.currentWaveIndex, Is.EqualTo(2));
+        Assert.That(Stats.Instance.modulesBuilt, Is.EqualTo(1));
+        Assert.That(Stats.Instance.resourcesCollectedManually, Is.EqualTo(7));
+        Assert.That(StationModule.GetModuleByType(StationModule.eModuleType.Extractor).isBuilt, Is.True);
+        Assert.That(StationModule.GetModuleByType(StationModule.eModuleType.CommandUnit).isBuilt, Is.False);
+
+        var loadedSpawner = EnemySpawner.Instance;
+        loadedSpawner.ResetScript();
+        loadedSpawner.currentWaveIndex = 2;
+        SaveGameManager.Instance.CaptureWaveCheckpoint();
+        ResourceManager.Instance.curMaterials = 55;
+        loadedSpawner.currentWaveIndex = 3;
+        loadedSpawner.UpdateNormal();
+        var completedWaveSave = JsonUtility.FromJson<SaveGame>(
+            File.ReadAllText(Path.Combine(saveDirectory, "savegame.json")));
+        Assert.That(completedWaveSave.material, Is.EqualTo(55));
+        Assert.That(completedWaveSave.currentWaveIndex, Is.EqualTo(3));
+    }
+
+    [UnityTest]
+    public IEnumerator SpawnerCapturesCheckpointWhenWaveActuallyStarts()
+    {
+        var spawner = EnemySpawner.Instance;
+        spawner.ResetScript();
+        var delay = typeof(EnemySpawner).GetField("timeBetweenWaves",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(delay, Is.Not.Null);
+        delay.SetValue(spawner, 0f);
+        spawner.currentWaveIndex = 2;
+        Stats.Instance.wavesCompleted = 1;
+        ResourceManager.Instance.curMaterials = 80;
+        spawner.UpdateNormal();
+        Assert.That(SaveGameManager.Instance.HasWaveCheckpoint, Is.False);
+
+        ResourceManager.Instance.curMaterials = 90;
+        yield return null;
+
+        Assert.That(SaveGameManager.Instance.HasWaveCheckpoint, Is.True);
+        var checkpoint = JsonUtility.FromJson<SaveGame>(
+            File.ReadAllText(Path.Combine(saveDirectory, "savegame.json")));
+        Assert.That(checkpoint.material, Is.EqualTo(90));
+        Assert.That(checkpoint.currentWaveIndex, Is.EqualTo(2));
+        Assert.That(checkpoint.stats.enemiesSpawned, Is.Zero);
+        Assert.That(checkpoint.stats.wavesCompleted, Is.EqualTo(1));
+        Assert.That(Stats.Instance.wavesCompleted, Is.EqualTo(2));
+        spawner.ResetScript();
+
+        yield return ReloadMainScene();
+        Assert.That(Stats.Instance.wavesCompleted, Is.EqualTo(1));
+        spawner = EnemySpawner.Instance;
+        spawner.ResetScript();
+        spawner.currentWaveIndex = 2;
+        delay.SetValue(spawner, 0f);
+        spawner.UpdateNormal();
+        yield return null;
+        Assert.That(Stats.Instance.wavesCompleted, Is.EqualTo(2));
+        spawner.ResetScript();
+    }
+
     IEnumerator ReloadMainScene()
     {
         GameManager.isInit = false;
@@ -664,6 +826,7 @@ public class GameFlowTests
         yield return null;
         Assert.That(GameManager.isInit, Is.True);
         GameManager.isInit = false;
+        SaveGameManager.Instance.ClearWaveCheckpoint();
     }
 }
 #endif

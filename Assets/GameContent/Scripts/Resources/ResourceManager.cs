@@ -119,7 +119,7 @@ public class ResourceManager : MonoBehaviour, IResettable
 
         RefreshUI();
 
-        SaveGameManager.Instance.Save();
+        SaveGameManager.Instance.RequestSave();
     }
 
     public bool SpendMaterial(int amount, bool save = true)

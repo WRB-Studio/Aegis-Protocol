@@ -90,9 +90,8 @@ public class StationModule : MonoBehaviour, IResettable
             ModulesUI.Instance.RefreshPanel();
         }
 
-        SaveGameManager.Instance.Save();
-
         if (currentHP <= 0) Die();
+        else SaveGameManager.Instance.RequestSave();
 
     }
 
