@@ -6,7 +6,7 @@ using UnityEngine;
 public class SaveGame
 {
     // Optional: für spätere Änderungen am Save-Format
-    public int version = 1;
+    public int version = 2;
 
     public int score = 0;
 
@@ -18,6 +18,7 @@ public class SaveGame
 
     // Shield
     public float currentShieldPoints;
+    public float shieldRechargeCountdown;
 
     // Drones
     public float droneBuildCountdown;
@@ -53,7 +54,5 @@ public class SaveGame
         public int level;
     }
 
-    void OnApplicationPause(bool pause) { if (pause) SaveGameManager.Instance.Save(); }
-    void OnApplicationQuit() { SaveGameManager.Instance.Save(); }
 
 }

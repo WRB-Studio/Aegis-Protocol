@@ -189,8 +189,10 @@ public class UpgradeAttribute : IResettable
 
             // Extractor
             case eUpgradeName.AutoCollecting:
-                if (level == 1)
+                if (level == 1 && StationModule.GetModuleByType(StationModule.eModuleType.Extractor).isBuilt)
                     ResourceManager.Instance.enableAutoCollecting();
+                else
+                    ResourceManager.Instance.disableAutoCollecting();
                 break;
 
             case eUpgradeName.CollectingEfficiency:

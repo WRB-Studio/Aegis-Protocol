@@ -338,27 +338,28 @@ public class ModulesUI : MonoBehaviour, IResettable
 
     public void RepairSelectedModule()
     {
-        if (currentSelectedModule == null) return;
+        if (currentSelectedModule == null || !currentSelectedModule.isBuilt ||
+            currentSelectedModule.currentHP >= currentSelectedModule.maxHP) return;
 
         int cost = currentSelectedModule.GetModuleRepairCost();
-        if (ResourceManager.Instance.curMaterials < cost) return;
-
-        ResourceManager.Instance.SpendMaterial(cost);
+        if (!ResourceManager.Instance.SpendMaterial(cost, false)) return;
         currentSelectedModule.currentHP = currentSelectedModule.maxHP;
 
         RefreshPanel();
+        SaveGameManager.Instance.Save();
     }
 
     public void BuySelectedModule()
     {
-        if (currentSelectedModule == null) return;
+        if (currentSelectedModule == null || currentSelectedModule.isBuilt) return;
+
+        int cost = currentSelectedModule.cost;
+        if (!ResourceManager.Instance.SpendMaterial(cost, false)) return;
 
         SoundManager.Instance.PlayInstallationSound();
 
         Stats.Instance.modulesBuilt++;
-        Stats.Instance.modulesCost += currentSelectedModule.cost;
-
-        ResourceManager.Instance.SpendMaterial(currentSelectedModule.cost);
+        Stats.Instance.modulesCost += cost;
 
         currentSelectedModule.GetComponent<SpriteRenderer>().color = builtColor;
         currentSelectedModule.isBuilt = true;

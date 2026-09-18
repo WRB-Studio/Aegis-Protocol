@@ -202,11 +202,10 @@ public class UpgradeUI : MonoBehaviour, IResettable
         if (upgrade.level >= upgrade.maxLevel) return;
 
         int cost = Mathf.RoundToInt(upgrade.cost);
-        if (cost > ResourceManager.Instance.curMaterials) return;
+        if (!ResourceManager.Instance.SpendMaterial(cost, false)) return;
 
         SoundManager.Instance.PlayUpgradeSound();
         Stats.Instance.AddUpgrade(cost);
-        ResourceManager.Instance.SpendMaterial(cost);
 
         upgrade.Upgrade();
 

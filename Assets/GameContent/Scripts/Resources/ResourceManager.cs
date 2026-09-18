@@ -122,14 +122,14 @@ public class ResourceManager : MonoBehaviour, IResettable
         SaveGameManager.Instance.Save();
     }
 
-    public bool SpendMaterial(int amount)
+    public bool SpendMaterial(int amount, bool save = true)
     {
-        if (curMaterials >= amount)
+        if (amount >= 0 && curMaterials >= amount)
         {
             curMaterials -= amount;
             RefreshUI();
 
-            SaveGameManager.Instance.Save();
+            if (save) SaveGameManager.Instance.Save();
 
             return true;
         }

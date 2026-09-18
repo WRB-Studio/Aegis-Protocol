@@ -2,7 +2,7 @@
 
 Stand: 18.09.2026 · Ziel: Das vorhandene Spiel für Android im Hochformat fertigstellen.
 
-Grundlage: [Projektanalyse](E:/GitHub/UnityProjects/Aktiv/Aegis-Protocol/Assets/Docs/PROJEKTANALYSE.md). Die Kennungen A01–A22 verweisen auf deren Befunde. Die Analyse und isolierten Compilerprüfungen sind bereits erfolgt. Das Projekt wurde anschließend vom Entwickler auf Unity `6000.3.15f1` aktualisiert; ein vollständiger Android-Build und Gerätetest sind noch nicht bestätigt.
+Grundlage: [Projektanalyse](E:/GitHub/UnityProjects/Aktiv/Aegis-Protocol/Assets/Docs/PROJEKTANALYSE.md). Die Kennungen A01–A22 verweisen auf deren Befunde. Die Analyse und isolierten Compilerprüfungen sind bereits erfolgt. Das Projekt wurde anschließend vom Entwickler auf Unity `6000.3.15f1` aktualisiert; der Android-Start wurde vom Entwickler am 18.09.2026 als funktionierend gemeldet.
 
 ## Arbeitsregeln
 
@@ -17,7 +17,8 @@ Grundlage: [Projektanalyse](E:/GitHub/UnityProjects/Aktiv/Aegis-Protocol/Assets/
 Aufwand: etwa 0,5–1 Tag. Voraussetzung für belastbare Laufzeitprüfungen.
 
 - [x] **Unity-Version aktualisiert:** `6000.3.15f1` ist in `ProjectSettings/ProjectVersion.txt` eingetragen. Dieser Teil von U01 ist erledigt.
-- [ ] **U01 – Android-Buildumgebung und Start prüfen.** Unter Unity `6000.3.15f1` die benötigten Android-Werkzeuge prüfen, einen Development-Build erstellen und auf einem Gerät starten. **Abnahme:** Buildschritte und verwendetes Gerät sind dokumentiert; das Spiel startet.
+- [x] **Editor-Start und Android-Werkzeuge geprüft:** Das Projekt ist mit Unity `6000.3.15f1` geöffnet; die Laufzeit- und Editor-Assemblies wurden am 18.09.2026 erzeugt. Im aktuellen Editor-Log stehen keine C#-Compilerfehler. Android Build Support mit SDK, NDK und OpenJDK ist vorhanden.
+- [x] **U01 – Android-Start prüfen.** Unter Unity `6000.3.15f1` einen Development-Build erstellen und auf einem Gerät starten. **Abnahme:** Buildschritte und verwendetes Gerät sind dokumentiert; das Spiel startet. **Nachweis vom 18.09.2026:** Der Entwickler hat den Android-Build auf einem Google Pixel gestartet und als funktionierend bestätigt. Vorgehen: Projekt mit Unity `6000.3.15f1` für Android bauen, Build auf dem Gerät installieren und starten. Aktuelle Projektkonfiguration: Version `1.2`, Android-Versioncode `3`. Das genaue Pixel-Modell wurde für diesen Test nicht separat genannt; die Eco-lor-Geräteprotokolle nennen für das nach Aussage des Entwicklers gleiche Gerät ein Pixel 7. Ein APK-Artefakt ist im Repository nicht abgelegt.
 - [ ] **U02 – Einfachen Editor-Eingabepfad reparieren.** Fehlerhaften Standalone-Zweig in `UIManager` korrigieren und Mausbedienung auch für Ressourcen ermöglichen. Touch und Maus sollen dieselben Aktionen auslösen. **Abnahme:** Station öffnen, Modul kaufen und Material sammeln funktionieren im Editor und auf Android. Bezug: A19.
 - [ ] **U03 – Ausgangsverhalten festhalten.** Kurzen Run mit Bau, Upgrade, Schaden, Laden und Replay durchführen; Fehler und relevante Console-Meldungen notieren. **Abnahme:** Die wichtigsten Analysebefunde sind reproduziert oder ausdrücklich als noch ungeprüft markiert.
 
@@ -38,12 +39,16 @@ Gemeinsam mit Paket 3 etwa 3–5 Tage. Vor neuem Balancing abschließen.
 
 Auf Paket 2 aufbauen; insbesondere dieselben abgeleiteten Werte und Modulregeln verwenden.
 
+Stand 18.09.2026: Die Codeänderungen für U12–U14 sind begonnen: Android-Pause speichert über den Manager, Laden vermeidet Zwischen-Saves und stellt HP nach den Upgrades wieder her; Kill-Statistiken sind serialisierbar. Die Aufgaben bleiben offen, bis ein Save/Load-Roundtrip im Editor und auf Android geprüft ist. Die allgemeine Regel für zerstörte Module aus U07 ist noch nicht abgeschlossen.
+
 - [ ] **U12 – Android-Lifecycle-Speicherung korrigieren.** Pause-/Quit-Callbacks aus der Datenklasse in den SaveGameManager verlegen. Initialisierung und beendete Runs berücksichtigen. **Abnahme:** Hintergrundwechsel speichert einen gültigen Zustand; Rückkehr oder Neustart verliert keinen zuvor bestätigten Fortschritt. Bezug: A01.
 - [ ] **U13 – Ladeablauf ohne Seiteneffekte implementieren.** Erst Module und Upgradelevel, dann abgeleitete Maximalwerte, danach aktuelle HP wiederherstellen. Drohnen explizit initialisieren. Währenddessen keine Saves oder Bau-Statistiken erzeugen. **Abnahme:** Beschädigte Module und Drohnen besitzen nach Laden exakt dieselben HP und Maximalwerte. Bezug: A02.
 - [ ] **U14 – Statistik vollständig speichern.** Kill-Einträge serialisierbar ablegen sowie fehlende Ressourcen- und Modulkostenzähler ergänzen. **Abnahme:** Statistik und berechneter Score sind vor und nach Laden identisch. Bezug: A03.
 - [ ] **U15 – Dateizugriff absichern und bündeln.** Häufige Änderungen bündeln; vollständigen Zustand über temporäre Datei und atomaren Austausch sichern. JSON, Version und Werte validieren; beschädigte Dateien und Schreibfehler behandeln. **Abnahme:** Defekte Save-Datei blockiert den Start nicht; einzelne Drops und Treffer schreiben nicht mehr jeweils den gesamten Save. Bezug: A07.
 - [ ] **U16 – Verbindlichen Wellen-Checkpoint festlegen.** Empfohlener kleiner Umfang: vollständigen Zustand zu Beginn einer Welle sichern und beim Fortsetzen diese Welle wiederholen. Ressourcen, Käufe und Statistik müssen zum selben Checkpoint gehören. **Abnahme:** Kein übersprungener Restkampf und keine doppelte Belohnung durch Laden. Bezug: A08.
-- [ ] **U17 – Gezielte Regressionstests ergänzen.** Roundtrip-Speicherung, NewRun, Modulverlust/Wiederaufbau und vollständige Kaufaktionen abdecken. **Abnahme:** Die Tests prüfen die Spielregeln und erkennen die zuvor gefundenen Fehler.
+- [x] **U17 – Gezielte Regressionstests ergänzen.** Roundtrip-Speicherung, NewRun, Modulverlust/Wiederaufbau und vollständige Kaufaktionen abdecken. **Abnahme:** Die Tests prüfen die Spielregeln und erkennen die zuvor gefundenen Fehler.
+
+Sieben Tests liegen in `Assets/Tests/Editor/SaveGameTests.cs` und `Assets/Tests/PlayMode/GameFlowTests.cs`: Datei-/JSON-Roundtrip und Statistik sowie Laden nach Szenen-Neustart, drei Replays, Extractor-Verlust/Wiederaufbau und Modul-/Reparatur-/Upgrade-Käufe. Am 18.09.2026 bestanden **2 Edit-Mode- und 5 Play-Mode-Tests** unter Unity `6000.3.15f1` mit Android als Build-Ziel. Play-Mode-Tests nutzen einen temporären Speicherordner. Ausführen über **Window > General > Test Runner**, jeweils **EditMode** und **PlayMode**. Android-Geräteprüfung bleibt Teil von U01/U36; die übrigen Abnahmekriterien von U04/U07/U09 bleiben separat offen.
 
 ## 4. Upgrade-Daten, Wellen und Wirtschaft überarbeiten
 

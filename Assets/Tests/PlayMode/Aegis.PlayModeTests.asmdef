@@ -1,0 +1,9 @@
+{
+  "name": "Aegis.PlayModeTests",
+  "references": [
+    "Aegis.Runtime"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

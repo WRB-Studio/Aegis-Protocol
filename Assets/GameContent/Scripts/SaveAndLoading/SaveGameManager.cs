@@ -10,9 +10,26 @@ public class SaveGameManager : MonoBehaviour
     public SaveGame currentSaveGame { get; private set; }
 
     public SaveGame bestSaveGame { get; private set; }
+    bool isLoading;
 
-    string PathFile => Path.Combine(Application.persistentDataPath, "savegame.json");
-    string PathBestFile => Path.Combine(Application.persistentDataPath, "bestscore.json");
+#if UNITY_EDITOR
+    // Allows Play Mode tests to use an isolated save directory.
+    public static string SaveDirectoryOverride;
+#endif
+
+    string SaveDirectory
+    {
+        get
+        {
+#if UNITY_EDITOR
+            if (!string.IsNullOrEmpty(SaveDirectoryOverride)) return SaveDirectoryOverride;
+#endif
+            return Application.persistentDataPath;
+        }
+    }
+
+    string PathFile => Path.Combine(SaveDirectory, "savegame.json");
+    string PathBestFile => Path.Combine(SaveDirectory, "bestscore.json");
 
     void Awake()
     {
@@ -21,8 +38,19 @@ public class SaveGameManager : MonoBehaviour
         LoadBestScore();
     }
 
+    void OnApplicationPause(bool pause)
+    {
+        if (pause && GameManager.isInit && !GameManager.gameOver) Save();
+    }
+
+    void OnApplicationQuit()
+    {
+        if (GameManager.isInit && !GameManager.gameOver) Save();
+    }
+
     public void Save()
     {
+        if (isLoading) return;
         currentSaveGame = BuildFromWorld();
         File.WriteAllText(PathFile, JsonUtility.ToJson(currentSaveGame, true));
     }
@@ -31,21 +59,27 @@ public class SaveGameManager : MonoBehaviour
     {
         if (!File.Exists(PathFile))
         {
-            // Es gibt noch keinen Save → aktueller Scene-Start ist der Default
-            currentSaveGame = BuildFromWorld();
             Save();
             return;
         }
 
         currentSaveGame = JsonUtility.FromJson<SaveGame>(File.ReadAllText(PathFile));
-        ApplyToWorld(currentSaveGame);
+        isLoading = true;
+        try
+        {
+            ApplyToWorld(currentSaveGame);
 
-        TimeController.Instance.RefreshPanel();
-        ModulesUI.Instance.ResetModulePanel();
-        ModulesUI.Instance.RefreshPanel();
-        UpgradeUI.Instance.Refresh();
-        DroneManager.Instance.CheckDroneCanBuild();
-        ResourceManager.Instance.RefreshUI();
+            TimeController.Instance.RefreshPanel();
+            ModulesUI.Instance.ResetModulePanel();
+            ModulesUI.Instance.RefreshPanel();
+            UpgradeUI.Instance.Refresh();
+            DroneManager.Instance.CheckDroneCanBuild();
+            ResourceManager.Instance.RefreshUI();
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     public void DeleteSaveData()
@@ -72,6 +106,7 @@ public class SaveGameManager : MonoBehaviour
         data.material = ResourceManager.Instance.curMaterials;
         data.currentWaveIndex = EnemySpawner.Instance.currentWaveIndex;
         data.currentShieldPoints = Shield.Instance.currentShieldPoints;
+        data.shieldRechargeCountdown = Shield.Instance.rechargeCountdown;
 
         // Drones
         data.droneBuildCountdown = DroneManager.Instance.droneBuildCountdown;
@@ -111,8 +146,6 @@ public class SaveGameManager : MonoBehaviour
     {
         ResourceManager.Instance.curMaterials = data.material;
         EnemySpawner.Instance.currentWaveIndex = data.currentWaveIndex;
-        DroneManager.Instance.droneBuildCountdown = data.droneBuildCountdown;
-
         // Modules
         foreach (var loadedModule in data.modules)
         {
@@ -121,7 +154,6 @@ public class SaveGameManager : MonoBehaviour
 
             module.isBuilt = loadedModule.isBuilt;
             module.wasDestroyed = loadedModule.wasDestroyed;
-            module.currentHP = loadedModule.currentHP;
         }
 
         // Upgrades
@@ -133,22 +165,53 @@ public class SaveGameManager : MonoBehaviour
             upgradeAttribute.RecalculateFromLevel();
         }
 
-        // Drones
-        foreach (var loadedDrone in data.drones)
-        {
-            GameObject droneObj = DroneManager.Instance.SpawnDrone();
-            Drone newDrone = droneObj.GetComponent<Drone>();
-            newDrone.currentHP = loadedDrone.currentHP;
-        }
-
-        // Stats
-        if (data.stats != null) Stats.Instance.ApplyStatsData(data.stats);
-
         UpgradeAttribute.ApplyAllUpgradeEffect();
 
-        Shield.Instance.currentShieldPoints = data.currentShieldPoints;
-        if (StationModule.GetModuleByType(StationModule.eModuleType.Shield).isBuilt)
+        // Restore current HP only after upgrades have established maximum HP.
+        foreach (var loadedModule in data.modules)
+        {
+            var module = StationModule.GetModuleByType(ParseModuleType(loadedModule.moduleType));
+            if (module) module.currentHP = Mathf.Clamp(loadedModule.currentHP, 0, module.maxHP);
+        }
+
+        if (data.stats != null) Stats.Instance.ApplyStatsData(data.stats);
+
+        var droneModule = StationModule.GetModuleByType(StationModule.eModuleType.Drone);
+        if (droneModule && droneModule.isBuilt)
+        {
+            foreach (var loadedDrone in data.drones)
+            {
+                GameObject droneObj = DroneManager.Instance.SpawnDrone(true);
+                if (!droneObj) break;
+                var drone = droneObj.GetComponent<Drone>();
+                drone.currentHP = Mathf.Clamp(loadedDrone.currentHP, 0, drone.maxHP);
+            }
+
+            DroneManager.Instance.AfterModulInit();
+        }
+        DroneManager.Instance.droneBuildCountdown = data.droneBuildCountdown;
+        DroneManager.Instance.CheckDroneCanBuild();
+
+        Shield.Instance.currentShieldPoints = Mathf.Clamp(data.currentShieldPoints, 0f, Shield.Instance.maxShieldPoints);
+        var shieldModule = StationModule.GetModuleByType(StationModule.eModuleType.Shield);
+        if (shieldModule && shieldModule.isBuilt && Shield.Instance.currentShieldPoints > 0f)
+        {
+            Shield.Instance.rechargeCountdown = 0f;
             Shield.Instance.activateShield();
+        }
+        else
+        {
+            Shield.Instance.deactivateShield();
+            Shield.Instance.rechargeCountdown = shieldModule && shieldModule.isBuilt
+                ? (data.shieldRechargeCountdown > 0f ? data.shieldRechargeCountdown : Shield.Instance.rechargeTime)
+                : 0f;
+            if (Shield.Instance.rechargeCountdown > 0f)
+            {
+                Shield.Instance.txtShieldRecharge.gameObject.SetActive(true);
+                Shield.Instance.txtShieldRecharge.text = Mathf.CeilToInt(Shield.Instance.rechargeCountdown).ToString();
+            }
+        }
+        Shield.Instance.refreshShieldPointSlider();
     }
 
 

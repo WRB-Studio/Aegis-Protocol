@@ -157,8 +157,10 @@ public class Stats : MonoBehaviour, IResettable
 
         resourcesCollectedManually = 0;
         resourcesCollectedAutomatically = 0;
+        resourcesSpawned = 0;
 
         modulesBuilt = 0;
+        modulesCost = 0;
         modulesDestroyed = 0;
         modulesDamageTaken = 0;
         shieldDamageTaken = 0;
@@ -189,17 +191,28 @@ public class Stats : MonoBehaviour, IResettable
             enemyProjectilesHit = enemyProjectilesHit,
             deflectedProjectilesFired = deflectedProjectilesFired,
             deflectedProjectilesHit = deflectedProjectilesHit,
+            resourcesSpawned = resourcesSpawned,
             resourcesCollectedManually = resourcesCollectedManually,
             resourcesCollectedAutomatically = resourcesCollectedAutomatically,
             modulesBuilt = modulesBuilt,
+            modulesCost = modulesCost,
             modulesDestroyed = modulesDestroyed,
             modulesDamageTaken = modulesDamageTaken,
             shieldDamageTaken = shieldDamageTaken,
             boughtUpgrades = boughtUpgrades,
             totalUpgradeCosts = totalUpgradeCosts,
             dronesBuilt = dronesBuilt,
-            dronesDestroyed = dronesDestroyed
+            dronesDestroyed = dronesDestroyed,
+            kills = GetKillStats()
         };
+    }
+
+    private List<KillStat> GetKillStats()
+    {
+        var result = new List<KillStat>();
+        foreach (var entry in killsByTypeAndCause)
+            result.Add(new KillStat { enemyType = entry.Key.Item1, deadBy = entry.Key.Item2, count = entry.Value });
+        return result;
     }
 
     public void ApplyStatsData(StatsData d)
@@ -217,9 +230,11 @@ public class Stats : MonoBehaviour, IResettable
         enemyProjectilesHit = d.enemyProjectilesHit;
         deflectedProjectilesFired = d.deflectedProjectilesFired;
         deflectedProjectilesHit = d.deflectedProjectilesHit;
+        resourcesSpawned = d.resourcesSpawned;
         resourcesCollectedManually = d.resourcesCollectedManually;
         resourcesCollectedAutomatically = d.resourcesCollectedAutomatically;
         modulesBuilt = d.modulesBuilt;
+        modulesCost = d.modulesCost;
         modulesDestroyed = d.modulesDestroyed;
         modulesDamageTaken = d.modulesDamageTaken;
         shieldDamageTaken = d.shieldDamageTaken;
@@ -228,8 +243,10 @@ public class Stats : MonoBehaviour, IResettable
         dronesBuilt = d.dronesBuilt;
         dronesDestroyed = d.dronesDestroyed;
 
-        // Dictionary ist nicht JsonUtility-serialisierbar -> runtime-only
         killsByTypeAndCause.Clear();
+        if (d.kills != null)
+            foreach (var kill in d.kills)
+                killsByTypeAndCause[(kill.enemyType, kill.deadBy)] = kill.count;
     }
 
     public void StoreInit()
@@ -321,9 +338,11 @@ public class StatsData
     public int enemyProjectilesHit;
     public int deflectedProjectilesFired;
     public int deflectedProjectilesHit;
+    public int resourcesSpawned;
     public int resourcesCollectedManually;
     public int resourcesCollectedAutomatically;
     public int modulesBuilt;
+    public int modulesCost;
     public int modulesDestroyed;
     public int modulesDamageTaken;
     public int shieldDamageTaken;
@@ -331,4 +350,13 @@ public class StatsData
     public int totalUpgradeCosts;
     public int dronesBuilt;
     public int dronesDestroyed;
+    public List<KillStat> kills = new();
+}
+
+[System.Serializable]
+public class KillStat
+{
+    public Enemy.eEnemyType enemyType;
+    public Stats.eDeadBy deadBy;
+    public int count;
 }

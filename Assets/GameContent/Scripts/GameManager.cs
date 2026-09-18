@@ -305,8 +305,7 @@ public class GameManager : MonoBehaviour
         DetailPanel.gameObject.SetActive(false);
 
         foreach (var resettable in allResettable) resettable.ResetScript();
-
-        // UpgradeAttribute.ResetAll(); // <- RAUS, killt dir die frisch neu gebauten costs
+        UpgradeAttribute.ApplyAllUpgradeEffect();
 
         SoundManager.Instance.PlayMainMusic();
         isInit = true;

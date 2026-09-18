@@ -98,23 +98,24 @@ public class DroneManager : MonoBehaviour, IResettable
 
     public void CheckDroneCanBuild()
     {
-        if (allDrones.Count < currentDroneSlots)
+        var droneModule = StationModule.GetModuleByType(StationModule.eModuleType.Drone);
+        if (droneModule && droneModule.isBuilt && allDrones.Count < currentDroneSlots)
             txtDroneBuildTime.gameObject.SetActive(true);
         else
             txtDroneBuildTime.gameObject.SetActive(false);
     }
 
-    public GameObject SpawnDrone()
+    public GameObject SpawnDrone(bool restoring = false)
     {
         foreach (DroneSlot slot in droneSlots)
         {
             if (slot.occupiedDrone == null)
             {
-                Stats.Instance.dronesBuilt++;
+                if (!restoring) Stats.Instance.dronesBuilt++;
                 GameObject drone = Instantiate(dronePrefab, slot.transform.position, slot.transform.rotation, spawnParent);
                 allDrones.Add(drone.GetComponent<Drone>());
                 slot.occupiedDrone = drone.GetComponent<Drone>();
-                SaveGameManager.Instance.Save();
+                if (!restoring) SaveGameManager.Instance.Save();
                 CheckDroneCanBuild();
                 RefreshUIDroneCount();
                 return drone;

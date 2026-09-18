@@ -25,7 +25,7 @@ public class Drone : MonoBehaviour
     private Transform station;
 
 
-    private void Start()
+    private void Awake()
     {
         station = StationModule.GetModuleByType(StationModule.eModuleType.Core).transform;
 
