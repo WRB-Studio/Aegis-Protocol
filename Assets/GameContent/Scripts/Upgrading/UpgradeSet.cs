@@ -19,6 +19,7 @@ public class UpgradeSet : ScriptableObject
     {
         UpgradeSet clonedSet = CreateInstance<UpgradeSet>();
         clonedSet.name = name;
+        clonedSet.moduleType = moduleType;
 
         clonedSet.upgradeAttributes = new List<UpgradeAttribute>();
         foreach (var upgrade in upgradeAttributes)

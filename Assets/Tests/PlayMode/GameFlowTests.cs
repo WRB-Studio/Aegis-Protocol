@@ -397,6 +397,60 @@ public class GameFlowTests
         yield break;
     }
 
+    [UnityTest]
+    public IEnumerator ExpandedRunDoesNotChangeUpgradeDefaults()
+    {
+        var defaults = UpgradeAttribute.allUpgradeAttributes.ToDictionary(
+            upgrade => upgrade.upgradeName,
+            upgrade => (upgrade.level, upgrade.currentValue, upgrade.cost));
+        Assert.That(defaults.Count, Is.GreaterThan(10));
+
+        // The Temporal Modulator's template is assigned to Shield (tracked by U19).
+        foreach (var module in StationModule.allModules.Where(m => m.upgradeSet &&
+                     m.moduleType != StationModule.eModuleType.TemporalModulator))
+            Assert.That(module.upgradeSet.moduleType, Is.EqualTo(module.moduleType));
+
+        for (int run = 0; run < 2; run++)
+        {
+            foreach (var upgrade in UpgradeAttribute.allUpgradeAttributes)
+            {
+                if (upgrade.level >= upgrade.maxLevel) continue;
+                upgrade.level++;
+                upgrade.RecalculateFromLevel();
+            }
+            UpgradeAttribute.ApplyAllUpgradeEffect();
+            SaveGameManager.Instance.Save();
+
+            if (run == 0)
+            {
+                yield return ReloadMainScene();
+                foreach (var upgrade in UpgradeAttribute.allUpgradeAttributes)
+                    Assert.That(upgrade.level, Is.EqualTo(defaults[upgrade.upgradeName].level + 1));
+            }
+
+            GameManager.Instance.GameOver();
+            GameManager.Instance.Replay();
+            GameManager.isInit = false;
+
+            foreach (var upgrade in UpgradeAttribute.allUpgradeAttributes)
+            {
+                var expected = defaults[upgrade.upgradeName];
+                Assert.That(upgrade.level, Is.EqualTo(expected.level), upgrade.upgradeName.ToString());
+                Assert.That(upgrade.currentValue, Is.EqualTo(expected.currentValue).Within(0.001f),
+                    upgrade.upgradeName.ToString());
+                Assert.That(upgrade.cost, Is.EqualTo(expected.cost).Within(0.001f),
+                    upgrade.upgradeName.ToString());
+            }
+
+            if (run == 0)
+            {
+                yield return ReloadMainScene();
+                foreach (var upgrade in UpgradeAttribute.allUpgradeAttributes)
+                    Assert.That(upgrade.level, Is.EqualTo(defaults[upgrade.upgradeName].level));
+            }
+        }
+    }
+
     IEnumerator ReloadMainScene()
     {
         GameManager.isInit = false;
