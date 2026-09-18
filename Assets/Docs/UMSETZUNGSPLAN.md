@@ -57,7 +57,7 @@ Stand 18.09.2026: Save/Load und Wellen-Checkpoint sind im Play Mode mit Android 
 U12-Teilstand: `OnApplicationPause` und `OnApplicationQuit` schreiben nur bei initialisiertem, laufendem Run. Der Play-Mode-Test prüft, dass Pause einen ausstehenden Save sofort schreibt und Game Over keinen neuen Save erzeugt. Für den Abschluss fehlt der reale Hintergrundwechsel mit App-Neustart auf Android.
 - [x] **U17 – Gezielte Regressionstests ergänzen.** Roundtrip-Speicherung, NewRun, Modulverlust/Wiederaufbau und vollständige Kaufaktionen abdecken. **Abnahme:** Die Tests prüfen die Spielregeln und erkennen die zuvor gefundenen Fehler.
 
-Zwanzig Tests liegen in `Assets/Tests/Editor/SaveGameTests.cs` und `Assets/Tests/PlayMode/GameFlowTests.cs`: Datei-/JSON-Roundtrip und Statistik sowie Laden, Replays, Modulverlust/Wiederaufbau, Kaufaktionen, U03-Kurzrun, Core-Tod/Game Over, Szenenstarts, Modulvorschau, Schild und Tempo. Hinzu kamen Pause-Speicherung, beschädigte Save-Datei mit Backup und zwei Wellen-Checkpoint-Prüfungen. Am 18.09.2026 bestanden **2 Edit-Mode- und 18 Play-Mode-Tests** unter Unity `6000.3.15f1` mit Android als Build-Ziel. Play-Mode-Tests nutzen einen temporären Speicherordner. Ausführen über **Window > General > Test Runner**, jeweils **EditMode** und **PlayMode**. Android-Geräteprüfung bleibt Teil von U01/U36.
+Fünfundzwanzig Tests liegen in `Assets/Tests/Editor/SaveGameTests.cs` und `Assets/Tests/PlayMode/GameFlowTests.cs`: Datei-/JSON-Roundtrip und Statistik sowie Laden, Replays, Modulverlust/Wiederaufbau, Kaufaktionen, U03-Kurzrun, Core-Tod/Game Over, Szenenstarts, Modulvorschau, Schild und Tempo. Hinzu kamen Pause-Speicherung, beschädigte Save-Datei mit Backup und zwei Wellen-Checkpoint-Prüfungen. Am 18.09.2026 bestanden zuletzt **3 Edit-Mode- und 22 Play-Mode-Tests** unter Unity `6000.3.15f1` mit Android als Build-Ziel. Play-Mode-Tests nutzen einen temporären Speicherordner. Ausführen über **Window > General > Test Runner**, jeweils **EditMode** und **PlayMode**. Android-Geräteprüfung bleibt Teil von U01/U36.
 
 ## 4. Upgrade-Daten, Wellen und Wirtschaft überarbeiten
 
@@ -91,6 +91,8 @@ U21-Teilstand: AutoCollecting und der erste Drohnenslot kosten je 100 statt 850/
 - [ ] **U29 – Kurze Einführung und visuelle Rückmeldung ergänzen.** Station antippen, bauen und sammeln kontextbezogen erklären. Textfarben beruhigen, dunkle Gegner besser abheben und Bau/Upgrade kurz hervorheben. **Abnahme:** Ein Erstspieler kann ohne mündliche Anleitung einen Run beginnen und ausbauen; der bestehende Look bleibt erhalten.
 - [ ] **U30 – Audioeinstellungen und Audiolaufzeit korrigieren.** Musik und Effekte getrennt regeln und Einstellungen speichern. Audioobjekte unabhängig vom Spieltempo erst nach Wiedergabe entfernen. Hörtest durchführen. **Abnahme:** Keine abgeschnittenen Sounds bei hohem Tempo; Einstellungen bleiben nach Neustart erhalten.
 
+Stand 18.09.2026 zu U26–U30: Eine dauerhafte Anzeige nennt Welle, Core-HP und Material; Pause/Android-Zurück sowie getrennte, gespeicherte Musik-/Effekt-Schalter sind implementiert. Upgrade-Infos bleiben auch ohne Material zugänglich und zeigen aktuelle und nächste Werte samt Preis. Material ist die einheitliche Währung; der Modulabzug im Score trägt ein Minuszeichen. Welt-Taps wählen gezielt Material oder Station. Zwei kontextbezogene Hinweise erklären den ersten Bau und das Sammeln. Soundeffekte bleiben unabhängig vom Spieltempo bis zum Ende der Wiedergabe bestehen. Ein Play-Mode-Test prüft Pause/Tempo. **U26–U30 bleiben bis zur visuellen Bedien- und Hörprüfung auf Android offen**; insbesondere Safe Area, Touch-Ziele, Lesbarkeit und Gegnerkontrast.
+
 ## 7. Gemessen optimieren und gezielt aufräumen
 
 Teil der abschließenden 2–4 Tage. Erst messen, dann die nachgewiesenen Engpässe bearbeiten.
@@ -98,7 +100,9 @@ Teil der abschließenden 2–4 Tage. Erst messen, dann die nachgewiesenen Engpä
 - [ ] **U31 – Android-Profil erstellen.** Frühe und späte Wellen auf einem schwächeren Gerät untersuchen: Frametimes, Speicher, Garbage Collection, Save-Zugriffe und längere Belastung. Zielwerte festlegen. **Abnahme:** Gerät, Szene/Welle, Tempo, Messwerte und relevante Engpässe sind dokumentiert.
 - [ ] **U32 – Nötige Optimierungen umsetzen.** Je nach Messung Projektile/Effekte/Audio wiederverwenden, Physik-Layer eingrenzen und Musikimport anpassen. Upgrade-Symbole einmalig laden. **Abnahme:** Erneute Messung bestätigt die Verbesserung; Kampfverhalten bleibt korrekt.
 - [ ] **U33 – Bildimporte und ungenutzte Assets prüfen.** Android-Texturgrößen und gegebenenfalls SpriteAtlas prüfen. Pivots bei transparenten Rändern erhalten. Alte Grafiken, Dummy und unbenutzte Dateien erst nach Referenzprüfung archivieren. **Abnahme:** Keine fehlenden Referenzen oder veränderten Stationspositionen.
-- [ ] **U34 – Projektkonfiguration und Dokumentation bereinigen.** Verwaiste Google-Adaptive-Performance-Assets behandeln; unnötige Pakete nur nach Prüfung entfernen. README-Szenenpfad korrigieren und Buildanleitung aktualisieren. **Abnahme:** Projekt und Build funktionieren mit dokumentiertem Setup. Bezug: A22.
+- [x] **U34 – Projektkonfiguration und Dokumentation bereinigen.** Verwaiste Google-Adaptive-Performance-Assets behandeln; unnötige Pakete nur nach Prüfung entfernen. README-Szenenpfad korrigieren und Buildanleitung aktualisieren. **Abnahme:** Projekt und Build funktionieren mit dokumentiertem Setup. Bezug: A22.
+
+Stand 18.09.2026 zu U31–U34: Die Upgrade-Symbole werden nur einmal aus `Resources` geladen. 64 PNG-Dateien unter `GameContent` wurden inventarisiert; die größten Spielgrafiken sind 2048 × 2048 px. Ohne Profiling werden weder Pooling noch Sprite-Importe breit umgebaut oder Assets gelöscht. Die verwaisten Google-Adaptive-Performance-Assets und ihre Build-Settings-Referenz sind entfernt; Samsung bleibt der aktive Loader. README-Szenenpfad und `BUILD.md` sind aktualisiert. Ein vollständiger Android-Development-Build aus der isolierten Projektkopie erzeugte ein APK mit `targetSdkVersion 36` und Version `1.2`/Code `3`. U31–U33 warten auf Gerätemessung und Referenzprüfung.
 
 ## 8. Release-Kandidat abnehmen
 
@@ -106,6 +110,8 @@ Teil der abschließenden 2–4 Tage. Erst messen, dann die nachgewiesenen Engpä
 - [ ] **U36 – Geräte- und Unterbrechungstests abschließen.** Unterschiedliche Seitenverhältnisse, Aussparungen, Hintergrundwechsel, App-Neustart, Android-Zurück und längeren Run testen. **Abnahme:** Bedienung bleibt erreichbar; Fortsetzen folgt der dokumentierten Checkpoint-Regel.
 - [ ] **U37 – Veröffentlichungsmaterial vervollständigen.** Aktuelle Gameplay-Screenshots, kurze Beschreibung und Medienherkunft/Nutzungsnachweise zusammenstellen. Aktuelle Store-Vorgaben und vorhandenen Eintrag prüfen. **Abnahme:** Präsentation entspricht dem tatsächlichen Spiel und alle erforderlichen Angaben liegen vor.
 - [ ] **U38 – Signierten Release-Kandidaten erstellen und prüfen.** Versionsnummer/Versioncode festlegen, Release-AAB bauen und über den vorgesehenen Testweg installieren. **Abnahme:** Der tatsächliche Release-Build besteht Start, Ausbau, Speichern/Fortsetzen und Replay.
+
+Release-Teilstand: Die automatisierte Android-Ziel-Konfiguration besteht 22 Play-Mode- und 3 Edit-Mode-Tests. Der Android-Development-Build ist erfolgreich (APK, API 36). `RELEASE.md` enthält einen Store-Textentwurf, eine Medieninventur, aktuelle Google-Quellen und die konkrete Geräte-Testmatrix. U35–U38 bleiben bis zu Pixel-Abnahme, neuen Screenshots, Medienrechten, Signierung und Store-Testlauf offen.
 
 ## Abschlusskriterien
 

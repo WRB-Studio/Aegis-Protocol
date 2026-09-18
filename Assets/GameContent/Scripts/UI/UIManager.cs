@@ -44,6 +44,7 @@ public class UIManager : MonoBehaviour, IResettable
         originScale = slowPanel.transform.localScale.x;
         slowPanel.transform.localScale = Vector3.zero;
         btnBuyOriginalColor = btnBuy.image.color;
+        gameObject.AddComponent<PauseMenu>().Init();
 
     }
 
@@ -52,10 +53,12 @@ public class UIManager : MonoBehaviour, IResettable
         if (!Utils.TryGetPointerDown(out var screenPosition) || Utils.IsPointerOverUI()) return;
 
         Vector2 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
-        RaycastHit2D hit = Physics2D.Raycast(worldPosition, Vector2.zero);
-
-        bool hitStation = hit.collider != null &&
-                          (hit.collider.CompareTag("Tower") || hit.collider.CompareTag("Station"));
+        bool hitStation = false;
+        foreach (var collider in Physics2D.OverlapPointAll(worldPosition))
+        {
+            if (collider.CompareTag("Material")) return;
+            if (collider.CompareTag("Tower") || collider.CompareTag("Station")) hitStation = true;
+        }
 
         if (hitStation && !stationUI.activeSelf)
             Show(true);
@@ -143,7 +146,7 @@ public class UIManager : MonoBehaviour, IResettable
         txtTitle.text = char.ToUpper(formatted[0]) + formatted.Substring(1);
 
         txtInfo.text = info;
-        txtBuyCost.text = cost.ToString() + " $";
+        txtBuyCost.text = cost.ToString() + " M";
         btnBuy.gameObject.SetActive(showBtnBuy);
         StartCoroutine(DelayedLayoutRebuild());
     }

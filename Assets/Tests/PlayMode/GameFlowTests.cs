@@ -181,6 +181,21 @@ public class GameFlowTests
     }
 
     [UnityTest]
+    public IEnumerator PauseMenu_StopsAndRestoresGameSpeed()
+    {
+        GameManager.isInit = true;
+        var menu = UnityEngine.Object.FindFirstObjectByType<PauseMenu>();
+        Assert.That(menu, Is.Not.Null);
+        var toggle = typeof(PauseMenu).GetMethod("TogglePause", BindingFlags.Instance | BindingFlags.NonPublic);
+        toggle.Invoke(menu, null);
+        Assert.That(Time.timeScale, Is.Zero);
+        toggle.Invoke(menu, null);
+        Assert.That(Time.timeScale, Is.EqualTo(1f));
+        GameManager.isInit = false;
+        yield break;
+    }
+
+    [UnityTest]
     public IEnumerator ReplayRestoresInitialRunThreeTimes()
     {
         var resources = ResourceManager.Instance;

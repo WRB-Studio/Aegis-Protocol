@@ -21,6 +21,11 @@ public class ResourceManager : MonoBehaviour, IResettable
     private int initcurMaterials;
     private float initcollectingEffeciency;
     private bool initautoCollecting;
+    private int displayedWave = -1;
+    private int displayedCoreHP = -1;
+    private int displayedCoreMaxHP = -1;
+    private int displayedMaterials = -1;
+    private int displayedHint = -1;
 
 
     void Awake()
@@ -37,18 +42,24 @@ public class ResourceManager : MonoBehaviour, IResettable
 
     public void UpdateNormal()
     {
+        var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
+        if (core && (displayedWave != EnemySpawner.Instance.DisplayWave ||
+            displayedCoreHP != core.currentHP || displayedCoreMaxHP != core.maxHP ||
+            displayedMaterials != curMaterials || displayedHint != TutorialHint()))
+            RefreshUI();
+
         if (!autoCollecting && Utils.TryGetPointerDown(out var screenPosition) && !Utils.IsPointerOverUI())
         {
             Vector2 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
-            RaycastHit2D hit = Physics2D.Raycast(worldPosition, Vector2.zero);
-
-            if (hit.collider != null && hit.collider.CompareTag("Material"))
+            foreach (var collider in Physics2D.OverlapPointAll(worldPosition))
             {
-                CollectEffect effect = hit.collider.GetComponent<CollectEffect>();
-
+                if (!collider.CompareTag("Material")) continue;
+                CollectEffect effect = collider.GetComponent<CollectEffect>();
+                if (!effect || effect.flyToStation) break;
                 effect.flyToStation = true;
                 effect.setOriginScale();
                 effect.collectedManually = true;
+                break;
             }
         }
 
@@ -80,7 +91,21 @@ public class ResourceManager : MonoBehaviour, IResettable
 
     public void RefreshUI()
     {
-        txtMaterial.text = $"Material: {Utils.FormatNumber(curMaterials)} $";
+        var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
+        displayedWave = EnemySpawner.Instance ? EnemySpawner.Instance.DisplayWave : 1;
+        displayedCoreHP = core ? core.currentHP : 0;
+        displayedCoreMaxHP = core ? core.maxHP : 0;
+        displayedMaterials = curMaterials;
+        displayedHint = TutorialHint();
+        string hint = displayedHint == 0 ? "\nTap station to build" :
+            displayedHint == 1 ? "\nTap material to collect" : "";
+        txtMaterial.text = $"Wave {displayedWave}  |  Core {displayedCoreHP}/{displayedCoreMaxHP}\nMaterial {Utils.FormatNumber(curMaterials)}{hint}";
+    }
+
+    int TutorialHint()
+    {
+        if (Stats.Instance.modulesBuilt == 0) return 0;
+        return !autoCollecting && Stats.Instance.resourcesCollectedManually == 0 ? 1 : 2;
     }
 
     public void SpawnMaterial(int amount, Vector3 spawnPosition)

@@ -135,7 +135,7 @@ public class UpgradeUI : MonoBehaviour, IResettable
 
             if (ui.marker.enabled)
             {
-                if(ui.button.interactable)
+                if(upgrade.level < upgrade.maxLevel && Mathf.RoundToInt(upgrade.cost) <= ResourceManager.Instance.curMaterials)
                     ui.marker.color = colorBtnFrameSelected;
                 else
                     ui.marker.color = colorBtnFrameCantBuy;
@@ -144,6 +144,13 @@ public class UpgradeUI : MonoBehaviour, IResettable
             {
                 ui.marker.color = colorBtnFrameUnselected;
             }
+        }
+
+        if (currentSelectedUpgrade != eUpgradeName.None)
+        {
+            var selected = currentUpgradeSet.upgradeAttributes.Find(
+                upgrade => upgrade.upgradeName == currentSelectedUpgrade);
+            if (selected != null) RefreshInfoPanel(selected);
         }
 
         UpdateFireRangePreview();
@@ -164,19 +171,33 @@ public class UpgradeUI : MonoBehaviour, IResettable
             title.text = char.ToUpper(formatted[0]) + formatted.Substring(1);
         }
 
-        if (desc) desc.text = upgrade.description;
+        if (desc)
+        {
+            string current = GetValueWithUnit(upgrade, upgrade.currentValue);
+            if (upgrade.level >= upgrade.maxLevel)
+                desc.text = upgrade.description + "\n" + current + " (MAX)";
+            else
+            {
+                int price = Mathf.RoundToInt(upgrade.cost);
+                string next = GetValueWithUnit(upgrade, upgrade.CalculateValue(upgrade.level + 1));
+                string action = price <= ResourceManager.Instance.curMaterials
+                    ? "Tap again to buy for " + price + " M"
+                    : "Need " + price + " M";
+                desc.text = upgrade.description + "\n" + current + " -> " + next + "\n" + action;
+            }
+        }
 
         StartCoroutine(DelayedLayoutRebuild());
     }
 
     void UpdateButtonUI(ButtonRefs ui, UpgradeAttribute upgrade)
     {
-        string valueText = GetValueWithUnit(upgrade);
-        ui.infoText.text = valueText ?? "";
+        ui.infoText.text = GetValueWithUnit(upgrade, upgrade.currentValue);
 
         if (upgrade.level >= upgrade.maxLevel)
         {
             ui.costText.text = "MAX";
+            ui.button.interactable = true;
             var c = ui.button.colors.disabledColor;
             c.a = 1f;
             ui.button.image.color = c;
@@ -184,9 +205,10 @@ public class UpgradeUI : MonoBehaviour, IResettable
         }
 
         int cost = Mathf.RoundToInt(upgrade.cost);
-        ui.costText.text = cost.ToString("0.##") + " $";
-
-        ui.button.interactable = cost <= ResourceManager.Instance.curMaterials;
+        bool canBuy = cost <= ResourceManager.Instance.curMaterials;
+        ui.costText.text = cost + " M";
+        ui.button.interactable = true;
+        ui.button.image.color = canBuy ? ui.button.colors.normalColor : ui.button.colors.disabledColor;
     }
 
     void OnUpgradeClicked(UpgradeAttribute upgrade)
@@ -194,7 +216,6 @@ public class UpgradeUI : MonoBehaviour, IResettable
         if (currentSelectedUpgrade != upgrade.upgradeName)
         {
             currentSelectedUpgrade = upgrade.upgradeName;
-            RefreshInfoPanel(upgrade);
             RefreshAll(true);
             return;
         }
@@ -211,7 +232,6 @@ public class UpgradeUI : MonoBehaviour, IResettable
 
         upgrade.Upgrade();
 
-        RefreshInfoPanel(upgrade);
         RefreshAll(true);
 
         TimeController.Instance.RefreshPanel();
@@ -263,9 +283,8 @@ public class UpgradeUI : MonoBehaviour, IResettable
         };
     }
 
-    string GetValueWithUnit(UpgradeAttribute upgrade)
+    string GetValueWithUnit(UpgradeAttribute upgrade, float value)
     {
-        float value = upgrade.currentValue;
 
         if (ShouldRound(upgrade.upgradeName))
             value = Mathf.RoundToInt(value);
@@ -282,9 +301,9 @@ public class UpgradeUI : MonoBehaviour, IResettable
             case eUpgradeName.RechargeTime: return value.ToString("0.##") + " s";
             case eUpgradeName.DeflectionChance: return value.ToString("0.##") + " %";
             case eUpgradeName.FireRange: return value.ToString("0.##") + " m";
-            case eUpgradeName.RotationSpeed: return value.ToString("0.##") + " °/s";
+            case eUpgradeName.RotationSpeed: return value.ToString("0.##") + " deg/s";
             case eUpgradeName.StructuralIntegrity: return value.ToString("0.##") + " HP";
-            case eUpgradeName.AutoCollecting: return null;
+            case eUpgradeName.AutoCollecting: return value > 0f ? "On" : "Off";
             case eUpgradeName.CollectingEfficiency: return "x" + value.ToString("0.##");
             default: return value.ToString("0.##");
         }

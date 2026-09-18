@@ -53,15 +53,12 @@ public class SoundManager : MonoBehaviour, IResettable
     private List<AudioSource> currentUpgradeSounds = new List<AudioSource>();
 
     private bool musicEnabled = true;
+    private bool effectsEnabled = true;
     private Coroutine pitchRoutine;
     private Coroutine fadeRoutine;
 
 
     // --- INIT SNAPSHOT ---
-    private float initmusicPitch;
-    private bool initmusicEnabled;
-
-
     private void Awake()
     {
         Instance = this;
@@ -70,6 +67,9 @@ public class SoundManager : MonoBehaviour, IResettable
     public void Init()
     {
         musicSource = GetComponent<AudioSource>();
+        musicEnabled = PlayerPrefs.GetInt("Aegis.MusicEnabled", 1) != 0;
+        effectsEnabled = PlayerPrefs.GetInt("Aegis.EffectsEnabled", 1) != 0;
+        musicSource.mute = !musicEnabled;
         PlayMainMusic();
     }
 
@@ -77,6 +77,15 @@ public class SoundManager : MonoBehaviour, IResettable
     {
         musicEnabled = enabled;
         musicSource.mute = !enabled;
+        PlayerPrefs.SetInt("Aegis.MusicEnabled", enabled ? 1 : 0);
+        PlayerPrefs.Save();
+    }
+
+    public void ToggleEffects(bool enabled)
+    {
+        effectsEnabled = enabled;
+        PlayerPrefs.SetInt("Aegis.EffectsEnabled", enabled ? 1 : 0);
+        PlayerPrefs.Save();
     }
 
 
@@ -139,7 +148,7 @@ public class SoundManager : MonoBehaviour, IResettable
 
     public void PlaySound(List<AudioSource> soundList, AudioClip sound, Vector2 pitchRange)
     {
-        if (soundList.Count >= maxSoundsPerCategory) return;
+        if (!effectsEnabled || !sound || soundList.Count >= maxSoundsPerCategory) return;
 
         GameObject tempGO = new GameObject("TempAudio");
         tempGO.transform.parent = this.transform;
@@ -205,11 +214,11 @@ public class SoundManager : MonoBehaviour, IResettable
 
     private IEnumerator DestroySoundAfterPlay(AudioSource source, List<AudioSource> list)
     {
-        float duration = source.clip.length / source.pitch;
-        yield return new WaitForSeconds(duration);
+        while (source && source.isPlaying)
+            yield return null;
 
         list.Remove(source);
-        Destroy(source.gameObject);
+        if (source) Destroy(source.gameObject);
     }
 
 
@@ -219,32 +228,19 @@ public class SoundManager : MonoBehaviour, IResettable
 
     public void ResetScript()
     {
-        //StopAllCoroutines();
-        //pitchRoutine = null;
-        //fadeRoutine = null;
-
-        //// destroy temp audio objects + clear lists
-        //void ClearTemp(List<AudioSource> list)
-        //{
-        //    for (int i = list.Count - 1; i >= 0; i--)
-        //        if (list[i]) Destroy(list[i].gameObject);
-        //    list.Clear();
-        //}
-
-        //ClearTemp(currentExplosionSounds);
-        //ClearTemp(currentHitSounds);
-        //ClearTemp(currentShootSounds);
-        //ClearTemp(currentInstallationSounds);
-        //ClearTemp(currentUpgradeSounds);
-
-        //musicPitch = initmusicPitch;
-        //musicEnabled = initmusicEnabled;
-
-        //if (!musicSource) musicSource = GetComponent<AudioSource>();
-        //musicSource.pitch = musicPitch;
-        //musicSource.mute = !musicEnabled;
-
-        //PlayMainMusic(); // back to default track
+        StopAllCoroutines();
+        pitchRoutine = null;
+        fadeRoutine = null;
+        foreach (var source in GetComponentsInChildren<AudioSource>())
+            if (source != musicSource) Destroy(source.gameObject);
+        currentExplosionSounds.Clear();
+        currentHitSounds.Clear();
+        currentShootSounds.Clear();
+        currentInstallationSounds.Clear();
+        currentUpgradeSounds.Clear();
+        musicPitch = 1f;
+        musicSource.pitch = musicPitch;
+        musicSource.mute = !musicEnabled;
     }
 
 }

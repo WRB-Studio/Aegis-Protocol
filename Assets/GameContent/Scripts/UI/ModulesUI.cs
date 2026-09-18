@@ -331,7 +331,7 @@ public class ModulesUI : MonoBehaviour, IResettable
         }
 
         int repairCost = currentSelectedModule.GetModuleRepairCost();
-        txtRepairCost.text = $"Repair\n{repairCost} $";
+        txtRepairCost.text = $"Repair\n{repairCost} M";
         btnRepair.interactable = ResourceManager.Instance.curMaterials >= repairCost;
         btnRepair.gameObject.SetActive(true);
     }

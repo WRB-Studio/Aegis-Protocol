@@ -20,6 +20,7 @@ public class TimeController : MonoBehaviour, IResettable
     float current = 1f;
     float initialCurrent;
     bool stationUIOpen;
+    bool paused;
 
 
     void Awake()
@@ -64,7 +65,13 @@ public class TimeController : MonoBehaviour, IResettable
 
     void Apply()
     {
-        Time.timeScale = stationUIOpen ? stationUITimeModulation : current;
+        Time.timeScale = paused ? 0f : stationUIOpen ? stationUITimeModulation : current;
+    }
+
+    public void SetPaused(bool value)
+    {
+        paused = value;
+        Apply();
     }
 
     void UpdateText()
@@ -101,6 +108,7 @@ public class TimeController : MonoBehaviour, IResettable
     {
         current = initialCurrent;
         stationUIOpen = false;
+        paused = false;
         btnTimeIncrease.interactable = true;
         btnTimeDecrease.interactable = true;
         Apply();

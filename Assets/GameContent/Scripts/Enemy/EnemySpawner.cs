@@ -24,6 +24,8 @@ public class EnemySpawner : MonoBehaviour, IResettable
     public List<Enemy> instantiatedEnemies = new List<Enemy>();
 
     bool waveIsRunning;
+    public int DisplayWave => Mathf.Max(1, currentWaveIndex +
+        ((waveIsRunning || instantiatedEnemies.Count == 0) ? 1 : 0));
     Transform spawnParent;
     Dictionary<Enemy.eEnemyType, GameObject> prefabByType;
 

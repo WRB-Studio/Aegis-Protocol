@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class Utils : MonoBehaviour
 {
+    static Dictionary<string, Sprite> upgradeSymbols;
     public static string FormatNumber(int amount)
     {
         if (amount >= 1_000_000)
@@ -58,15 +60,16 @@ public class Utils : MonoBehaviour
 
     public static Sprite GetSymbolByName(UpgradeAttribute.eUpgradeName upgradeName)
     {
-        Sprite[] allSymbols = Resources.LoadAll<Sprite>("Images/UpgradeSymbols");
-
-        foreach (var sprite in allSymbols)
+        if (upgradeSymbols == null)
         {
-            if (sprite.name.ToLower() == upgradeName.ToString().ToLower())
-                return sprite;
+            upgradeSymbols = new Dictionary<string, Sprite>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (var sprite in Resources.LoadAll<Sprite>("Images/UpgradeSymbols"))
+                upgradeSymbols[sprite.name] = sprite;
         }
 
-        Debug.LogWarning("Symbol not found: " + upgradeName.ToString().ToLower());
+        if (upgradeSymbols.TryGetValue(upgradeName.ToString(), out var symbol)) return symbol;
+
+        Debug.LogWarning("Symbol not found: " + upgradeName);
         return null;
     }
 

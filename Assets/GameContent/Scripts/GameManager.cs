@@ -37,7 +37,7 @@ public class GameManager : MonoBehaviour
         sb.AppendLine($"Resources\t\t999");
 
         // modules penalty in red, as negative
-        sb.AppendLine($"<color=#FF4D4D>Modules\t\t999</color>");
+        sb.AppendLine($"<color=#FF4D4D>Modules\t\t-999</color>");
         sb.AppendLine("__________________");
         sb.AppendLine($"<size=140%><b>Score</b>\t999999</size>");
         sb.AppendLine($"Best\t\t\t999999");
@@ -81,14 +81,14 @@ public class GameManager : MonoBehaviour
 
         sb.AppendLine($"<b>Upgrading</b>");
         sb.AppendLine($" └ Bought\t\t\t999");
-        sb.AppendLine($" └ Total costs\t\t999 $");
+        sb.AppendLine($" └ Total costs\t\t999 M");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Resources</b>");
         sb.AppendLine($" └ spawned raw\t\t999");
-        sb.AppendLine($" └ manually\t\t999 $");
-        sb.AppendLine($" └ automatically\t\t999 $");
-        sb.AppendLine($" └ total\t\t\t999 $");
+        sb.AppendLine($" └ manually\t\t999 M");
+        sb.AppendLine($" └ automatically\t\t999 M");
+        sb.AppendLine($" └ total\t\t\t999 M");
 
         txtDetails.text = sb.ToString();
     }
@@ -223,7 +223,7 @@ public class GameManager : MonoBehaviour
         sb.AppendLine($"Resources\t\t{b.resourcesScore}");
 
         // modules penalty in red, as negative
-        sb.AppendLine($"<color=#FF4D4D>Modules\t\t{b.modulesPenalty}</color>");
+        sb.AppendLine($"<color=#FF4D4D>Modules\t\t-{b.modulesPenalty}</color>");
         sb.AppendLine("__________________");
         sb.AppendLine($"<size=140%><b>Score</b>\t{b.totalScore}</size>");
         if (SaveGameManager.Instance.bestSaveGame.score != 0 && SaveGameManager.Instance.bestSaveGame.score > b.totalScore)
@@ -282,14 +282,14 @@ public class GameManager : MonoBehaviour
 
         sb.AppendLine($"<b>Upgrading</b>");
         sb.AppendLine($" └ Bought\t\t\t{s.boughtUpgrades}");
-        sb.AppendLine($" └ Total costs\t\t{s.totalUpgradeCosts} $");
+        sb.AppendLine($" └ Total costs\t\t{s.totalUpgradeCosts} M");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Resources</b>");
         sb.AppendLine($" └ spawned raw\t\t{s.resourcesSpawned}");
-        sb.AppendLine($" └ manually\t\t{s.resourcesCollectedManually} $");
-        sb.AppendLine($" └ automatically\t\t{s.resourcesCollectedAutomatically} $");
-        sb.AppendLine($" └ total\t\t\t{s.resourcesCollectedManually + s.resourcesCollectedAutomatically} $");
+        sb.AppendLine($" └ manually\t\t{s.resourcesCollectedManually} M");
+        sb.AppendLine($" └ automatically\t\t{s.resourcesCollectedAutomatically} M");
+        sb.AppendLine($" └ total\t\t\t{s.resourcesCollectedManually + s.resourcesCollectedAutomatically} M");
 
         return sb.ToString();
     }

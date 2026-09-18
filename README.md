@@ -9,7 +9,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Engine-Unity%206-222c32?logo=unity&logoColor=white" alt="Unity 6">
   <img src="https://img.shields.io/badge/Genre-Sci--Fi%20Defense-5b8def" alt="Sci-fi defense">
-  <img src="https://img.shields.io/badge/Status-On%20hold-f0ad4e" alt="On hold">
+  <img src="https://img.shields.io/badge/Status-In%20development-f0ad4e" alt="In development">
 </p>
 
 ## About
@@ -25,10 +25,12 @@
 ## Technical details
 
 - **Engine:** Unity `6000.3.15f1`
-- **Status:** On hold
+- **Target:** Android, portrait
 
 ## Run locally
 
 1. Clone the repository.
 2. Open it in Unity Hub with Unity `6000.3.15f1`.
-3. Open a gameplay scene in `Assets/GameContent/Scenes` and press Play.
+3. Open `Assets/Scenes/MainScene.unity` and press Play.
+
+For Android builds and tests, see [BUILD.md](Assets/Docs/BUILD.md). The implementation checklist is in [UMSETZUNGSPLAN.md](Assets/Docs/UMSETZUNGSPLAN.md).
