@@ -93,6 +93,9 @@ public class Shield : MonoBehaviour, IResettable
 
     public void activateShield()
     {
+        var module = StationModule.GetModuleByType(StationModule.eModuleType.Shield);
+        if (!module || !module.isBuilt || currentShieldPoints <= 0f) return;
+
         shieldObject.SetActive(true);
         GetComponent<Collider2D>().enabled = true;
         sliderShieldPoints.gameObject.SetActive(true);
@@ -110,6 +113,21 @@ public class Shield : MonoBehaviour, IResettable
         shieldIsActive = false;
     }
 
+    public void OnModuleBuilt()
+    {
+        currentShieldPoints = maxShieldPoints;
+        rechargeCountdown = 0f;
+        regenCountdown = 0f;
+        activateShield();
+    }
+
+    public void OnModuleLost()
+    {
+        rechargeCountdown = 0f;
+        regenCountdown = 0f;
+        deactivateShield();
+    }
+
     public void refreshShieldPointSlider()
     {
         sliderShieldPoints.maxValue = maxShieldPoints;
@@ -125,6 +143,13 @@ public class Shield : MonoBehaviour, IResettable
 
     private void RechargeHandling()
     {
+        var module = StationModule.GetModuleByType(StationModule.eModuleType.Shield);
+        if (!module || !module.isBuilt)
+        {
+            if (rechargeCountdown > 0f || shieldIsActive) OnModuleLost();
+            return;
+        }
+
         if (rechargeCountdown > 0)
         {
             rechargeCountdown -= Time.deltaTime;

@@ -199,7 +199,9 @@ public class UpgradeUI : MonoBehaviour, IResettable
             return;
         }
 
-        if (upgrade.level >= upgrade.maxLevel) return;
+        if (upgrade.level >= upgrade.maxLevel || !upgrade.ownerModule ||
+            !upgrade.ownerModule.isBuilt || currentUpgradeSet == null ||
+            !currentUpgradeSet.upgradeAttributes.Contains(upgrade)) return;
 
         int cost = Mathf.RoundToInt(upgrade.cost);
         if (!ResourceManager.Instance.SpendMaterial(cost, false)) return;

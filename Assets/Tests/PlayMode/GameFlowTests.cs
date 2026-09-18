@@ -495,6 +495,163 @@ public class GameFlowTests
         }
     }
 
+    [UnityTest]
+    public IEnumerator ModuleLossAndLoadKeepOnlyBuiltModuleEffects()
+    {
+        var command = StationModule.GetModuleByType(StationModule.eModuleType.CommandUnit);
+        var extractor = StationModule.GetModuleByType(StationModule.eModuleType.Extractor);
+        var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
+        var integrity = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.StructuralIntegrity);
+        var efficiency = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.CollectingEfficiency);
+        command.isBuilt = true;
+        command.gameObject.SetActive(true);
+        extractor.isBuilt = true;
+        extractor.gameObject.SetActive(true);
+        integrity.level = 1;
+        integrity.RecalculateFromLevel();
+        efficiency.level = 1;
+        efficiency.RecalculateFromLevel();
+        UpgradeAttribute.ApplyAllUpgradeEffect();
+        int upgradedHP = core.maxHP;
+        float upgradedEfficiency = ResourceManager.Instance.collectingEffeciency;
+        Assert.That(upgradedHP, Is.GreaterThan(Mathf.RoundToInt(integrity.baseValue)));
+        Assert.That(upgradedEfficiency, Is.GreaterThan(efficiency.baseValue));
+
+        command.TakeDamage(command.currentHP);
+        Assert.That(core.maxHP, Is.EqualTo(Mathf.RoundToInt(integrity.baseValue)));
+        Assert.That(ResourceManager.Instance.collectingEffeciency, Is.EqualTo(upgradedEfficiency));
+        Assert.That(integrity.currentValue, Is.GreaterThan(integrity.baseValue));
+
+        yield return ReloadMainScene();
+
+        command = StationModule.GetModuleByType(StationModule.eModuleType.CommandUnit);
+        core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
+        Assert.That(command.isBuilt, Is.False);
+        Assert.That(core.maxHP, Is.EqualTo(Mathf.RoundToInt(integrity.baseValue)));
+        Assert.That(ResourceManager.Instance.collectingEffeciency, Is.EqualTo(upgradedEfficiency));
+
+        var radar = StationModule.GetModuleByType(StationModule.eModuleType.Radar);
+        radar.isBuilt = false;
+        radar.currentHP = 0;
+        ResourceManager.Instance.curMaterials = command.cost + 10;
+        ModulesUI.Instance.SelectModule(StationModule.eModuleType.CommandUnit);
+        ModulesUI.Instance.BuySelectedModule();
+        Assert.That(command.isBuilt, Is.True);
+        Assert.That(core.maxHP, Is.EqualTo(upgradedHP));
+        Assert.That(ResourceManager.Instance.collectingEffeciency, Is.EqualTo(upgradedEfficiency));
+        Assert.That(radar.isBuilt, Is.False);
+        Assert.That(radar.currentHP, Is.Zero);
+    }
+
+    [UnityTest]
+    public IEnumerator UnbuiltPreviewCannotTakeDamage()
+    {
+        var extractor = StationModule.GetModuleByType(StationModule.eModuleType.Extractor);
+        ModulesUI.Instance.SelectModule(StationModule.eModuleType.Extractor);
+        Assert.That(extractor.gameObject.activeSelf, Is.True);
+        Assert.That(extractor.GetComponent<Collider2D>().enabled, Is.False);
+        int initialHP = extractor.currentHP;
+        int damageTaken = Stats.Instance.modulesDamageTaken;
+
+        extractor.TakeDamage(2);
+
+        Assert.That(extractor.currentHP, Is.EqualTo(initialHP));
+        Assert.That(Stats.Instance.modulesDamageTaken, Is.EqualTo(damageTaken));
+        Assert.That(extractor.isBuilt, Is.False);
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator LostShieldCannotRechargeBeforeRebuild()
+    {
+        var module = StationModule.GetModuleByType(StationModule.eModuleType.Shield);
+        var shield = Shield.Instance;
+        module.isBuilt = true;
+        module.gameObject.SetActive(true);
+        module.RefreshCollider();
+        shield.currentShieldPoints = shield.maxShieldPoints;
+        shield.activateShield();
+        shield.TakeDamage(Mathf.CeilToInt(shield.maxShieldPoints));
+        Assert.That(shield.rechargeCountdown, Is.GreaterThan(0f));
+
+        module.TakeDamage(module.currentHP);
+        Assert.That(shield.rechargeCountdown, Is.Zero);
+        Assert.That(shield.shieldIsActive, Is.False);
+        shield.UpdateNormal();
+        Assert.That(shield.shieldIsActive, Is.False);
+
+        ResourceManager.Instance.curMaterials = module.cost + 10;
+        ModulesUI.Instance.SelectModule(StationModule.eModuleType.Shield);
+        ModulesUI.Instance.BuySelectedModule();
+        Assert.That(shield.shieldIsActive, Is.True);
+        Assert.That(shield.currentShieldPoints, Is.EqualTo(shield.maxShieldPoints));
+        Assert.That(shield.rechargeCountdown, Is.Zero);
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator UpgradeClickAfterModuleLossDoesNotCharge()
+    {
+        var upgrade = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.Damage);
+        var owner = StationModule.allModules.Single(m =>
+            m.upgradeSet && m.upgradeSet.upgradeAttributes.Contains(upgrade));
+        owner.isBuilt = true;
+        owner.gameObject.SetActive(true);
+        ModulesUI.Instance.SelectModule(owner.moduleType);
+        UpgradeUI.Instance.Show(owner.upgradeSet);
+        UpgradeUI.Instance.currentSelectedUpgrade = upgrade.upgradeName;
+        owner.TakeDamage(owner.currentHP);
+
+        int level = upgrade.level;
+        int materials = Mathf.RoundToInt(upgrade.cost) + 10;
+        ResourceManager.Instance.curMaterials = materials;
+        var click = typeof(UpgradeUI).GetMethod("OnUpgradeClicked",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(click, Is.Not.Null);
+        click.Invoke(UpgradeUI.Instance, new object[] { upgrade });
+
+        Assert.That(upgrade.level, Is.EqualTo(level));
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(materials));
+        Assert.That(Stats.Instance.boughtUpgrades, Is.Zero);
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator TimeSpeedFollowsRealMenuTransitionsAndReplay()
+    {
+        var module = StationModule.GetModuleByType(StationModule.eModuleType.TemporalModulator);
+        var upgrade = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.TimeMultiplier);
+        var time = TimeController.Instance;
+        module.isBuilt = true;
+        module.gameObject.SetActive(true);
+        upgrade.level = 2;
+        upgrade.RecalculateFromLevel();
+        time.RefreshPanel();
+        time.btnTimeIncrease.onClick.Invoke();
+        time.btnTimeIncrease.onClick.Invoke();
+        Assert.That(Time.timeScale, Is.EqualTo(2f));
+
+        UIManager.Instance.Show(true);
+        Assert.That(Time.timeScale, Is.EqualTo(time.stationUITimeModulation));
+        time.OnStationUIOpen();
+        Assert.That(Time.timeScale, Is.EqualTo(time.stationUITimeModulation));
+        UIManager.Instance.Show(false);
+        Assert.That(Time.timeScale, Is.EqualTo(2f));
+        time.OnStationUIClose();
+        Assert.That(Time.timeScale, Is.EqualTo(2f));
+
+        module.TakeDamage(module.currentHP);
+        Assert.That(Time.timeScale, Is.EqualTo(time.minTimeModulation));
+        Assert.That(time.panelTimeModulation.activeSelf, Is.False);
+
+        GameManager.Instance.Replay();
+        GameManager.isInit = false;
+        Assert.That(Time.timeScale, Is.EqualTo(1f));
+        Assert.That(time.panelTimeModulation.activeSelf, Is.False);
+        Assert.That(time.btnTimeIncrease.interactable, Is.True);
+        yield break;
+    }
+
     IEnumerator ReloadMainScene()
     {
         GameManager.isInit = false;

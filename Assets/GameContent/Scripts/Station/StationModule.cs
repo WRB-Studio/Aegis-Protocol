@@ -51,6 +51,17 @@ public class StationModule : MonoBehaviour, IResettable
         allModules.Remove(this);
     }
 
+    void OnEnable()
+    {
+        RefreshCollider();
+    }
+
+    public void RefreshCollider()
+    {
+        var moduleCollider = GetComponent<Collider2D>();
+        if (moduleCollider) moduleCollider.enabled = isBuilt;
+    }
+
     public void Init()
     {
         wasDestroyed = false;
@@ -60,10 +71,13 @@ public class StationModule : MonoBehaviour, IResettable
         linePoint = transform.Find("LinePoint");
 
         if (!isBuilt) gameObject.SetActive(false);
+        RefreshCollider();
     }
 
     public void TakeDamage(int damage)
     {
+        if (!isBuilt || currentHP <= 0 || damage <= 0) return;
+
         SoundManager.Instance.PlayStationHitSound();
         Stats.Instance.modulesDamageTaken += damage;
 
@@ -118,45 +132,21 @@ public class StationModule : MonoBehaviour, IResettable
             Stats.Instance.modulesDestroyed++;
             isBuilt = false;
 
-            //TODO: handle upgrade values after destroying
             switch (moduleType)
             {
-                case eModuleType.None:
-                    break;
-                case eModuleType.Core:
-                    break;
-                case eModuleType.Extractor:
-                    ResourceManager.Instance.disableAutoCollecting();
-                    UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.CollectingEfficiency).OnModulDestruction();
-                    break;
                 case eModuleType.Shield:
-                    Shield.Instance.deactivateShield();
+                    Shield.Instance.OnModuleLost();
                     break;
                 case eModuleType.Drone:
                     DroneManager.Instance.AfterModuleOff();
                     break;
-                case eModuleType.Radar:
-                    //handled in Tower.cs
-                    UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.FireRange).OnModulDestruction();
-                    break;
-                case eModuleType.AmmoFabricator:
-                    UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.FireRate).OnModulDestruction();
-                    UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.Damage).OnModulDestruction();
-                    //handled in Tower.cs
-                    break;
-                case eModuleType.CommandUnit:
-                    //Maybe later!?
-                    //decrease all modules HP?
-                    //decrease tower rotation speed?
-                    UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.StructuralIntegrity).OnModulDestruction();
-                    UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.RotationSpeed).OnModulDestruction();
-                    break;
                 case eModuleType.TemporalModulator:
                     TimeController.Instance.OnModulDestroy();
                     break;
-                default:
-                    break;
             }
+
+            UpgradeAttribute.ApplyAllUpgradeEffect();
+            RefreshCollider();
 
             SaveGameManager.Instance.Save();
 
@@ -197,6 +187,7 @@ public class StationModule : MonoBehaviour, IResettable
 
         // state sync
         gameObject.SetActive(isBuilt);
+        RefreshCollider();
     }
 
 }

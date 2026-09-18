@@ -18,7 +18,8 @@ public class TimeController : MonoBehaviour, IResettable
     public float stationUITimeModulation = 0.5f;
 
     float current = 1f;
-    float storedBeforeStationUI = 1f;
+    float initialCurrent;
+    bool stationUIOpen;
 
 
     void Awake()
@@ -47,10 +48,7 @@ public class TimeController : MonoBehaviour, IResettable
 
     public void OnModulDestroy()
     {
-        current = UIManager.Instance.stationUI.activeSelf
-            ? stationUITimeModulation
-            : minTimeModulation;
-
+        current = minTimeModulation;
         Apply();
 
         RefreshPanel();
@@ -66,7 +64,7 @@ public class TimeController : MonoBehaviour, IResettable
 
     void Apply()
     {
-        Time.timeScale = current;
+        Time.timeScale = stationUIOpen ? stationUITimeModulation : current;
     }
 
     void UpdateText()
@@ -77,26 +75,35 @@ public class TimeController : MonoBehaviour, IResettable
     // === Station UI ===
     public void OnStationUIOpen()
     {
+        if (stationUIOpen) return;
+        stationUIOpen = true;
         btnTimeIncrease.interactable = false;
         btnTimeDecrease.interactable = false;
-        storedBeforeStationUI = current;
-        Time.timeScale = stationUITimeModulation;
+        Apply();
     }
 
     public void OnStationUIClose()
     {
+        if (!stationUIOpen) return;
+        stationUIOpen = false;
         btnTimeIncrease.interactable = true;
         btnTimeDecrease.interactable = true;
-        Time.timeScale = storedBeforeStationUI;
+        Apply();
     }
 
 
     public void StoreInit()
     {
+        initialCurrent = current;
     }
 
     public void ResetScript()
     {
+        current = initialCurrent;
+        stationUIOpen = false;
+        btnTimeIncrease.interactable = true;
+        btnTimeDecrease.interactable = true;
+        Apply();
         RefreshPanel();
     }
 }

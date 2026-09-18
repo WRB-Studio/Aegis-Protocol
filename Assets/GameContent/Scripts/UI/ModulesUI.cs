@@ -363,16 +363,14 @@ public class ModulesUI : MonoBehaviour, IResettable
 
         currentSelectedModule.GetComponent<SpriteRenderer>().color = builtColor;
         currentSelectedModule.isBuilt = true;
+        currentSelectedModule.RefreshCollider();
 
         currentSelectedModule.currentHP = currentSelectedModule.maxHP;
         UpgradeAttribute.ApplyAllUpgradeEffect();
-        if(currentSelectedModule.wasDestroyed)
-            UpgradeAttribute.OnModulRebuildAll();
 
         if (currentSelectedModule.moduleType == StationModule.eModuleType.Shield)
         {
-            Shield.Instance.activateShield();
-            Shield.Instance.sliderShieldPoints.gameObject.SetActive(true);
+            Shield.Instance.OnModuleBuilt();
         }
         else if (currentSelectedModule.moduleType == StationModule.eModuleType.Drone)
         {

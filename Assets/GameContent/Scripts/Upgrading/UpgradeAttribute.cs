@@ -60,6 +60,7 @@ public class UpgradeAttribute : IResettable
     // baseValue can be left at 0 in the UpgradeSets.
     // We will pull safe defaults from the current scene state.
     private bool baseValueAutoFilled;
+    internal StationModule ownerModule;
 
     public void Init()
     {
@@ -150,6 +151,7 @@ public class UpgradeAttribute : IResettable
     {
         // Ensure we never apply "zero" defaults by accident.
         TryAutoFillBaseValue();
+        float value = ownerModule && !ownerModule.isBuilt ? baseValue : currentValue;
 
         switch (upgradeName)
         {
@@ -158,21 +160,21 @@ public class UpgradeAttribute : IResettable
 
             // Ammo Fabricator
             case eUpgradeName.FireRate:
-                Tower.Instance.fireRate = Mathf.Max(0.1f, currentValue);
+                Tower.Instance.fireRate = Mathf.Max(0.1f, value);
                 break;
 
             case eUpgradeName.Damage:
-                Tower.Instance.damage = Mathf.Max(1, Mathf.RoundToInt(currentValue));
+                Tower.Instance.damage = Mathf.Max(1, Mathf.RoundToInt(value));
                 break;
 
             // Radar
             case eUpgradeName.FireRange:
-                Tower.Instance.fireRange = Mathf.Max(0.1f, currentValue);
+                Tower.Instance.fireRange = Mathf.Max(0.1f, value);
                 break;
 
             // Command Unit
             case eUpgradeName.RotationSpeed:
-                Tower.Instance.rotationSpeed = Mathf.Max(0.1f, currentValue);
+                Tower.Instance.rotationSpeed = Mathf.Max(0.1f, value);
                 break;
 
             case eUpgradeName.StructuralIntegrity:
@@ -182,38 +184,38 @@ public class UpgradeAttribute : IResettable
                     float currentHP = module.currentHP;
                     float pct = currentMaxHP > 0 ? (currentHP / currentMaxHP) : 1f;
 
-                    module.maxHP = Mathf.Max(1, Mathf.RoundToInt(currentValue));
+                    module.maxHP = Mathf.Max(1, Mathf.RoundToInt(value));
                     module.currentHP = Mathf.Clamp(Mathf.RoundToInt(module.maxHP * pct), 0, module.maxHP);
                 }
                 break;
 
             // Extractor
             case eUpgradeName.AutoCollecting:
-                if (level == 1 && StationModule.GetModuleByType(StationModule.eModuleType.Extractor).isBuilt)
+                if (level == 1 && ownerModule && ownerModule.isBuilt)
                     ResourceManager.Instance.enableAutoCollecting();
                 else
                     ResourceManager.Instance.disableAutoCollecting();
                 break;
 
             case eUpgradeName.CollectingEfficiency:
-                ResourceManager.Instance.collectingEffeciency = currentValue;
+                ResourceManager.Instance.collectingEffeciency = value;
                 break;
 
             // Drone
             case eUpgradeName.DroneCount:
-                DroneManager.Instance.currentDroneSlots = Mathf.Max(0, Mathf.RoundToInt(currentValue));
+                DroneManager.Instance.currentDroneSlots = Mathf.Max(0, Mathf.RoundToInt(value));
                 break;
 
             case eUpgradeName.DroneHP:
-                DroneManager.Instance.droneInitialHP = Mathf.Max(1, Mathf.RoundToInt(currentValue));
+                DroneManager.Instance.droneInitialHP = Mathf.Max(1, Mathf.RoundToInt(value));
                 break;
 
             case eUpgradeName.DroneBuildTime:
-                DroneManager.Instance.droneBuildTime = Mathf.Max(0.05f, currentValue);
+                DroneManager.Instance.droneBuildTime = Mathf.Max(0.05f, value);
                 break;
 
             case eUpgradeName.DroneDamage:
-                DroneManager.Instance.droneInitialDamage = Mathf.Max(1, Mathf.RoundToInt(currentValue));
+                DroneManager.Instance.droneInitialDamage = Mathf.Max(1, Mathf.RoundToInt(value));
                 break;
 
             // Shield
@@ -223,7 +225,7 @@ public class UpgradeAttribute : IResettable
                     float current = Shield.Instance.currentShieldPoints;
                     float pct = currentMax > 0 ? (current / currentMax) : 1f;
 
-                    Shield.Instance.maxShieldPoints = Mathf.Max(1, Mathf.RoundToInt(currentValue));
+                    Shield.Instance.maxShieldPoints = Mathf.Max(1, Mathf.RoundToInt(value));
                     Shield.Instance.currentShieldPoints = Mathf.Clamp(Mathf.RoundToInt(Shield.Instance.maxShieldPoints * pct), 0, Shield.Instance.maxShieldPoints);
                     break;
                 }
@@ -234,7 +236,7 @@ public class UpgradeAttribute : IResettable
                     float currentCd = Shield.Instance.rechargeCountdown;
                     float pct = currentTime > 0 ? (currentCd / currentTime) : 1f;
 
-                    Shield.Instance.rechargeTime = Mathf.Max(0.1f, currentValue);
+                    Shield.Instance.rechargeTime = Mathf.Max(0.1f, value);
                     Shield.Instance.rechargeCountdown = Shield.Instance.rechargeTime * pct;
 
                     Shield.Instance.refreshShieldPointSlider();
@@ -242,7 +244,7 @@ public class UpgradeAttribute : IResettable
                 }
 
             case eUpgradeName.DeflectionChance:
-                Shield.Instance.deflectionChance = currentValue;
+                Shield.Instance.deflectionChance = value;
                 break;
         }
     }
@@ -258,39 +260,6 @@ public class UpgradeAttribute : IResettable
         ApplyUpgradeEffect();
 
         SaveGameManager.Instance.Save();
-    }
-
-    public void OnModulDestruction()
-    {
-        switch (upgradeName)
-        {
-            case eUpgradeName.FireRate:
-            case eUpgradeName.Damage:
-            case eUpgradeName.FireRange:
-            case eUpgradeName.RotationSpeed:
-            case eUpgradeName.StructuralIntegrity:
-            case eUpgradeName.CollectingEfficiency:
-                currentValue = Mathf.Max(baseValue, currentValue * 0.5f);
-                break;
-        }
-
-        ApplyUpgradeEffect();
-
-        SaveGameManager.Instance.Save();
-    }
-
-    public static void OnModulRebuildAll()
-    {
-        foreach (UpgradeAttribute upgradeAttribute in allUpgradeAttributes)
-        {
-            upgradeAttribute.OnModulRebuild();
-        }
-    }
-
-    public void OnModulRebuild()
-    {
-        RecalculateFromLevel();
-        ApplyUpgradeEffect();
     }
 
     public void RecalculateFromLevel()

@@ -28,6 +28,8 @@ public class UpgradeManager : MonoBehaviour
             }
 
             var runtimeCopy = sourceSet.GetInstanceOfUpgradeSet();
+            foreach (var upgrade in runtimeCopy.upgradeAttributes)
+                upgrade.ownerModule = module;
             runtimeCopy.Init();
             module.upgradeSet = runtimeCopy;
         }
