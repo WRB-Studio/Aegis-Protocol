@@ -33,9 +33,21 @@ public class SaveGameManager : MonoBehaviour
 
     void Awake()
     {
+        if (Instance && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
+        transform.SetParent(null);
         DontDestroyOnLoad(gameObject);
         LoadBestScore();
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     void OnApplicationPause(bool pause)

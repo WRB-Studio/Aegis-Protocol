@@ -42,7 +42,13 @@ public class StationModule : MonoBehaviour, IResettable
 
     void Awake()
     {
-        allModules.Add(this);
+        allModules.RemoveAll(module => !module);
+        if (!allModules.Contains(this)) allModules.Add(this);
+    }
+
+    void OnDestroy()
+    {
+        allModules.Remove(this);
     }
 
     public void Init()

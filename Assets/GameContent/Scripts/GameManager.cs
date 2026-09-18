@@ -96,12 +96,22 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        isInit = false;
+        gameOver = false;
 
         Application.targetFrameRate = 60;
         QualitySettings.vSyncCount = 0;
 
         foreach (var r in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             if (r is IResettable i) allResettable.Add(i);
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance != this) return;
+        Instance = null;
+        isInit = false;
+        gameOver = false;
     }
 
     private void Start()

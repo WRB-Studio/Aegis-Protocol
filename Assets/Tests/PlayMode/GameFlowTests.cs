@@ -451,6 +451,50 @@ public class GameFlowTests
         }
     }
 
+    [UnityTest]
+    public IEnumerator ReloadingSceneDoesNotKeepOldModulesOrRunFlags()
+    {
+        int moduleCount = StationModule.allModules.Count;
+        int upgradeCount = UpgradeAttribute.allUpgradeAttributes.Count;
+        int setCount = UpgradeSet.allUpgradeSets.Count;
+        var saveManager = SaveGameManager.Instance;
+        Assert.That(moduleCount, Is.GreaterThan(0));
+        Assert.That(upgradeCount, Is.GreaterThan(0));
+        Assert.That(setCount, Is.GreaterThan(0));
+        Assert.That(saveManager.transform.parent, Is.Null);
+
+        for (int i = 0; i < 3; i++)
+        {
+            if (i == 1) GameManager.Instance.GameOver();
+
+            SceneManager.LoadScene("MainScene");
+            yield return null;
+
+            Assert.That(GameManager.isInit, Is.True);
+            Assert.That(GameManager.gameOver, Is.False);
+            Assert.That(StationModule.allModules, Has.Count.EqualTo(moduleCount));
+            Assert.That(StationModule.allModules.All(module => module != null), Is.True);
+            Assert.That(StationModule.allModules.Select(module => module.moduleType).Distinct().Count(),
+                Is.EqualTo(moduleCount));
+            Assert.That(UpgradeAttribute.allUpgradeAttributes, Has.Count.EqualTo(upgradeCount));
+            Assert.That(UpgradeAttribute.allUpgradeAttributes.Distinct().Count(), Is.EqualTo(upgradeCount));
+            Assert.That(UpgradeSet.allUpgradeSets, Has.Count.EqualTo(setCount));
+            Assert.That(UpgradeSet.allUpgradeSets.Distinct().Count(), Is.EqualTo(setCount));
+            foreach (var module in StationModule.allModules.Where(m => m.upgradeSet))
+            {
+                Assert.That(UpgradeSet.allUpgradeSets, Does.Contain(module.upgradeSet));
+                foreach (var upgrade in module.upgradeSet.upgradeAttributes)
+                    Assert.That(UpgradeAttribute.allUpgradeAttributes, Does.Contain(upgrade));
+            }
+            Assert.That(SaveGameManager.Instance, Is.SameAs(saveManager));
+            Assert.That(UnityEngine.Object.FindObjectsByType<SaveGameManager>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None), Has.Length.EqualTo(1));
+            Assert.That(StationModule.GetModuleByType(StationModule.eModuleType.Core).gameObject.activeSelf,
+                Is.True);
+            GameManager.isInit = false;
+        }
+    }
+
     IEnumerator ReloadMainScene()
     {
         GameManager.isInit = false;
