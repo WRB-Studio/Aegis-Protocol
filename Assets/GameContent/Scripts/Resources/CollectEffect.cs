@@ -32,6 +32,7 @@ public class CollectEffect : MonoBehaviour
         this.target = target;
         this.material = material;
         flyToStation = autoCollecting;
+        originalScale = transform.localScale;
 
         startPos = transform.position;
 
@@ -53,9 +54,7 @@ public class CollectEffect : MonoBehaviour
         transform.GetChild(0).GetComponent<TrailRenderer>().startColor = color;
         transform.GetChild(0).GetComponent<TrailRenderer>().endColor = color;
 
-        if (flyToStation)
-            originalScale = transform.localScale;
-        else
+        if (!flyToStation)
             transform.localScale *= nonAutoCollectScale;
     }
 
@@ -70,7 +69,10 @@ public class CollectEffect : MonoBehaviour
         {
             lífeTime -= Time.deltaTime;
             if (lífeTime <= 0f || GameManager.gameOver)
+            {
                 ResourceManager.RemoveCollectEffect(this);
+                return;
+            }
         }
 
         if (!flyToStation) return;

@@ -22,13 +22,13 @@ MonoBehaviour:
     upgradeValue: 1
     maxValue: 1
     currentValue: 0
-    baseCost: 850
+    baseCost: 100
     costMultiplier: 1
     cost: 0
   - upgradeName: 7
     description: Increase resource per collect
     level: 0
-    maxLevel: 100
+    maxLevel: 80
     baseValue: 1
     upgradeValue: 1.25
     maxValue: 100

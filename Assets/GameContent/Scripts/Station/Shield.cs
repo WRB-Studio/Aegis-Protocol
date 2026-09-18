@@ -217,8 +217,9 @@ public class Shield : MonoBehaviour, IResettable
         if (collision.tag == "Enemy")
         {
             SoundManager.Instance.PlayStationHitSound();
-            TakeDamage(1);
-            EnemySpawner.RemoveEnemy(collision.gameObject.GetComponent<Enemy>(), Stats.eDeadBy.shieldCollision);
+            var enemy = collision.GetComponent<Enemy>();
+            TakeDamage(Mathf.Max(1, enemy.maxHP));
+            EnemySpawner.RemoveEnemy(enemy, Stats.eDeadBy.shieldCollision);
         }
     }
 

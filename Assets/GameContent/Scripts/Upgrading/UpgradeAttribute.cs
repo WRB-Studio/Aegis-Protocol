@@ -208,6 +208,13 @@ public class UpgradeAttribute : IResettable
 
             case eUpgradeName.DroneHP:
                 DroneManager.Instance.droneInitialHP = Mathf.Max(1, Mathf.RoundToInt(value));
+                foreach (var drone in DroneManager.Instance.allDrones)
+                {
+                    if (!drone) continue;
+                    int damageTaken = drone.maxHP - drone.currentHP;
+                    drone.maxHP = DroneManager.Instance.droneInitialHP;
+                    drone.currentHP = Mathf.Clamp(drone.maxHP - damageTaken, 0, drone.maxHP);
+                }
                 break;
 
             case eUpgradeName.DroneBuildTime:
@@ -216,6 +223,8 @@ public class UpgradeAttribute : IResettable
 
             case eUpgradeName.DroneDamage:
                 DroneManager.Instance.droneInitialDamage = Mathf.Max(1, Mathf.RoundToInt(value));
+                foreach (var drone in DroneManager.Instance.allDrones)
+                    if (drone) drone.damage = DroneManager.Instance.droneInitialDamage;
                 break;
 
             // Shield
@@ -268,15 +277,21 @@ public class UpgradeAttribute : IResettable
         cost = CalculateCost();
     }
 
-    public float CalculateValue()
+    public float CalculateValue() => CalculateValue(level);
+
+    public float CalculateValue(int targetLevel)
     {
         if (maxLevel <= 0) return baseValue;
-        return baseValue + level * upgradeValue;
+        float value = baseValue + Mathf.Clamp(targetLevel, 0, maxLevel) * upgradeValue;
+        return upgradeValue >= 0f ? Mathf.Min(value, maxValue) : Mathf.Max(value, maxValue);
     }
 
-    public float CalculateCost()
+    public float CalculateCost() => CalculateCost(level);
+
+    public float CalculateCost(int targetLevel)
     {
-        return baseCost * Mathf.Pow(costMultiplier, level);
+        double price = baseCost * System.Math.Pow(costMultiplier, Mathf.Clamp(targetLevel, 0, maxLevel));
+        return (float)System.Math.Min(1000000000d, System.Math.Max(0d, price));
     }
 
     public static UpgradeAttribute GetUpgradeByName(eUpgradeName upgradeName)

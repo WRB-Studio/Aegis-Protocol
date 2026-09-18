@@ -5912,10 +5912,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moduleType: 4
-  description: Deploys autonomous combat drones.
+  description: Deploys combat drones after buying a Drone Count upgrade.
   maxHP: 3
   currentHP: 0
-  cost: 1500
+  cost: 500
   isBuilt: 0
   wasDestroyed: 0
   upgradeSet: {fileID: 11400000, guid: be009294b5b8cdd4e9cfe9299de86e08, type: 2}
@@ -6411,7 +6411,7 @@ MonoBehaviour:
   description: Activates the station's shield system.
   maxHP: 3
   currentHP: 0
-  cost: 800
+  cost: 300
   isBuilt: 0
   wasDestroyed: 0
   upgradeSet: {fileID: 11400000, guid: 7de33a00927865f4598b0d4242f73c24, type: 2}

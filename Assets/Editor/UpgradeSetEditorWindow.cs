@@ -256,7 +256,7 @@ public class UpgradeSetEditorWindow : EditorWindow
                 if (entry == null) continue;
 
                 var baseCost = entry.FindPropertyRelative("baseCost");
-                var costStep = entry.FindPropertyRelative("costStep");
+                var costMultiplierProperty = entry.FindPropertyRelative("costMultiplier");
 
                 if (baseCost != null)
                 {
@@ -269,14 +269,14 @@ public class UpgradeSetEditorWindow : EditorWindow
                     }
                 }
 
-                if (costStep != null)
+                if (costMultiplierProperty != null)
                 {
-                    if (costStep.propertyType == SerializedPropertyType.Integer)
-                        costStep.intValue = Mathf.RoundToInt(costStep.intValue * costMultiplier);
-                    else if (costStep.propertyType == SerializedPropertyType.Float)
+                    if (costMultiplierProperty.propertyType == SerializedPropertyType.Integer)
+                        costMultiplierProperty.intValue = Mathf.RoundToInt(costMultiplierProperty.intValue * costMultiplier);
+                    else if (costMultiplierProperty.propertyType == SerializedPropertyType.Float)
                     {
-                        float v = costStep.floatValue * costMultiplier;
-                        costStep.floatValue = Mathf.Round(v * 100f) / 100f;
+                        float v = costMultiplierProperty.floatValue * costMultiplier;
+                        costMultiplierProperty.floatValue = Mathf.Round(v * 100f) / 100f;
                     }
                 }
 

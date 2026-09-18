@@ -2,9 +2,33 @@ using System;
 using System.IO;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEditor;
 
 public class SaveGameTests
 {
+    [Test]
+    public void UpgradeAssets_HaveFiniteBoundedValuesAndCosts()
+    {
+        foreach (var guid in AssetDatabase.FindAssets("t:UpgradeSet", new[] { "Assets/GameContent/Prefabs/UpgradeSets" }))
+        {
+            var set = AssetDatabase.LoadAssetAtPath<UpgradeSet>(AssetDatabase.GUIDToAssetPath(guid));
+            foreach (var upgrade in set.upgradeAttributes)
+            {
+                Assert.That(upgrade.maxLevel, Is.GreaterThan(0), upgrade.upgradeName.ToString());
+                Assert.That(upgrade.costMultiplier, Is.GreaterThanOrEqualTo(1f), upgrade.upgradeName.ToString());
+                for (int level = 0; level <= upgrade.maxLevel; level++)
+                {
+                    float value = upgrade.CalculateValue(level);
+                    float cost = upgrade.CalculateCost(level);
+                    Assert.That(float.IsNaN(value) || float.IsInfinity(value), Is.False, upgrade.upgradeName.ToString());
+                    Assert.That(value, Is.InRange(Mathf.Min(upgrade.baseValue, upgrade.maxValue),
+                        Mathf.Max(upgrade.baseValue, upgrade.maxValue)), upgrade.upgradeName.ToString());
+                    Assert.That(cost, Is.InRange(0f, 1000000000f), upgrade.upgradeName.ToString());
+                }
+            }
+        }
+    }
+
     [Test]
     public void SaveGame_FileRoundTrip_PreservesResourcesModulesAndDrones()
     {

@@ -37,6 +37,11 @@ public class Drone : MonoBehaviour
 
     public void UpdateNormal()
     {
+        if (currentTarget && (!EnemySpawner.Instance ||
+            !EnemySpawner.Instance.instantiatedEnemies.Contains(currentTarget.GetComponent<Enemy>()) ||
+            Vector3.Distance(transform.position, currentTarget.position) >= range))
+            currentTarget = null;
+
         if (currentTarget == null)
         {
             FindTarget();

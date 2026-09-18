@@ -63,21 +63,25 @@ Zwanzig Tests liegen in `Assets/Tests/Editor/SaveGameTests.cs` und `Assets/Tests
 
 Aufwand: etwa 2–3 Tage. Erst nach stabilen Zuständen Preise fein abstimmen.
 
-- [ ] **U18 – Upgrade-Grenzen und Kosten korrigieren.** Steigende und fallende Werte wirksam begrenzen; Endwerte, Maximallevel und Preise aufeinander abstimmen. Zahlenbereichsüberschreitungen verhindern. **Abnahme:** Alle erlaubten Level haben gültige Preise und Werte; keine negativen Bauzeiten oder Abweichungen zwischen Anzeige und Wirkung. Bezug: A09.
-- [ ] **U19 – Balancing-Werkzeuge und Metadaten reparieren.** `costStep` durch das tatsächliche Feld ersetzen; Levelvorschau an Laufzeitformeln angleichen. Modulzuordnung des Temporal Modulator und Kopieren von `moduleType` korrigieren; inaktive Module im Editor berücksichtigen. **Abnahme:** Vorschau und Spiel liefern für Stichproben dieselben Werte und Kosten. Bezug: A18 und Zusatzbefunde.
+- [x] **U18 – Upgrade-Grenzen und Kosten korrigieren.** Steigende und fallende Werte wirksam begrenzen; Endwerte, Maximallevel und Preise aufeinander abstimmen. Zahlenbereichsüberschreitungen verhindern. **Abnahme:** Alle erlaubten Level haben gültige Preise und Werte; keine negativen Bauzeiten oder Abweichungen zwischen Anzeige und Wirkung. Bezug: A09.
+- [x] **U19 – Balancing-Werkzeuge und Metadaten reparieren.** `costStep` durch das tatsächliche Feld ersetzen; Levelvorschau an Laufzeitformeln angleichen. Modulzuordnung des Temporal Modulator und Kopieren von `moduleType` korrigieren; inaktive Module im Editor berücksichtigen. **Abnahme:** Vorschau und Spiel liefern für Stichproben dieselben Werte und Kosten. Bezug: A18 und Zusatzbefunde.
 
-Teilstand: Das Kopieren von `moduleType` in Runtime-Sets ist mit U05 korrigiert. Die Temporal-Modulator-Vorlage ist weiterhin falsch zugeordnet; Vorschau und Editorwerkzeuge sind noch ungeprüft.
-- [ ] **U20 – Wellen auf ein Gesamtbudget begrenzen.** Tatsächliche Gegnerzahl, Schwarmgrößen und Spawnzeit berücksichtigen. Neue Gegnertypen nachvollziehbar einführen; Bosswellen ausdrücklich definieren. **Abnahme:** Späte Wellen bleiben im vorgesehenen Budget; die vermeintliche 50er-Grenze erzeugt keine Tausende Gegner mehr. Bezug: A10.
+Teilstand: Das Kopieren von `moduleType` in Runtime-Sets ist mit U05 korrigiert. Die Temporal-Modulator-Vorlage ist jetzt korrekt zugeordnet; Editorfenster verwenden die Laufzeitformeln und zeigen inaktive Module.
+- [x] **U20 – Wellen auf ein Gesamtbudget begrenzen.** Tatsächliche Gegnerzahl, Schwarmgrößen und Spawnzeit berücksichtigen. Neue Gegnertypen nachvollziehbar einführen; Bosswellen ausdrücklich definieren. **Abnahme:** Späte Wellen bleiben im vorgesehenen Budget; die vermeintliche 50er-Grenze erzeugt keine Tausende Gegner mehr. Bezug: A10.
 - [ ] **U21 – Frühe Wirtschaft und Gegnerrollen abstimmen.** Startkäufe, Sammelautomatik, Schild und erste Drohne inklusive Slotkosten testen. Schildinteraktion mit Tanks/Bossen bewusst festlegen. **Abnahme:** Die ersten Minuten bieten verständliche Entscheidungen; Modulkäufe vermitteln ihren tatsächlichen Nutzen und ihre Gesamtkosten.
 
 ## 5. Kampf- und Darstellungsfehler schließen
 
 Zusammen mit Paket 6 etwa 2–3 Tage; Umfang nach Gerätetest begrenzen.
 
-- [ ] **U22 – Ablenkung und Trefferstatistik korrigieren.** `isDeflected` beim Ablenken setzen; Schutz gegen mehrfach verarbeitete Treffer prüfen. **Abnahme:** Abgelenkte Treffer und Kills landen in der richtigen Kategorie und zählen nur einmal. Bezug: A13.
-- [ ] **U23 – Manuellen Sammelflug reparieren.** Ursprungsskalierung unabhängig von AutoCollecting initialisieren. **Abnahme:** Manuell eingesammelte Drops fliegen sichtbar zur Station und werden einmal gutgeschrieben. Bezug: A14.
-- [ ] **U24 – Zielgültigkeit für Turm und Drohnen prüfen.** Tote, verschwundene und außer Reichweite geratene Ziele freigeben; erneut suchen. **Abnahme:** Keine Schüsse außerhalb der erlaubten Reichweite und keine untätigen Drohnen wegen eines veralteten Ziels. Bezug: A15.
-- [ ] **U25 – Drohnen-Upgrades konsistent anwenden.** Festlegen, ob vorhandene Drohnen profitieren; bevorzugt entsprechend der bestehenden Beschreibung alle aktiven Drohnen aktualisieren. HP-Anpassung eindeutig definieren. **Abnahme:** Beschreibung, bestehende Drohnen und neu gebaute Drohnen entsprechen derselben Regel. Bezug: A16.
+- [x] **U22 – Ablenkung und Trefferstatistik korrigieren.** `isDeflected` beim Ablenken setzen; Schutz gegen mehrfach verarbeitete Treffer prüfen. **Abnahme:** Abgelenkte Treffer und Kills landen in der richtigen Kategorie und zählen nur einmal. Bezug: A13.
+- [x] **U23 – Manuellen Sammelflug reparieren.** Ursprungsskalierung unabhängig von AutoCollecting initialisieren. **Abnahme:** Manuell eingesammelte Drops fliegen sichtbar zur Station und werden einmal gutgeschrieben. Bezug: A14.
+- [x] **U24 – Zielgültigkeit für Turm und Drohnen prüfen.** Tote, verschwundene und außer Reichweite geratene Ziele freigeben; erneut suchen. **Abnahme:** Keine Schüsse außerhalb der erlaubten Reichweite und keine untätigen Drohnen wegen eines veralteten Ziels. Bezug: A15.
+- [x] **U25 – Drohnen-Upgrades konsistent anwenden.** Festlegen, ob vorhandene Drohnen profitieren; bevorzugt entsprechend der bestehenden Beschreibung alle aktiven Drohnen aktualisieren. HP-Anpassung eindeutig definieren. **Abnahme:** Beschreibung, bestehende Drohnen und neu gebaute Drohnen entsprechen derselben Regel. Bezug: A16.
+
+Stand 18.09.2026: U18–U20 und U22–U25 sind umgesetzt. Werte werden zwischen Basis- und Endwert begrenzt, Preise bleiben im gültigen `int`-Bereich; ungenutzte Level nach Erreichen des Endwerts wurden entfernt. Die Wellenzahl zählt nun tatsächliche Gegner (maximal 50), mit genau einem Boss in Welle 20, 30 usw. Deflected-Treffer werden korrekt markiert und jedes Projektil nur einmal verarbeitet. Manuelles Sammeln behält die Ursprungsskalierung. Turm und Drohnen verwerfen ungültige Ziele; aktive Drohnen erhalten HP- und Schadens-Upgrades, wobei bereits erlittener Schaden erhalten bleibt. 3 Edit-Mode- und 21 Play-Mode-Tests bestanden unter Android als Build-Ziel.
+
+U21-Teilstand: AutoCollecting und der erste Drohnenslot kosten je 100 statt 850/250 Material; Schild und Drohnenmodul kosten 300/500 statt 800/1500. Die Drohnenbeschreibung nennt den nötigen Slotkauf. Schwere Gegner verbrauchen Schildpunkte entsprechend ihrer HP; Bosswellen sind planbar. Frühe Spielzeit, Verständlichkeit und Schwierigkeit brauchen weiterhin einen echten Playtest auf dem Pixel; U21 bleibt dafür offen.
 
 ## 6. Android-Bedienung und Feedback vervollständigen
 

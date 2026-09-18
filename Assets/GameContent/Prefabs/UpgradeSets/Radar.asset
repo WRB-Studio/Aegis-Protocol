@@ -17,7 +17,7 @@ MonoBehaviour:
   - upgradeName: 3
     description: Increase tower fire range
     level: 0
-    maxLevel: 100
+    maxLevel: 84
     baseValue: 2.5
     upgradeValue: 0.025
     maxValue: 4.6

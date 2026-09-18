@@ -53,6 +53,14 @@ public class Tower : MonoBehaviour, IResettable
 
     public void UpdateNormal()
     {
+        float effectiveRange = fireRange;
+        var radar = StationModule.GetModuleByType(StationModule.eModuleType.Radar);
+        if (!radar || !radar.isBuilt) effectiveRange = initialFireRange;
+        if (currentTarget && (!EnemySpawner.Instance ||
+            !EnemySpawner.Instance.instantiatedEnemies.Contains(currentTarget.GetComponent<Enemy>()) ||
+            Vector3.Distance(transform.position, currentTarget.position) >= effectiveRange))
+            currentTarget = null;
+
         if (currentTarget == null)
             FindTarget();
 

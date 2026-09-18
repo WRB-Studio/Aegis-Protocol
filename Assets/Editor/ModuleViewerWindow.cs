@@ -52,7 +52,7 @@ public class ModuleEditorWindow : EditorWindow
 
         var list = new List<Component>();
 
-        foreach (var mb in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+        foreach (var mb in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (!mb) continue;
             if (moduleBaseType.IsAssignableFrom(mb.GetType()))

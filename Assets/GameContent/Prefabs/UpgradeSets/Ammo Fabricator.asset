@@ -20,7 +20,7 @@ MonoBehaviour:
     maxLevel: 100
     baseValue: 0.5
     upgradeValue: 0.11
-    maxValue: 15
+    maxValue: 11.5
     currentValue: 0
     baseCost: 4
     costMultiplier: 1.2
@@ -28,7 +28,7 @@ MonoBehaviour:
   - upgradeName: 2
     description: Increase tower damage
     level: 0
-    maxLevel: 100
+    maxLevel: 87
     baseValue: 1
     upgradeValue: 1.14
     maxValue: 100

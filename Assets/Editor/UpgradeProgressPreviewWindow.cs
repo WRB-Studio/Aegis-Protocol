@@ -10,22 +10,13 @@ public class UpgradeProgressPreviewWindow : EditorWindow
     const string UPGRADE_SET_TYPE = "UpgradeSet";
     const string LIST_FIELD = "upgradeAttributes";
 
-    // Felder in UpgradeAttribute (anpassbar)
-    const string F_NAME = "upgradeName";
-    const string F_MAX = "maxLevel";
-    const string F_BASE_COST = "baseCost";
-    const string F_COST_MULT = "costMultiplier";
-    const string F_BASE_VAL = "baseValue";
-    const string F_VAL_STEP = "upgradeValue"; // bei dir so
-    const string F_VAL_MULT = "valueMultiplier";
-
     readonly List<UnityEngine.Object> sets = new();
     readonly Dictionary<int, SerializedObject> soCache = new();
     readonly Dictionary<int, bool> foldoutSet = new();
 
     Vector2 scroll;
     int showLevels = 15;
-    float cardWidth = 10f;
+    float cardWidth = 240f;
 
     [MenuItem("Tools/Aegis/Upgrades Progress Preview")]
     static void Open() => GetWindow<UpgradeProgressPreviewWindow>("Upgrades Preview");
@@ -122,32 +113,19 @@ public class UpgradeProgressPreviewWindow : EditorWindow
 
                     using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox, GUILayout.Width(cardWidth)))
                     {
-                        string upName = TryGetName(entry, F_NAME, $"Upgrade #{i}");
+                        var upgrade = ((UpgradeSet)set).upgradeAttributes[i];
+                        string upName = upgrade.upgradeName.ToString();
                         EditorGUILayout.LabelField(upName, EditorStyles.boldLabel);
 
-                        int maxLevel = Mathf.Max(1, TryGetInt(entry, F_MAX, showLevels));
-                        int levels = Mathf.Min(showLevels, maxLevel);
-
-                        float baseCost = TryGetFloat(entry, F_BASE_COST, 0f);
-                        float costMult = TryGetFloat(entry, F_COST_MULT, 1f);
-
-                        float baseVal = TryGetFloat(entry, F_BASE_VAL, 0f);
-                        float valStep = TryGetFloat(entry, F_VAL_STEP, 0f);
-                        float valMult = TryGetFloat(entry, F_VAL_MULT, 1f);
+                        int levels = Mathf.Min(showLevels, Mathf.Max(0, upgrade.maxLevel));
 
                         var costs = new float[levels];
                         var vals = new float[levels];
 
                         for (int l = 1; l <= levels; l++)
                         {
-                            float c = baseCost * Mathf.Pow(costMult, (l - 1));
-
-                            float v = baseVal + valStep * (l - 1);
-                            if (!Mathf.Approximately(valMult, 1f))
-                                v *= Mathf.Pow(valMult, (l - 1));
-
-                            costs[l - 1] = c;
-                            vals[l - 1] = v;
+                            costs[l - 1] = upgrade.CalculateCost(l - 1);
+                            vals[l - 1] = upgrade.CalculateValue(l);
                         }
 
                         DrawTable(costs, vals);
@@ -175,7 +153,7 @@ public class UpgradeProgressPreviewWindow : EditorWindow
             GUILayout.Label("Val", mini, GUILayout.Width(60));
         }
 
-        float total = 0f;
+        double total = 0d;
 
         for (int i = 0; i < costs.Length; i++)
         {
@@ -185,7 +163,7 @@ public class UpgradeProgressPreviewWindow : EditorWindow
             {
                 GUILayout.Label((i + 1).ToString(), mini, GUILayout.Width(26));
                 GUILayout.Label(Mathf.RoundToInt(costs[i]).ToString(), mini, GUILayout.Width(60));
-                GUILayout.Label(Mathf.RoundToInt(total).ToString(), mini, GUILayout.Width(70));
+                GUILayout.Label(total.ToString("0"), mini, GUILayout.Width(70));
                 GUILayout.Label(vals[i].ToString("0.###"), mini, GUILayout.Width(60));
             }
         }

@@ -115,6 +115,71 @@ public class GameFlowTests
         Assert.That(ScoreManager.Instance.GetBreakdown(Stats.Instance).totalScore, Is.EqualTo(score));
     }
 
+    [Test]
+    public void ProceduralWaves_RespectActualEnemyBudgetAndExplicitBossWaves()
+    {
+        var generate = typeof(EnemySpawner).GetMethod("GenerateProceduralWave",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(generate, Is.Not.Null);
+        foreach (int waveIndex in new[] { 0, 9, 18, 19, 29, 49, 99 })
+        {
+            var wave = (EnemyWave)generate.Invoke(EnemySpawner.Instance, new object[] { waveIndex });
+            int count = wave.enemies.Sum(instruction => instruction.amount.x * instruction.swarmGroupSize.x);
+            Assert.That(count, Is.InRange(2, 50), $"Wave {waveIndex + 1}");
+            int bosses = wave.enemies.Where(instruction => instruction.type == Enemy.eEnemyType.Boss)
+                .Sum(instruction => instruction.amount.x * instruction.swarmGroupSize.x);
+            Assert.That(bosses, Is.EqualTo((waveIndex + 1) % 10 == 0 && waveIndex >= 19 ? 1 : 0));
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator DroneUpgrades_UpdateExistingDronesAndPreserveDamageTaken()
+    {
+        var module = StationModule.GetModuleByType(StationModule.eModuleType.Drone);
+        module.isBuilt = true;
+        module.gameObject.SetActive(true);
+        var manager = DroneManager.Instance;
+        manager.AfterModulInit();
+        var drone = manager.SpawnDrone(true).GetComponent<Drone>();
+        int originalHP = drone.maxHP;
+        drone.currentHP = originalHP - 1;
+
+        var hp = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.DroneHP);
+        hp.level = 1;
+        hp.RecalculateFromLevel();
+        hp.ApplyUpgradeEffect();
+        Assert.That(drone.maxHP, Is.EqualTo(manager.droneInitialHP));
+        Assert.That(drone.currentHP, Is.EqualTo(drone.maxHP - 1));
+
+        var damage = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.DroneDamage);
+        damage.level = 1;
+        damage.RecalculateFromLevel();
+        damage.ApplyUpgradeEffect();
+        Assert.That(drone.damage, Is.EqualTo(manager.droneInitialDamage));
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator HeavyEnemyCollision_ConsumesShieldPointsByEnemyHealth()
+    {
+        var module = StationModule.GetModuleByType(StationModule.eModuleType.Shield);
+        module.isBuilt = true;
+        module.gameObject.SetActive(true);
+        Shield.Instance.OnModuleBuilt();
+        var enemyObject = new GameObject("Heavy enemy test");
+        enemyObject.tag = "Enemy";
+        var collider = enemyObject.AddComponent<CircleCollider2D>();
+        var enemy = enemyObject.AddComponent<Enemy>();
+        enemy.maxHP = 3;
+        EnemySpawner.Instance.instantiatedEnemies.Add(enemy);
+        float before = Shield.Instance.currentShieldPoints;
+        var hit = typeof(Shield).GetMethod("OnTriggerEnter2D", BindingFlags.Instance | BindingFlags.NonPublic);
+        hit.Invoke(Shield.Instance, new object[] { collider });
+        Assert.That(Shield.Instance.currentShieldPoints, Is.EqualTo(Mathf.Max(0f, before - 3f)));
+        UnityEngine.Object.Destroy(enemyObject);
+        yield break;
+    }
+
     [UnityTest]
     public IEnumerator ReplayRestoresInitialRunThreeTimes()
     {

@@ -5,6 +5,7 @@ public class Projectile : MonoBehaviour
     public float speed = 10f;
     public int damage = 1;
     [HideInInspector] public bool isDeflected = false;
+    private bool hitProcessed;
 
 
     private void Awake()
@@ -35,8 +36,11 @@ public class Projectile : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (hitProcessed) return;
+
         if ((CompareTag("TowerProjectile") || CompareTag("DroneProjectile")) && other.CompareTag("Enemy"))
         {
+            hitProcessed = true;
             if (CompareTag("TowerProjectile"))
             {
                 if (isDeflected)
@@ -74,6 +78,7 @@ public class Projectile : MonoBehaviour
                 {
                     SoundManager.Instance.PlayDeflectionHitSound();
                     transform.tag = "TowerProjectile";
+                    isDeflected = true;
                     Stats.Instance.deflectedProjectilesFired++;
                     transform.rotation *= Quaternion.Euler(0f, 0f, 180f);
                     shield.TakeDamage(damage / 2);
@@ -81,6 +86,7 @@ public class Projectile : MonoBehaviour
                 }
 
                 SoundManager.Instance.PlayStationHitSound();
+                hitProcessed = true;
                 shield.TakeDamage(damage);
                 ProjectileManager.Instance.RemoveProjectile(this);
                 return;
@@ -93,6 +99,7 @@ public class Projectile : MonoBehaviour
 
                 Stats.Instance.enemyProjectilesHit++;
 
+                hitProcessed = true;
                 other.GetComponent<StationModule>().TakeDamage(damage);
                 ProjectileManager.Instance.RemoveProjectile(this);
                 return;
@@ -102,6 +109,7 @@ public class Projectile : MonoBehaviour
             {
                 Stats.Instance.enemyProjectilesHit++;
 
+                hitProcessed = true;
                 other.GetComponent<Drone>().TakeDamage(damage, Stats.eDeadBy.enemyProjectile);
                 ProjectileManager.Instance.RemoveProjectile(this);
                 return;

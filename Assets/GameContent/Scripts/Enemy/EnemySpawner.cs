@@ -189,36 +189,35 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
     EnemyWave GenerateProceduralWave(int waveIndex)
     {
-        int enemyCount = Mathf.Min(Mathf.RoundToInt(2 + waveIndex * 1.2f), 50);
-
-        Vector2 typeDelay = new Vector2(0.3f, 0.6f);
-        Vector2 spawnDelay = new Vector2(0.4f, 0.8f);
-
-        Vector2Int amountRange = new Vector2Int(1, 3 + waveIndex);
+        int remaining = Mathf.Clamp(2 + waveIndex * 2, 2, 50);
+        bool bossWave = waveIndex >= 19 && (waveIndex + 1) % 10 == 0;
+        if (bossWave) remaining--;
 
         var wave = new EnemyWave
         {
-            enemies = new List<SpawnInstruction>(enemyCount),
-            delayBetweenSpawnsTypes = typeDelay
+            enemies = new List<SpawnInstruction>(),
+            delayBetweenSpawnsTypes = new Vector2(0.1f, 0.2f)
         };
 
-        for (int i = 0; i < enemyCount; i++)
+        while (remaining > 0)
         {
             var type = GetEnemyTypeByWave(waveIndex);
-            bool isSwarm = type == Enemy.eEnemyType.Swarm;
-
-            Vector2Int swarmSize = isSwarm
-                ? new Vector2Int(3 + waveIndex / 6, 5 + waveIndex / 6)
-                : Vector2Int.one;
+            int groupSize = type == Enemy.eEnemyType.Swarm ? Mathf.Min(3 + waveIndex / 10, 5, remaining) : 1;
+            int amount = Mathf.Min(Random.Range(1, 4), remaining / groupSize);
 
             wave.enemies.Add(new SpawnInstruction
             {
                 type = type,
-                amount = amountRange,
-                delayBetweenSpawns = spawnDelay,
-                swarmGroupSize = swarmSize
+                amount = new Vector2Int(amount, amount),
+                delayBetweenSpawns = new Vector2(0.15f, 0.3f),
+                swarmGroupSize = new Vector2Int(groupSize, groupSize)
             });
+            remaining -= amount * groupSize;
         }
+
+        if (bossWave)
+            wave.enemies.Add(new SpawnInstruction { type = Enemy.eEnemyType.Boss, amount = Vector2Int.one,
+                delayBetweenSpawns = Vector2.zero, swarmGroupSize = Vector2Int.one });
 
         return wave;
     }
@@ -227,7 +226,6 @@ public class EnemySpawner : MonoBehaviour, IResettable
     {
         float roll = Random.value;
 
-        if (waveIndex > 16 && roll < 0.1f) return Enemy.eEnemyType.Boss;
         if (waveIndex > 13 && roll < 0.25f) return Enemy.eEnemyType.Swarm;
         if (waveIndex > 9 && roll < 0.4f) return Enemy.eEnemyType.Ranged;
         if (waveIndex > 7 && roll < 0.5f) return Enemy.eEnemyType.Tank;
