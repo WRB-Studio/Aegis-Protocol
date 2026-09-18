@@ -29,3 +29,5 @@ Quellen: [Google Play: Preview Assets](https://support.google.com/googleplay/and
 - Frametimes, Speicher und GC auf einem schwächeren Gerät messen; erst danach über Pooling, Texturen und Audioimport entscheiden.
 
 Für neue Apps und Updates verlangt Google Play seit 31.08.2026 API 36. Dieses Projekt verwendet aktuell die automatische Ziel-API; die installierte Unity-Android-SDK enthält API 36. Der erfolgreiche Development-Build meldet `targetSdkVersion 36`; die Manifest-Zielversion des finalen AAB erneut prüfen. Ein signierter AAB sowie der Store-Testweg sind noch offen.
+
+Signierung: Ein Keystore und Alias sind lokal konfiguriert, die Passwörter sind im Projekt nicht hinterlegt. Für U38 müssen sie im Unity-Editor eingegeben werden; niemals in Git oder diese Dokumentation schreiben. Erst danach Version/Versioncode festlegen, AAB signieren und auf dem vorgesehenen Testweg installieren.

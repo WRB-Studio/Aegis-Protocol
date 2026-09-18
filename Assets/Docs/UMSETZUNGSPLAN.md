@@ -111,7 +111,7 @@ Stand 18.09.2026 zu U31–U34: Die Upgrade-Symbole werden nur einmal aus `Resour
 - [ ] **U37 – Veröffentlichungsmaterial vervollständigen.** Aktuelle Gameplay-Screenshots, kurze Beschreibung und Medienherkunft/Nutzungsnachweise zusammenstellen. Aktuelle Store-Vorgaben und vorhandenen Eintrag prüfen. **Abnahme:** Präsentation entspricht dem tatsächlichen Spiel und alle erforderlichen Angaben liegen vor.
 - [ ] **U38 – Signierten Release-Kandidaten erstellen und prüfen.** Versionsnummer/Versioncode festlegen, Release-AAB bauen und über den vorgesehenen Testweg installieren. **Abnahme:** Der tatsächliche Release-Build besteht Start, Ausbau, Speichern/Fortsetzen und Replay.
 
-Release-Teilstand: Die automatisierte Android-Ziel-Konfiguration besteht 22 Play-Mode- und 3 Edit-Mode-Tests. Der Android-Development-Build ist erfolgreich (APK, API 36). `RELEASE.md` enthält einen Store-Textentwurf, eine Medieninventur, aktuelle Google-Quellen und die konkrete Geräte-Testmatrix. U35–U38 bleiben bis zu Pixel-Abnahme, neuen Screenshots, Medienrechten, Signierung und Store-Testlauf offen.
+Release-Teilstand: Die automatisierte Android-Ziel-Konfiguration besteht 22 Play-Mode- und 3 Edit-Mode-Tests. Der Android-Development-Build ist erfolgreich (APK, API 36). `RELEASE.md` enthält einen Store-Textentwurf, eine Medieninventur, aktuelle Google-Quellen und die konkrete Geräte-Testmatrix. U35–U38 bleiben bis zu Pixel-Abnahme, neuen Screenshots, Medienrechten, lokale Signierpasswörter, Signierung und Store-Testlauf offen. Ein Keystore/Alias ist konfiguriert, aber keine Passwörter im Projekt hinterlegt.
 
 ## Abschlusskriterien
 
