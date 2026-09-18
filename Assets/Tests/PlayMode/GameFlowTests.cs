@@ -196,6 +196,26 @@ public class GameFlowTests
     }
 
     [UnityTest]
+    public IEnumerator UpgradeButtons_RemainReadableWhenUnselectedAndSelected()
+    {
+        var module = StationModule.GetModuleByType(StationModule.eModuleType.AmmoFabricator);
+        module.isBuilt = true;
+        module.gameObject.SetActive(true);
+        ResourceManager.Instance.curMaterials = 0;
+        UpgradeUI.Instance.Show(module.upgradeSet);
+
+        var button = UnityEngine.Object.FindObjectsByType<UnityEngine.UI.Button>(
+            FindObjectsInactive.Include, FindObjectsSortMode.None)
+            .First(item => item.gameObject.name == "btnUpgrade(Clone)");
+        Assert.That(button.interactable, Is.True);
+        Assert.That(button.image.color.grayscale, Is.LessThan(0.5f));
+
+        button.onClick.Invoke();
+        Assert.That(button.image.color.grayscale, Is.LessThan(0.5f));
+        yield break;
+    }
+
+    [UnityTest]
     public IEnumerator ReplayRestoresInitialRunThreeTimes()
     {
         var resources = ResourceManager.Instance;

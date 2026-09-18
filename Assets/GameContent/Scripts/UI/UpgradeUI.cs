@@ -198,17 +198,12 @@ public class UpgradeUI : MonoBehaviour, IResettable
         {
             ui.costText.text = "MAX";
             ui.button.interactable = true;
-            var c = ui.button.colors.disabledColor;
-            c.a = 1f;
-            ui.button.image.color = c;
             return;
         }
 
         int cost = Mathf.RoundToInt(upgrade.cost);
-        bool canBuy = cost <= ResourceManager.Instance.curMaterials;
         ui.costText.text = cost + " M";
         ui.button.interactable = true;
-        ui.button.image.color = canBuy ? ui.button.colors.normalColor : ui.button.colors.disabledColor;
     }
 
     void OnUpgradeClicked(UpgradeAttribute upgrade)
