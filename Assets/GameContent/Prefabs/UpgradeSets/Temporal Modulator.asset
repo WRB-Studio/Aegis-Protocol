@@ -15,7 +15,7 @@ MonoBehaviour:
   moduleType: 8
   upgradeAttributes:
   - upgradeName: 15
-    description: Increase maximum game speed factor.
+    description: Unlock faster game speeds.
     level: 0
     maxLevel: 6
     baseValue: 1

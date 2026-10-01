@@ -142,14 +142,29 @@ public class UIManager : MonoBehaviour, IResettable
     public void ShowInfoPanel(string title, string info, int cost, bool showBtnBuy = false)
     {
         UIManagerInfoPanel.SetActive(true);
+        ConstrainInfoPanel(UIManagerInfoPanel);
 
         string formatted = Regex.Replace(title, "([a-z])([A-Z])", "$1 $2");
         txtTitle.text = char.ToUpper(formatted[0]) + formatted.Substring(1);
 
         txtInfo.text = info;
-        txtBuyCost.text = cost.ToString() + " M";
+        txtBuyCost.text = Utils.FormatNumber(cost) + " M";
         btnBuy.gameObject.SetActive(showBtnBuy);
         StartCoroutine(DelayedLayoutRebuild());
+    }
+
+    public static void ConstrainInfoPanel(GameObject panel)
+    {
+        var canvas = panel.GetComponentInParent<Canvas>();
+        var rect = panel.transform as RectTransform;
+        if (!canvas || !rect) return;
+        var canvasRect = canvas.rootCanvas.transform as RectTransform;
+        if (!canvasRect) return;
+        float safeWidth = canvasRect.rect.width * Screen.safeArea.width / Mathf.Max(1, Screen.width);
+        float width = Mathf.Min(500f, Mathf.Max(100f, safeWidth - 48f));
+        rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+        var textGroup = panel.transform.Find("TextGrp") as RectTransform;
+        if (textGroup) textGroup.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
     }
 
     private IEnumerator DelayedLayoutRebuild()

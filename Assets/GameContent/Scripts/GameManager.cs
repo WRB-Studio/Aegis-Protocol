@@ -29,68 +29,68 @@ public class GameManager : MonoBehaviour
     {
         var sb = new System.Text.StringBuilder(256);
 
-        sb.AppendLine($"<align=center>Played Time 00:00:00</align>");
+        sb.AppendLine($"<align=center>Play time 00:00:00</align>");
         sb.AppendLine();
 
-        sb.AppendLine($"Time\t\t\t999");
-        sb.AppendLine($"Waves\t\t999");
-        sb.AppendLine($"Kills\t\t\t999");
-        sb.AppendLine($"Upgrades\t\t999");
-        sb.AppendLine($"Resources\t\t999");
+        sb.AppendLine($"Time: 999");
+        sb.AppendLine($"Waves: 999");
+        sb.AppendLine($"Kills: 999");
+        sb.AppendLine($"Upgrades: 999");
+        sb.AppendLine($"Resources: 999");
 
         // modules penalty in red, as negative
-        sb.AppendLine($"<color=#FF4D4D>Modules\t\t-999</color>");
-        sb.AppendLine("__________________");
-        sb.AppendLine($"<size=140%><b>Score</b>\t999999</size>");
-        sb.AppendLine($"Best\t\t\t999999");
+        sb.AppendLine($"<color=#FF4D4D>Modules: -999</color>");
+        sb.AppendLine("");
+        sb.AppendLine($"<size=120%><b>Score</b>: 999999</size>");
+        sb.AppendLine($"Best: 999999");
 
         txtGameOverStats.text = sb.ToString();
 
 
         sb = new System.Text.StringBuilder(256);
 
-        sb.AppendLine($"<align=center>Played Time: 00:00:00</align>");
+        sb.AppendLine($"<align=center>Play time: 00:00:00</align>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Waves\t\t\t999");
+        sb.AppendLine($"<b>Waves:</b> 999");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Enemies</b>");
-        sb.AppendLine($" └ Spawned\t\t999");
-        sb.AppendLine($" └ Killed\t\t\t999");
+        sb.AppendLine($"Spawned: 999");
+        sb.AppendLine($"Killed: 999");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Projectiles</b>");
-        sb.AppendLine($" └ Tower fired\t\t999");
-        sb.AppendLine($" └ Tower hits\t\t999");
-        sb.AppendLine($" └ Drone fired\t\t999");
-        sb.AppendLine($" └ Drone hits\t\t999");
-        sb.AppendLine($" └ Enemy fired\t\t999");
-        sb.AppendLine($" └ Enemy hits\t\t999");
+        sb.AppendLine($"Tower shots: 999");
+        sb.AppendLine($"Tower hits: 999");
+        sb.AppendLine($"Drone shots: 999");
+        sb.AppendLine($"Drone hits: 999");
+        sb.AppendLine($"Enemy shots: 999");
+        sb.AppendLine($"Enemy hits: 999");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Modules</b>");
-        sb.AppendLine($" └ Built\t\t\t999");
-        sb.AppendLine($" └ Lost\t\t\t999");
-        sb.AppendLine($" └ Damage Taken\t999");
+        sb.AppendLine($"Built: 999");
+        sb.AppendLine($"Lost: 999");
+        sb.AppendLine($"Damage: 999");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Shield</b>");
-        sb.AppendLine($" └ Damage Taken\t999");
-        sb.AppendLine($" └ Deflected\t\t999");
-        sb.AppendLine($" └ Deflected hits\t999");
+        sb.AppendLine($"Damage: 999");
+        sb.AppendLine($"Deflected: 999");
+        sb.AppendLine($"Deflected hits: 999");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Upgrading</b>");
-        sb.AppendLine($" └ Bought\t\t\t999");
-        sb.AppendLine($" └ Total costs\t\t999 M");
+        sb.AppendLine($"Bought: 999");
+        sb.AppendLine($"Spent: 999 M");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Resources</b>");
-        sb.AppendLine($" └ spawned raw\t\t999");
-        sb.AppendLine($" └ manually\t\t999 M");
-        sb.AppendLine($" └ automatically\t\t999 M");
-        sb.AppendLine($" └ total\t\t\t999 M");
+        sb.AppendLine($"Dropped: 999");
+        sb.AppendLine($"Collected: 999 M");
+        sb.AppendLine($"Auto-collected: 999 M");
+        sb.AppendLine($"Total: 999 M");
 
         txtDetails.text = sb.ToString();
     }
@@ -218,21 +218,21 @@ public class GameManager : MonoBehaviour
         var b = FindAnyObjectByType<ScoreManager>().GetBreakdown(Stats.Instance);
         var sb = new System.Text.StringBuilder(256);
 
-        sb.AppendLine($"<align=center>Played Time {FormatTimeSmart(b.playTimeSeconds)}</align>");
+        sb.AppendLine($"<align=center>Play time {FormatTimeSmart(b.playTimeSeconds)}</align>");
         sb.AppendLine();
 
-        sb.AppendLine($"Time\t\t\t{b.timeScore}");
-        sb.AppendLine($"Waves\t\t{b.wavesScore}");
-        sb.AppendLine($"Kills\t\t\t{b.killsScore}");
-        sb.AppendLine($"Upgrades\t\t{b.upgradesScore}");
-        sb.AppendLine($"Resources\t\t{b.resourcesScore}");
+        sb.AppendLine($"Time: {b.timeScore}");
+        sb.AppendLine($"Waves: {b.wavesScore}");
+        sb.AppendLine($"Kills: {b.killsScore}");
+        sb.AppendLine($"Upgrades: {b.upgradesScore}");
+        sb.AppendLine($"Resources: {b.resourcesScore}");
 
         // modules penalty in red, as negative
-        sb.AppendLine($"<color=#FF4D4D>Modules\t\t-{b.modulesPenalty}</color>");
-        sb.AppendLine("__________________");
-        sb.AppendLine($"<size=140%><b>Score</b>\t{b.totalScore}</size>");
+        sb.AppendLine($"<color=#FF4D4D>Modules: -{b.modulesPenalty}</color>");
+        sb.AppendLine("");
+        sb.AppendLine($"<size=120%><b>Score</b>: {b.totalScore}</size>");
         if (SaveGameManager.Instance.bestSaveGame.score != 0 && SaveGameManager.Instance.bestSaveGame.score > b.totalScore)
-            sb.AppendLine($"Best\t\t\t{SaveGameManager.Instance.bestSaveGame.score}");
+            sb.AppendLine($"Best: {SaveGameManager.Instance.bestSaveGame.score}");
 
         txtGameOverStats.text = sb.ToString();
 
@@ -253,48 +253,48 @@ public class GameManager : MonoBehaviour
         var s = Stats.Instance;
         var sb = new System.Text.StringBuilder(512);
 
-        sb.AppendLine($"<align=center>Play Time: {FormatTimeSmart(s.playTime)}</align>");
+        sb.AppendLine($"<align=center>Play time: {FormatTimeSmart(s.playTime)}</align>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Waves:\t\t\t{s.wavesCompleted}");
+        sb.AppendLine($"<b>Waves:</b> {s.wavesCompleted}");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Enemies</b>");
-        sb.AppendLine($" └ Spawned\t\t{s.enemiesSpawned}");
-        sb.AppendLine($" └ Killed\t\t\t{s.GetTotalKills()}");
+        sb.AppendLine($"Spawned: {s.enemiesSpawned}");
+        sb.AppendLine($"Killed: {s.GetTotalKills()}");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Projectiles</b>");
-        sb.AppendLine($" └ Tower fired\t\t{s.towerProjectilesFired}");
-        sb.AppendLine($" └ Tower hits\t\t{s.towerProjectilesHit}");
-        sb.AppendLine($" └ Drone fired\t\t{s.droneProjectilesFired}");
-        sb.AppendLine($" └ Drone hits\t\t{s.droneProjectilesHit}");
-        sb.AppendLine($" └ Enemy fired\t\t{s.enemyProjectilesFired}");
-        sb.AppendLine($" └ Enemy hits\t\t{s.enemyProjectilesHit}");
+        sb.AppendLine($"Tower shots: {s.towerProjectilesFired}");
+        sb.AppendLine($"Tower hits: {s.towerProjectilesHit}");
+        sb.AppendLine($"Drone shots: {s.droneProjectilesFired}");
+        sb.AppendLine($"Drone hits: {s.droneProjectilesHit}");
+        sb.AppendLine($"Enemy shots: {s.enemyProjectilesFired}");
+        sb.AppendLine($"Enemy hits: {s.enemyProjectilesHit}");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Modules</b>");
-        sb.AppendLine($" └ Built\t\t\t{s.modulesBuilt}");
-        sb.AppendLine($" └ Lost\t\t\t{s.modulesDestroyed}");
-        sb.AppendLine($" └ Damage Taken\t{s.modulesDamageTaken}");
+        sb.AppendLine($"Built: {s.modulesBuilt}");
+        sb.AppendLine($"Lost: {s.modulesDestroyed}");
+        sb.AppendLine($"Damage: {s.modulesDamageTaken}");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Shield</b>");
-        sb.AppendLine($" └ Damage Taken\t{s.shieldDamageTaken}");
-        sb.AppendLine($" └ Deflected\t\t{s.deflectedProjectilesFired}");
-        sb.AppendLine($" └ Deflected hits\t{s.deflectedProjectilesHit}");
+        sb.AppendLine($"Damage: {s.shieldDamageTaken}");
+        sb.AppendLine($"Deflected: {s.deflectedProjectilesFired}");
+        sb.AppendLine($"Deflected hits: {s.deflectedProjectilesHit}");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Upgrading</b>");
-        sb.AppendLine($" └ Bought\t\t\t{s.boughtUpgrades}");
-        sb.AppendLine($" └ Total costs\t\t{s.totalUpgradeCosts} M");
+        sb.AppendLine($"Bought: {s.boughtUpgrades}");
+        sb.AppendLine($"Spent: {s.totalUpgradeCosts} M");
         sb.AppendLine();
 
         sb.AppendLine($"<b>Resources</b>");
-        sb.AppendLine($" └ spawned raw\t\t{s.resourcesSpawned}");
-        sb.AppendLine($" └ manually\t\t{s.resourcesCollectedManually} M");
-        sb.AppendLine($" └ automatically\t\t{s.resourcesCollectedAutomatically} M");
-        sb.AppendLine($" └ total\t\t\t{s.resourcesCollectedManually + s.resourcesCollectedAutomatically} M");
+        sb.AppendLine($"Dropped: {s.resourcesSpawned}");
+        sb.AppendLine($"Collected: {s.resourcesCollectedManually} M");
+        sb.AppendLine($"Auto-collected: {s.resourcesCollectedAutomatically} M");
+        sb.AppendLine($"Total: {s.resourcesCollectedManually + s.resourcesCollectedAutomatically} M");
 
         return sb.ToString();
     }

@@ -106,11 +106,11 @@ public class ResourceManager : MonoBehaviour, IResettable
         displayedCoreMaxHP = core ? core.maxHP : 0;
         displayedMaterials = curMaterials;
         displayedHint = TutorialHint();
-        string hint = displayedHint == 0 ? "\nTap station to build" :
-            displayedHint == 1 ? "\nTap material to collect" : "";
-        txtMaterial.text = $"Wave {displayedWave}  |  Core {displayedCoreHP}/{displayedCoreMaxHP}\nMaterial {Utils.FormatNumber(curMaterials)}{hint}";
+        string hint = displayedHint == 0 ? "\nTap station: build" :
+            displayedHint == 1 ? "\nTap drops: collect" : "";
+        txtMaterial.text = $"Wave {displayedWave}\nCore {displayedCoreHP}/{displayedCoreMaxHP}  |  {Utils.FormatNumber(curMaterials)} M{hint}";
         if (waveBonusDisplayTime > 0f)
-            txtMaterial.text += $"\nWave complete +{lastWaveBonus} M";
+            txtMaterial.text += $"\nWave bonus +{Utils.FormatNumber(lastWaveBonus)} M";
     }
 
     int TutorialHint()

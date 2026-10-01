@@ -15,7 +15,7 @@ MonoBehaviour:
   moduleType: 5
   upgradeAttributes:
   - upgradeName: 3
-    description: Increase tower fire range
+    description: Increase turret range.
     level: 0
     maxLevel: 16
     baseValue: 3

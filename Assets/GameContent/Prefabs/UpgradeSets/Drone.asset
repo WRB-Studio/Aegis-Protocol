@@ -15,7 +15,7 @@ MonoBehaviour:
   moduleType: 4
   upgradeAttributes:
   - upgradeName: 8
-    description: Increase active drones
+    description: Add a drone slot.
     level: 0
     maxLevel: 3
     baseValue: 1
@@ -26,7 +26,7 @@ MonoBehaviour:
     costMultiplier: 2.15
     cost: 0
   - upgradeName: 9
-    description: Increase HP of all drones
+    description: More HP for all drones.
     level: 0
     maxLevel: 87
     baseValue: 2
@@ -37,7 +37,7 @@ MonoBehaviour:
     costMultiplier: 1.25
     cost: 0
   - upgradeName: 10
-    description: Decrease build time for drones
+    description: Build drones faster.
     level: 0
     maxLevel: 65
     baseValue: 30
@@ -48,7 +48,7 @@ MonoBehaviour:
     costMultiplier: 1.25
     cost: 0
   - upgradeName: 11
-    description: Increase damage for all drones
+    description: More damage for all drones.
     level: 0
     maxLevel: 100
     baseValue: 1

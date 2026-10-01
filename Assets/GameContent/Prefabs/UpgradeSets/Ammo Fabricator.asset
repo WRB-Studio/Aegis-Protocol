@@ -15,7 +15,7 @@ MonoBehaviour:
   moduleType: 6
   upgradeAttributes:
   - upgradeName: 1
-    description: Increase tower fire rate
+    description: Fire more often.
     level: 0
     maxLevel: 100
     baseValue: 0.5
@@ -26,7 +26,7 @@ MonoBehaviour:
     costMultiplier: 1.2
     cost: 0
   - upgradeName: 2
-    description: Increase tower damage
+    description: Deal more damage per shot.
     level: 0
     maxLevel: 87
     baseValue: 1

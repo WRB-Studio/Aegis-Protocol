@@ -15,7 +15,7 @@ MonoBehaviour:
   moduleType: 3
   upgradeAttributes:
   - upgradeName: 12
-    description: Increase shield points
+    description: Absorb more damage.
     level: 0
     maxLevel: 100
     baseValue: 5
@@ -26,7 +26,7 @@ MonoBehaviour:
     costMultiplier: 1.25
     cost: 0
   - upgradeName: 13
-    description: Decrease shield recharge time
+    description: Recharge the shield faster.
     level: 0
     maxLevel: 100
     baseValue: 20
@@ -37,7 +37,7 @@ MonoBehaviour:
     costMultiplier: 1.15
     cost: 0
   - upgradeName: 14
-    description: Increase chance to defelct damage on shield
+    description: Reflect more incoming shots.
     level: 0
     maxLevel: 80
     baseValue: 0

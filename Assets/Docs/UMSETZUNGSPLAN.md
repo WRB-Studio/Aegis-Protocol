@@ -37,6 +37,7 @@ Grundlage: [Projektanalyse](PROJEKTANALYSE.md).
 
 ## Umgesetzt
 
+- [x] UI-Texte gekürzt; Modul- und Upgrade-Infos mit begrenzter Breite und Zeilenumbruch, kompakteres HUD, gekürzte Zahlen auf Kaufbuttons und Statistik ohne breite Tabulator-Abstände.
 - [x] Structural Integrity zum Core verschoben; vorhandene HP-Upgrades bleiben beim Laden erhalten.
 - [x] CommandUnit behält Drehgeschwindigkeit und bietet Zielpriorisierung: einmalig 40 Material, danach kostenlos zwischen nächstem Gegner, Artillery und stärkstem Gegner wechseln. Auswahl bleibt bei Modulverlust gespeichert.
 - [x] Drohnenmodul erzeugt beim Bau eine Startdrohne; insgesamt vier Plätze, keine zusätzliche Startdrohne beim Laden oder Wiederaufbau mit vorhandenen Drohnen.

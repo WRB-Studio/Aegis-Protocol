@@ -15,7 +15,7 @@ MonoBehaviour:
   moduleType: 1
   upgradeAttributes:
   - upgradeName: 5
-    description: Increase HP of all modules
+    description: More HP for all modules.
     level: 0
     maxLevel: 100
     baseValue: 3

@@ -154,6 +154,7 @@ public class UpgradeUI : MonoBehaviour, IResettable
         if (!infoPanel) return;
 
         infoPanel.SetActive(true);
+        UIManager.ConstrainInfoPanel(infoPanel);
 
         var title = infoPanel.transform.Find(infoTitlePath)?.GetComponent<TextMeshProUGUI>();
         var desc = infoPanel.transform.Find(infoDescPath)?.GetComponent<TextMeshProUGUI>();
@@ -168,14 +169,14 @@ public class UpgradeUI : MonoBehaviour, IResettable
         {
             string current = GetValueWithUnit(upgrade, upgrade.currentValue);
             string persistence = upgrade.IsPermanent
-                ? "Permanent: survives module loss."
-                : "Requires an active module.";
+                ? "Permanent"
+                : "Active module required";
             if (upgrade.upgradeName == eUpgradeName.DroneHP || upgrade.upgradeName == eUpgradeName.DroneDamage)
-                persistence = "Installed on drones: survives module loss.";
+                persistence = "Existing drones keep this upgrade";
             else if (upgrade.upgradeName == eUpgradeName.DroneCount)
-                persistence = "Module required to build drones. Existing drones survive module loss.";
+                persistence = "Existing drones stay if module is lost";
             if (upgrade.upgradeName == eUpgradeName.TargetPriority && upgrade.level > 0)
-                desc.text = upgrade.description + "\n" + current + "\nTap again to switch for free.\n" + persistence;
+                desc.text = "Target: " + current + "\nTap again to switch (free)\n" + persistence;
             else if (upgrade.level >= upgrade.maxLevel)
                 desc.text = upgrade.description + "\n" + current + " (MAX)\n" + persistence;
             else
@@ -183,8 +184,8 @@ public class UpgradeUI : MonoBehaviour, IResettable
                 int price = Mathf.RoundToInt(upgrade.cost);
                 string next = GetValueWithUnit(upgrade, upgrade.CalculateValue(upgrade.level + 1));
                 string action = price <= ResourceManager.Instance.curMaterials
-                    ? "Tap again to buy for " + price + " M"
-                    : "Need " + price + " M";
+                    ? "Tap again: " + Utils.FormatNumber(price) + " M"
+                    : "Need " + Utils.FormatNumber(price) + " M";
                 desc.text = upgrade.description + "\n" + current + " -> " + next + "\n" + action + "\n" + persistence;
             }
         }
@@ -215,7 +216,7 @@ public class UpgradeUI : MonoBehaviour, IResettable
         }
 
         int cost = Mathf.RoundToInt(upgrade.cost);
-        ui.costText.text = cost + " M";
+        ui.costText.text = Utils.FormatNumber(cost) + " M";
         ui.button.interactable = true;
     }
 

@@ -15,7 +15,7 @@ MonoBehaviour:
   moduleType: 7
   upgradeAttributes:
   - upgradeName: 4
-    description: Increase tower rotation speed
+    description: Turn the turret faster.
     level: 0
     maxLevel: 100
     baseValue: 1
@@ -26,7 +26,7 @@ MonoBehaviour:
     costMultiplier: 1.2
     cost: 0
   - upgradeName: 16
-    description: Unlock target selection. Switch between nearest enemy, artillery first and strongest enemy.
+    description: Choose turret targets.
     level: 0
     maxLevel: 1
     baseValue: 0
