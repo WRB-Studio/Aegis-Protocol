@@ -179,6 +179,117 @@ public class GameFlowTests
     }
 
     [UnityTest]
+    public IEnumerator ProjectileSweepHitsThinTargetsOnceAtNormalAndFastSpeed()
+    {
+        var enemyObject = new GameObject("Thin projectile target");
+        enemyObject.tag = "Enemy";
+        enemyObject.transform.position = new Vector3(2f, 2f, 0f);
+        var collider = enemyObject.AddComponent<BoxCollider2D>();
+        collider.size = Vector2.one * 0.05f;
+        collider.isTrigger = true;
+        var enemy = enemyObject.AddComponent<Enemy>();
+        enemy.enemyType = Enemy.eEnemyType.Normal;
+        enemy.maxHP = 20;
+        enemy.InitWithLevel(0);
+        EnemySpawner.Instance.instantiatedEnemies.Add(enemy);
+        var hpField = typeof(Enemy).GetField("currentHP", BindingFlags.Instance | BindingFlags.NonPublic);
+        var trigger = typeof(Projectile).GetMethod("OnTriggerEnter2D", BindingFlags.Instance | BindingFlags.NonPublic);
+        try
+        {
+            foreach (float scale in new[] { 1f, 4f })
+            {
+                Time.timeScale = scale;
+                yield return null;
+                foreach (bool droneShot in new[] { false, true })
+                {
+                    var prefab = droneShot ? DroneManager.Instance.dronePrefab.GetComponent<Drone>().projectilePrefab
+                        : Tower.Instance.projectilePrefab;
+                    var projectile = ProjectileManager.Instance.spawnProjectile(prefab, new Vector2(2f, 0f));
+                    projectile.speed = 4f / Time.deltaTime;
+                    projectile.damage = 1;
+                    int hp = (int)hpField.GetValue(enemy);
+                    int hits = droneShot ? Stats.Instance.droneProjectilesHit : Stats.Instance.towerProjectilesHit;
+                    ProjectileManager.Instance.UpdateNormal();
+                    Assert.That((int)hpField.GetValue(enemy), Is.EqualTo(hp - 1), "A target between frame positions must be hit.");
+                    Assert.That(projectile.transform.position.y, Is.LessThan(2f));
+                    Assert.That(ProjectileManager.Instance.allProjectiles, Has.No.Member(projectile));
+                    trigger.Invoke(projectile, new object[] { collider });
+                    Assert.That((int)hpField.GetValue(enemy), Is.EqualTo(hp - 1), "The trigger must not duplicate the swept hit.");
+                    Assert.That(droneShot ? Stats.Instance.droneProjectilesHit : Stats.Instance.towerProjectilesHit,
+                        Is.EqualTo(hits + 1));
+                }
+            }
+        }
+        finally
+        {
+            Time.timeScale = 1f;
+            EnemySpawner.Instance.instantiatedEnemies.Remove(enemy);
+            UnityEngine.Object.Destroy(enemyObject);
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator SweptShieldReflectionProtectsCoreAndCanHitAnEnemy()
+    {
+        var shieldModule = StationModule.GetModuleByType(StationModule.eModuleType.Shield);
+        shieldModule.isBuilt = true;
+        shieldModule.gameObject.SetActive(true);
+        var shield = Shield.Instance;
+        shield.OnModuleBuilt();
+        shield.deflectionChance = 100f;
+        Time.timeScale = 4f;
+        yield return null;
+        Physics2D.SyncTransforms();
+        var shieldCollider = shield.GetComponent<Collider2D>();
+        var bounds = shieldCollider.bounds;
+        var prefabs = (System.Collections.Generic.List<GameObject>)typeof(EnemySpawner)
+            .GetField("enemyPrefabs", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(EnemySpawner.Instance);
+        var prefab = prefabs.Select(p => p.GetComponent<Enemy>())
+            .First(e => e.enemyType == Enemy.eEnemyType.Ranged).projectilePrefab;
+        var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
+        int coreHP = core.currentHP;
+        int reflected = Stats.Instance.deflectedProjectilesFired;
+        var projectile = ProjectileManager.Instance.spawnProjectile(prefab,
+            new Vector2(bounds.center.x, bounds.max.y + 1f));
+        projectile.transform.rotation = Quaternion.Euler(0f, 0f, 180f);
+        projectile.speed = (bounds.size.y + 2f) / Time.deltaTime;
+        projectile.damage = 2;
+        ProjectileManager.Instance.UpdateNormal();
+        Assert.That(projectile.isDeflected, Is.True);
+        Assert.That(projectile.CompareTag("TowerProjectile"), Is.True);
+        Assert.That(core.currentHP, Is.EqualTo(coreHP));
+        Assert.That(Stats.Instance.deflectedProjectilesFired, Is.EqualTo(reflected + 1));
+        Assert.That(ProjectileManager.Instance.allProjectiles, Has.Member(projectile));
+
+        var trigger = typeof(Projectile).GetMethod("OnTriggerEnter2D", BindingFlags.Instance | BindingFlags.NonPublic);
+        trigger.Invoke(projectile, new object[] { shieldCollider });
+        Assert.That(Stats.Instance.deflectedProjectilesFired, Is.EqualTo(reflected + 1));
+        var enemyObject = new GameObject("Reflected projectile target");
+        enemyObject.tag = "Enemy";
+        enemyObject.transform.position = projectile.transform.position + Vector3.up * 0.5f;
+        enemyObject.AddComponent<BoxCollider2D>().size = Vector2.one * 0.05f;
+        var enemy = enemyObject.AddComponent<Enemy>();
+        enemy.enemyType = Enemy.eEnemyType.Normal;
+        enemy.maxHP = 20;
+        enemy.InitWithLevel(0);
+        EnemySpawner.Instance.instantiatedEnemies.Add(enemy);
+        try
+        {
+            int hits = Stats.Instance.deflectedProjectilesHit;
+            projectile.speed = 2f / Time.deltaTime;
+            ProjectileManager.Instance.UpdateNormal();
+            Assert.That(Stats.Instance.deflectedProjectilesHit, Is.EqualTo(hits + 1));
+            Assert.That(ProjectileManager.Instance.allProjectiles, Has.No.Member(projectile));
+        }
+        finally
+        {
+            Time.timeScale = 1f;
+            EnemySpawner.Instance.instantiatedEnemies.Remove(enemy);
+            UnityEngine.Object.Destroy(enemyObject);
+        }
+    }
+
+    [UnityTest]
     public IEnumerator ArtilleryMustEnterActualTowerRangeBeforeFiring()
     {
         var tower = Tower.Instance;

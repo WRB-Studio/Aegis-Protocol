@@ -22,6 +22,8 @@ public class ProjectileManager : MonoBehaviour, IResettable
 
     public void UpdateNormal()
     {
+        // Enemies and drones move through their transforms before projectile sweeps run.
+        Physics2D.SyncTransforms();
         for (int i = allProjectiles.Count - 1; i >= 0; i--)
         {
             var p = allProjectiles[i];
