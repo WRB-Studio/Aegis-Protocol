@@ -16,6 +16,7 @@ public class SaveGameManager : MonoBehaviour
     SaveGame waveCheckpoint;
     Coroutine pendingSave;
     public bool HasWaveCheckpoint => waveCheckpoint != null;
+    public bool LoadedExistingSave { get; private set; }
 
 #if UNITY_EDITOR
     // Allows Play Mode tests to use an isolated save directory.
@@ -106,6 +107,7 @@ public class SaveGameManager : MonoBehaviour
 
     public void Load()
     {
+        LoadedExistingSave = false;
         ClearWaveCheckpoint();
         if (!File.Exists(PathFile))
         {
@@ -135,6 +137,7 @@ public class SaveGameManager : MonoBehaviour
         try
         {
             ApplyToWorld(currentSaveGame);
+            LoadedExistingSave = true;
 
             TimeController.Instance.RefreshPanel();
             ModulesUI.Instance.ResetModulePanel();

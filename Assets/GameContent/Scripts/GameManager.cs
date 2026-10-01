@@ -21,6 +21,8 @@ public class GameManager : MonoBehaviour
 
 
     private readonly List<IResettable> allResettable = new();
+    private MatchReporter matchReporter;
+    public string matchEndReason = "game_over";
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -109,6 +111,7 @@ public class GameManager : MonoBehaviour
     private void OnDestroy()
     {
         if (Instance != this) return;
+        matchReporter?.Dispose();
         Instance = null;
         isInit = false;
         gameOver = false;
@@ -130,6 +133,7 @@ public class GameManager : MonoBehaviour
         UpgradeAttribute.StoreAllInits();
 
         SaveGameManager.Instance.Load();
+        StartMatchReport(SaveGameManager.Instance.LoadedExistingSave);
 
         isInit = true;
     }
@@ -186,11 +190,13 @@ public class GameManager : MonoBehaviour
 
         UIManager.Instance.UpdateNormal();
         UIToWorldLine.Instance.UpdateNormal();
+        matchReporter?.Tick();
 
     }
 
     public void GameOver()
     {
+        if (gameOver) return;
         gameOver = true;
 
         Time.timeScale = 1f;
@@ -306,6 +312,8 @@ public class GameManager : MonoBehaviour
 
     public void Replay()
     {
+        matchReporter?.Finish(gameOver ? matchEndReason : "restarted");
+        matchReporter?.Dispose();
         StopAllCoroutines();
         Time.timeScale = 1f;
 
@@ -328,7 +336,33 @@ public class GameManager : MonoBehaviour
         isInit = true;
         SaveGameManager.Instance.ClearWaveCheckpoint();
         SaveGameManager.Instance.Save();
+        StartMatchReport(false);
     }
+
+    private void StartMatchReport(bool resumed)
+    {
+        matchEndReason = "game_over";
+        string root = Application.persistentDataPath;
+#if UNITY_EDITOR
+        if (!string.IsNullOrEmpty(SaveGameManager.SaveDirectoryOverride)) root = SaveGameManager.SaveDirectoryOverride;
+#endif
+        matchReporter = new MatchReporter(System.IO.Path.Combine(root, "MatchReports"), resumed);
+        matchReporter.Checkpoint();
+    }
+
+    private void LateUpdate()
+    {
+        // Finish after collision callbacks have counted the final hit/removal.
+        if (gameOver) matchReporter?.Finish(matchEndReason);
+    }
+
+    private void OnApplicationPause(bool paused)
+    {
+        MatchReporter.Event(paused ? "app_paused" : "app_resumed");
+        if (paused) matchReporter?.Checkpoint();
+    }
+
+    private void OnApplicationQuit() => matchReporter?.Finish(gameOver ? matchEndReason : "app_quit");
 
 
 }

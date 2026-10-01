@@ -13,7 +13,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
     [SerializeField] List<GameObject> enemyPrefabs = new List<GameObject>();
     [SerializeField] float timeBetweenWaves = 2f;
     [SerializeField] float firstWaveDelay = 5f;
-    [SerializeField] float earlyWaveDelay = 2.5f;
+    [SerializeField] float earlyWaveDelay = 5f;
     [SerializeField] Transform backgroundGrid;
     [SerializeField] Shader gridDistortionShader;
     public int currentWaveIndex = 0;
@@ -60,9 +60,12 @@ public class EnemySpawner : MonoBehaviour, IResettable
     {
         UpdateInstantiatedEnemies();
         if (!waveIsRunning && instantiatedEnemies.Count == 0 &&
-            SaveGameManager.Instance.HasWaveCheckpoint)
+            !GameManager.gameOver && SaveGameManager.Instance.HasWaveCheckpoint)
         {
             SaveGameManager.Instance.ClearWaveCheckpoint();
+            Stats.Instance.wavesCompleted++;
+            ResourceManager.Instance.AwardWaveBonus(currentWaveIndex);
+            MatchReporter.Current?.CompleteWave();
             SaveGameManager.Instance.Save();
         }
         StartNextWaveIfReady();
@@ -122,7 +125,8 @@ public class EnemySpawner : MonoBehaviour, IResettable
             yield return new WaitForSeconds(0f);
         }
 
-        if (!proceduralWave && currentWaveIndex >= waves.Count)
+        bool hasAuthoredWave = currentWaveIndex < waves.Count;
+        if (!hasAuthoredWave && !proceduralWave)
         {
             enableSpawning = false;
             waveIsRunning = false;
@@ -130,10 +134,8 @@ public class EnemySpawner : MonoBehaviour, IResettable
         }
 
         SaveGameManager.Instance.CaptureWaveCheckpoint();
-        if (currentWaveIndex > 0)
-            Stats.Instance.wavesCompleted++;
-
-        EnemyWave wave = proceduralWave ? GenerateProceduralWave(currentWaveIndex) : waves[currentWaveIndex];
+        EnemyWave wave = hasAuthoredWave ? waves[currentWaveIndex] : GenerateProceduralWave(currentWaveIndex);
+        MatchReporter.Current?.BeginWave(currentWaveIndex + 1, hasAuthoredWave);
 
         foreach (var instr in wave.enemies)
         {
@@ -160,6 +162,8 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
                     instantiatedEnemies.Add(enemy);
                     Stats.Instance.enemiesSpawned++;
+                    MatchReporter.Event("enemy_spawned", enemy.GetInstanceID().ToString(), enemy.enemyType.ToString(),
+                        enemy.maxHP, enemy.speed, $"damage={enemy.damage}; fireRate={enemy.fireRate}; fireRange={enemy.fireRange}", enemy.transform.position);
                 }
 
                 yield return new WaitForSeconds(Random.Range(instr.delayBetweenSpawns.x, instr.delayBetweenSpawns.y));
@@ -174,7 +178,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
     IEnumerator FadeOutWarning(float initialVisibility)
     {
-        const float duration = 2f;
+        const float duration = 2.2f;
         float elapsed = 0f;
         while (elapsed < duration)
         {
@@ -206,6 +210,8 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
         if (Instance.instantiatedEnemies.Contains(enemy))
         {
+            MatchReporter.Event("enemy_removed", enemy.GetInstanceID().ToString(), enemy.enemyType.ToString(),
+                detail: deadBy.ToString(), position: enemy.transform.position);
             if (deadBy != Stats.eDeadBy.None)
                 Stats.Instance.RegisterKill(enemy.enemyType, deadBy);
             Instance.instantiatedEnemies.Remove(enemy);

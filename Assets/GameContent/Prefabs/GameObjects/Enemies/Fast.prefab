@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 3372013719202044855}
   - component: {fileID: 8433256832278321484}
   - component: {fileID: 3155424160549303011}
+  - component: {fileID: 900000000000000002}
   m_Layer: 0
   m_Name: Fast
   m_TagString: Enemy
@@ -79,7 +80,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 30
-  m_Sprite: {fileID: -1696904293, guid: c39cc719a3bcba144bf8d35eaed84cdf, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 21c6410a0f5c48048f8d7f8cbd908d6c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -173,3 +174,24 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 0
+--- !u!114 &900000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3921241608030824942}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70c4c9ec0dca49ca8123427dc9fc7933, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  variants:
+    - {fileID: 21300000, guid: 21c6410a0f5c48048f8d7f8cbd908d6c, type: 3}
+    - {fileID: 21300000, guid: dcd263943e61457484d951e43e64028b, type: 3}
+    - {fileID: 21300000, guid: d1ad256974284345b1177dcb88d5d148, type: 3}
+    - {fileID: 21300000, guid: 10d27e5625d4467d903bc6a505b7a1ef, type: 3}
+  variant3FirstWave: 10
+  variant4FirstWave: 20
+  variant3Scale: 1
+  variant4Scale: 1

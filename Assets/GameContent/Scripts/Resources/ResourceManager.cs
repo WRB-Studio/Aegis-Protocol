@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -26,6 +27,9 @@ public class ResourceManager : MonoBehaviour, IResettable
     private int displayedCoreMaxHP = -1;
     private int displayedMaterials = -1;
     private int displayedHint = -1;
+    float waveBonusDisplayTime;
+    int lastWaveBonus;
+    readonly List<GameObject> incomeLabels = new();
 
 
     void Awake()
@@ -42,6 +46,11 @@ public class ResourceManager : MonoBehaviour, IResettable
 
     public void UpdateNormal()
     {
+        if (waveBonusDisplayTime > 0f)
+        {
+            waveBonusDisplayTime -= Time.unscaledDeltaTime;
+            if (waveBonusDisplayTime <= 0f) RefreshUI();
+        }
         var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
         if (core && (displayedWave != EnemySpawner.Instance.DisplayWave ||
             displayedCoreHP != core.currentHP || displayedCoreMaxHP != core.maxHP ||
@@ -100,6 +109,8 @@ public class ResourceManager : MonoBehaviour, IResettable
         string hint = displayedHint == 0 ? "\nTap station to build" :
             displayedHint == 1 ? "\nTap material to collect" : "";
         txtMaterial.text = $"Wave {displayedWave}  |  Core {displayedCoreHP}/{displayedCoreMaxHP}\nMaterial {Utils.FormatNumber(curMaterials)}{hint}";
+        if (waveBonusDisplayTime > 0f)
+            txtMaterial.text += $"\nWave complete +{lastWaveBonus} M";
     }
 
     int TutorialHint()
@@ -117,6 +128,7 @@ public class ResourceManager : MonoBehaviour, IResettable
                                                 autoCollecting);
 
         collectEffects.Add(effect.GetComponent<CollectEffect>());
+        MatchReporter.Event("material_spawned", value: amount, position: spawnPosition);
     }
 
     public static void RemoveCollectEffect(CollectEffect effect)
@@ -133,8 +145,11 @@ public class ResourceManager : MonoBehaviour, IResettable
 
         int amountCollected = Mathf.RoundToInt(amount * collectingEffeciency);
         curMaterials += amountCollected;
+        var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
+        ShowIncome(amountCollected, core.transform.position);
 
         Stats.Instance.AddCollectResource(amountCollected, collectBy);
+        MatchReporter.Event("material_collected", collectBy.ToString(), value: amountCollected, remaining: curMaterials);
 
         if (UIManager.Instance.stationUI.activeSelf)
         {
@@ -147,12 +162,75 @@ public class ResourceManager : MonoBehaviour, IResettable
         SaveGameManager.Instance.RequestSave();
     }
 
+    public void AwardWaveBonus(int completedWave)
+    {
+        lastWaveBonus = 15 + 3 * Mathf.Max(0, completedWave - 1);
+        curMaterials += lastWaveBonus;
+        MatchReporter.Event("wave_bonus", value: lastWaveBonus, remaining: curMaterials);
+        ShowIncome(lastWaveBonus, StationModule.GetModuleByType(StationModule.eModuleType.Core).transform.position);
+        waveBonusDisplayTime = 3f;
+        RefreshUI();
+        ModulesUI.Instance.RefreshPanel();
+        UpgradeUI.Instance.Refresh();
+    }
+
+    void ShowIncome(int amount, Vector3 position)
+    {
+        if (amount <= 0 || !txtMaterial || !txtMaterial.canvas || !Camera.main) return;
+        StartCoroutine(AnimateIncome(amount, position));
+    }
+
+    IEnumerator AnimateIncome(int amount, Vector3 position)
+    {
+        var canvas = txtMaterial.canvas.rootCanvas;
+        var canvasRect = (RectTransform)canvas.transform;
+        var worldCamera = Camera.main;
+        var labelObject = new GameObject("Income", typeof(RectTransform), typeof(TextMeshProUGUI));
+        labelObject.transform.SetParent(canvasRect, false);
+        incomeLabels.Add(labelObject);
+
+        var label = labelObject.GetComponent<TextMeshProUGUI>();
+        label.font = txtMaterial.font;
+        label.fontStyle = FontStyles.Bold;
+        label.fontMaterial.EnableKeyword("OUTLINE_ON");
+        label.outlineColor = new Color32(8, 12, 16, 255);
+        label.outlineWidth = 0.25f;
+        label.UpdateMeshPadding();
+        label.fontSize = Mathf.Clamp(txtMaterial.fontSize, 28f, 42f);
+        label.alignment = TextAlignmentOptions.Center;
+        label.color = new Color(0.65f, 1f, 0.8f);
+        label.raycastTarget = false;
+        label.text = $"+{Utils.FormatNumber(amount)} M";
+        var rect = label.rectTransform;
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(240f, 60f);
+
+        const float duration = 1.4f;
+        float elapsed = 0f;
+        while (elapsed < duration && label && worldCamera)
+        {
+            var uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+            Vector3 screenPosition = worldCamera.WorldToScreenPoint(position);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPosition, uiCamera, out var localPosition);
+            float progress = elapsed / duration;
+            rect.localPosition = localPosition + Vector2.up * (70f + progress * 65f);
+            label.alpha = 1f - Mathf.SmoothStep(0f, 1f, progress);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        incomeLabels.Remove(labelObject);
+        if (labelObject) Destroy(labelObject);
+    }
+
     public bool SpendMaterial(int amount, bool save = true)
     {
         if (amount >= 0 && curMaterials >= amount)
         {
             curMaterials -= amount;
+            MatchReporter.Event("material_spent", value: amount, remaining: curMaterials);
             RefreshUI();
+            UpgradeUI.Instance.Refresh();
 
             if (save) SaveGameManager.Instance.Save();
 
@@ -171,12 +249,17 @@ public class ResourceManager : MonoBehaviour, IResettable
 
     public void ResetScript()
     {
+        StopAllCoroutines();
+        foreach (var label in incomeLabels)
+            if (label) Destroy(label);
+        incomeLabels.Clear();
         // runtime clear
         for (int i = collectEffects.Count - 1; i >= 0; i--)
             if (collectEffects[i]) Destroy(collectEffects[i].gameObject);
         collectEffects.Clear();
 
         curMaterials = initcurMaterials;
+        waveBonusDisplayTime = 0f;
         collectingEffeciency = initcollectingEffeciency;
         autoCollecting = initautoCollecting;
 

@@ -24,6 +24,7 @@ public class Projectile : MonoBehaviour
         }
 
         SoundManager.Instance.PlayShootSound();
+        MatchReporter.Event("projectile_fired", tag, GetInstanceID().ToString(), position: transform.position);
     }
 
     public void UpdateNormal()
@@ -41,6 +42,8 @@ public class Projectile : MonoBehaviour
         if ((CompareTag("TowerProjectile") || CompareTag("DroneProjectile")) && other.CompareTag("Enemy"))
         {
             hitProcessed = true;
+            MatchReporter.Event("projectile_hit", tag + ":" + GetInstanceID(), other.GetComponent<Enemy>().enemyType + ":" + other.GetComponent<Enemy>().GetInstanceID(),
+                damage, detail: isDeflected ? "deflected" : "", position: transform.position);
             if (CompareTag("TowerProjectile"))
             {
                 if (isDeflected)
@@ -69,6 +72,7 @@ public class Projectile : MonoBehaviour
         {
             if (other.CompareTag("Shield"))
             {
+                MatchReporter.Event("projectile_hit", tag + ":" + GetInstanceID(), "Shield", damage, position: transform.position);
                 Stats.Instance.enemyProjectilesHit++;
 
                 Shield shield = other.GetComponent<Shield>();
@@ -80,14 +84,15 @@ public class Projectile : MonoBehaviour
                     transform.tag = "TowerProjectile";
                     isDeflected = true;
                     Stats.Instance.deflectedProjectilesFired++;
+                    MatchReporter.Event("projectile_deflected", "Shield", GetInstanceID().ToString(), position: transform.position);
                     transform.rotation *= Quaternion.Euler(0f, 0f, 180f);
-                    shield.TakeDamage(damage / 2);
+                    shield.TakeDamage(damage / 2, "deflectedProjectile:" + GetInstanceID());
                     return;
                 }
 
                 SoundManager.Instance.PlayStationHitSound();
                 hitProcessed = true;
-                shield.TakeDamage(damage);
+                shield.TakeDamage(damage, "enemyProjectile:" + GetInstanceID());
                 ProjectileManager.Instance.RemoveProjectile(this);
                 return;
             }
@@ -100,7 +105,8 @@ public class Projectile : MonoBehaviour
                 Stats.Instance.enemyProjectilesHit++;
 
                 hitProcessed = true;
-                other.GetComponent<StationModule>().TakeDamage(damage);
+                other.GetComponent<StationModule>().TakeDamage(damage, "enemyProjectile:" + GetInstanceID());
+                MatchReporter.Event("projectile_hit", tag + ":" + GetInstanceID(), other.GetComponent<StationModule>().moduleType.ToString(), damage, position: transform.position);
                 ProjectileManager.Instance.RemoveProjectile(this);
                 return;
             }
@@ -111,6 +117,7 @@ public class Projectile : MonoBehaviour
 
                 hitProcessed = true;
                 other.GetComponent<Drone>().TakeDamage(damage, Stats.eDeadBy.enemyProjectile);
+                MatchReporter.Event("projectile_hit", tag + ":" + GetInstanceID(), "Drone:" + other.GetComponent<Drone>().GetInstanceID(), damage, position: transform.position);
                 ProjectileManager.Instance.RemoveProjectile(this);
                 return;
             }

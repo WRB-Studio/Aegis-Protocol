@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -133,6 +134,50 @@ public class GameFlowTests
         }
     }
 
+    [Test]
+    public void AuthoredWaves_FollowCampaignPlan()
+    {
+        var field = typeof(EnemySpawner).GetField("waves", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(field, Is.Not.Null);
+
+        var waves = (System.Collections.Generic.List<EnemyWave>)field.GetValue(EnemySpawner.Instance);
+        Assert.That(waves, Has.Count.EqualTo(20));
+        Assert.That(waves[0].enemies.All(instruction => instruction.type == Enemy.eEnemyType.Normal), Is.True);
+        Assert.That(waves[0].enemies.Sum(instruction => instruction.amount.x), Is.GreaterThanOrEqualTo(25));
+        Assert.That(waves[1].enemies.Select(instruction => instruction.type),
+            Is.EqualTo(new[] { Enemy.eEnemyType.Normal, Enemy.eEnemyType.Fast, Enemy.eEnemyType.Normal,
+                Enemy.eEnemyType.Fast, Enemy.eEnemyType.Normal }));
+        Assert.That(waves[1].enemies.Where(instruction => instruction.type == Enemy.eEnemyType.Fast)
+            .Sum(instruction => instruction.amount.x), Is.EqualTo(2));
+        Assert.That(waves[2].enemies.Where(instruction => instruction.type == Enemy.eEnemyType.Fast)
+            .All(instruction => instruction.amount.y <= 2 && instruction.delayBetweenSpawns.x >= 0.8f), Is.True);
+        Assert.That(waves[3].enemies.Any(instruction => instruction.type == Enemy.eEnemyType.Tank), Is.True);
+        Assert.That(waves[5].enemies.Any(instruction => instruction.type == Enemy.eEnemyType.Ranged), Is.True);
+        Assert.That(waves[10].enemies.Any(instruction => instruction.type == Enemy.eEnemyType.Swarm), Is.True);
+
+        foreach (int waveIndex in new[] { 9, 19 })
+            Assert.That(waves[waveIndex].enemies.Count(instruction => instruction.type == Enemy.eEnemyType.Boss), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void EnemyPrefabs_HaveFourVisualVariants()
+    {
+        var prefabsField = typeof(EnemySpawner).GetField("enemyPrefabs",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        var variantsField = typeof(EnemyVisualVariant).GetField("variants",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(prefabsField, Is.Not.Null);
+        Assert.That(variantsField, Is.Not.Null);
+
+        var prefabs = (System.Collections.Generic.List<GameObject>)prefabsField.GetValue(EnemySpawner.Instance);
+        foreach (var prefab in prefabs)
+        {
+            var variants = prefab.GetComponent<EnemyVisualVariant>();
+            Assert.That(variants, Is.Not.Null, prefab.name);
+            Assert.That(((Sprite[])variantsField.GetValue(variants)), Has.Length.EqualTo(4), prefab.name);
+        }
+    }
+
     [UnityTest]
     public IEnumerator DroneUpgrades_UpdateExistingDronesAndPreserveDamageTaken()
     {
@@ -246,10 +291,42 @@ public class GameFlowTests
             .First(item => item.gameObject.name == "btnUpgrade(Clone)");
         Assert.That(button.interactable, Is.True);
         Assert.That(button.image.color.grayscale, Is.LessThan(0.5f));
+        var marker = button.transform.Find("SelectionMarker").GetComponent<Image>();
+        Assert.That(marker.enabled, Is.True);
+        Assert.That(marker.color, Is.EqualTo(UpgradeUI.Instance.colorBtnFrameCantBuy));
 
         button.onClick.Invoke();
         Assert.That(button.image.color.grayscale, Is.LessThan(0.5f));
+        ResourceManager.Instance.curMaterials = 100000;
+        UpgradeUI.Instance.Refresh();
+        Assert.That(marker.color, Is.EqualTo(Color.white));
         yield break;
+    }
+
+    [Test]
+    public void CompletedWave_AwardsBonusOnceAndPersistsIt()
+    {
+        var spawner = EnemySpawner.Instance;
+        spawner.StopAllCoroutines();
+        typeof(EnemySpawner).GetField("enableSpawning", BindingFlags.Instance | BindingFlags.NonPublic)
+            .SetValue(spawner, false);
+        typeof(EnemySpawner).GetField("waveIsRunning", BindingFlags.Instance | BindingFlags.NonPublic)
+            .SetValue(spawner, false);
+        EnemySpawner.RemoveAllEnemies();
+        spawner.currentWaveIndex = 1;
+        ResourceManager.Instance.curMaterials = 100;
+        SaveGameManager.Instance.CaptureWaveCheckpoint();
+        spawner.UpdateNormal();
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(115));
+        spawner.UpdateNormal();
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(115));
+        ResourceManager.Instance.curMaterials = 0;
+        SaveGameManager.Instance.Load();
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(115));
+        spawner.currentWaveIndex = 2;
+        SaveGameManager.Instance.CaptureWaveCheckpoint();
+        spawner.UpdateNormal();
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(133));
     }
 
     [UnityTest]
@@ -362,6 +439,7 @@ public class GameFlowTests
         Assert.That(extractor.currentHP, Is.EqualTo(extractor.maxHP));
         Assert.That(resources.curMaterials, Is.EqualTo(10));
 
+        yield return new WaitForSecondsRealtime(1.1f);
         var saved = JsonUtility.FromJson<SaveGame>(
             File.ReadAllText(Path.Combine(saveDirectory, "savegame.json")));
         Assert.That(saved.material, Is.EqualTo(10));
@@ -404,12 +482,67 @@ public class GameFlowTests
         Assert.That(stats.totalUpgradeCosts, Is.EqualTo(price));
         Assert.That(resources.curMaterials, Is.EqualTo(10));
 
+        yield return new WaitForSecondsRealtime(1.1f);
         var saved = JsonUtility.FromJson<SaveGame>(
             File.ReadAllText(Path.Combine(saveDirectory, "savegame.json")));
         Assert.That(saved.material, Is.EqualTo(10));
         Assert.That(saved.upgrades.Single(u => u.upgradeName == "Damage").level,
             Is.EqualTo(initialLevel + 1));
         yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator RapidUpgradeClicksUseCurrentPricesAndCannotOverspend()
+    {
+        var upgrade = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.Damage);
+        var owner = StationModule.allModules.Single(m =>
+            m.upgradeSet && m.upgradeSet.upgradeAttributes.Contains(upgrade));
+        int initialLevel = upgrade.level;
+        Assert.That(upgrade.maxLevel, Is.GreaterThanOrEqualTo(initialLevel + 2));
+        int budget = Mathf.RoundToInt(upgrade.CalculateCost(initialLevel)) +
+            Mathf.RoundToInt(upgrade.CalculateCost(initialLevel + 1));
+
+        UIManager.Instance.Show(true);
+        owner.isBuilt = true;
+        owner.gameObject.SetActive(true);
+        ModulesUI.Instance.SelectModule(owner.moduleType);
+        UpgradeUI.Instance.Show(owner.upgradeSet);
+        UpgradeUI.Instance.currentSelectedUpgrade = upgrade.upgradeName;
+        ResourceManager.Instance.curMaterials = budget;
+        int purchases = Stats.Instance.boughtUpgrades;
+        int costs = Stats.Instance.totalUpgradeCosts;
+        var container = (Transform)typeof(UpgradeUI).GetField("contentContainer",
+            BindingFlags.Instance | BindingFlags.NonPublic).GetValue(UpgradeUI.Instance);
+        int index = owner.upgradeSet.upgradeAttributes.IndexOf(upgrade);
+        var button = container.GetChild(index).GetComponent<UpgradeButton>();
+        Assert.That(button, Is.Not.Null, "The prefab must use press-triggered upgrade buttons.");
+        var pointer = new PointerEventData(EventSystem.current)
+        {
+            button = PointerEventData.InputButton.Left
+        };
+
+        // Exercise pointer events, including rapid taps and release without duplicate purchases.
+        for (int i = 0; i < 10; i++)
+        {
+            ExecuteEvents.Execute(button.gameObject, pointer, ExecuteEvents.pointerDownHandler);
+            int expectedLevel = initialLevel + Mathf.Min(i + 1, 2);
+            Assert.That(upgrade.level, Is.EqualTo(expectedLevel), "Purchase must happen on press.");
+            ExecuteEvents.Execute(button.gameObject, pointer, ExecuteEvents.pointerUpHandler);
+            ExecuteEvents.Execute(button.gameObject, pointer, ExecuteEvents.pointerClickHandler);
+            Assert.That(upgrade.level, Is.EqualTo(expectedLevel), "Release must not purchase again.");
+        }
+
+        Assert.That(upgrade.level, Is.EqualTo(initialLevel + 2));
+        Assert.That(ResourceManager.Instance.curMaterials, Is.Zero);
+        Assert.That(Stats.Instance.boughtUpgrades, Is.EqualTo(purchases + 2));
+        Assert.That(Stats.Instance.totalUpgradeCosts, Is.EqualTo(costs + budget));
+
+        yield return new WaitForSecondsRealtime(1.1f);
+        var saved = JsonUtility.FromJson<SaveGame>(
+            File.ReadAllText(Path.Combine(saveDirectory, "savegame.json")));
+        Assert.That(saved.material, Is.Zero);
+        Assert.That(saved.upgrades.Single(u => u.upgradeName == "Damage").level,
+            Is.EqualTo(initialLevel + 2));
     }
 
     [UnityTest]
@@ -677,7 +810,7 @@ public class GameFlowTests
         Assert.That(upgradedEfficiency, Is.GreaterThan(efficiency.baseValue));
 
         command.TakeDamage(command.currentHP);
-        Assert.That(core.maxHP, Is.EqualTo(Mathf.RoundToInt(integrity.baseValue)));
+        Assert.That(core.maxHP, Is.EqualTo(core.BaseHP));
         Assert.That(ResourceManager.Instance.collectingEffeciency, Is.EqualTo(upgradedEfficiency));
         Assert.That(integrity.currentValue, Is.GreaterThan(integrity.baseValue));
 
@@ -686,7 +819,7 @@ public class GameFlowTests
         command = StationModule.GetModuleByType(StationModule.eModuleType.CommandUnit);
         core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
         Assert.That(command.isBuilt, Is.False);
-        Assert.That(core.maxHP, Is.EqualTo(Mathf.RoundToInt(integrity.baseValue)));
+        Assert.That(core.maxHP, Is.EqualTo(core.BaseHP));
         Assert.That(ResourceManager.Instance.collectingEffeciency, Is.EqualTo(upgradedEfficiency));
 
         var radar = StationModule.GetModuleByType(StationModule.eModuleType.Radar);

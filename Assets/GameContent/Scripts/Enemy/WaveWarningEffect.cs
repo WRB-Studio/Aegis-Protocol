@@ -67,7 +67,7 @@ public sealed class WaveWarningEffect
 
     public void ShowExit(float elapsed, float initialVisibility)
     {
-        const float outwardTime = 0.7f;
+        const float outwardTime = 2.2f;
         const float fadeTime = 2f;
 
         float blast = Mathf.Clamp01(elapsed / outwardTime);

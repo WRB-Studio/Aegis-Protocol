@@ -346,7 +346,9 @@ public class ModulesUI : MonoBehaviour, IResettable
         currentSelectedModule.currentHP = currentSelectedModule.maxHP;
 
         RefreshPanel();
-        SaveGameManager.Instance.Save();
+        MatchReporter.Event("module_repaired", target: currentSelectedModule.moduleType.ToString(), value: cost,
+            remaining: currentSelectedModule.currentHP);
+        SaveGameManager.Instance.RequestSave();
     }
 
     public void BuySelectedModule()
@@ -367,6 +369,8 @@ public class ModulesUI : MonoBehaviour, IResettable
 
         currentSelectedModule.currentHP = currentSelectedModule.maxHP;
         UpgradeAttribute.ApplyAllUpgradeEffect();
+        MatchReporter.Event("module_built", target: currentSelectedModule.moduleType.ToString(), value: cost,
+            remaining: currentSelectedModule.currentHP);
 
         if (currentSelectedModule.moduleType == StationModule.eModuleType.Shield)
         {
@@ -381,7 +385,7 @@ public class ModulesUI : MonoBehaviour, IResettable
         UpgradeUI.Instance.Refresh();
         TimeController.Instance.RefreshPanel();
 
-        SaveGameManager.Instance.Save();
+        SaveGameManager.Instance.RequestSave();
     }
 
     void ShowSelectedModuleLine()
@@ -424,6 +428,8 @@ public class ModulesUI : MonoBehaviour, IResettable
 
         UIManager.Instance.Show(false);
 
+        GameManager.Instance.matchEndReason = "self_destruct";
+        MatchReporter.Event("self_destruct");
         StationModule.GetModuleByType(StationModule.eModuleType.Core).Die();
     }
 

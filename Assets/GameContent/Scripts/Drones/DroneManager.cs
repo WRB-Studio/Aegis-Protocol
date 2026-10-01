@@ -114,6 +114,7 @@ public class DroneManager : MonoBehaviour, IResettable
                 if (!restoring) Stats.Instance.dronesBuilt++;
                 GameObject drone = Instantiate(dronePrefab, slot.transform.position, slot.transform.rotation, spawnParent);
                 allDrones.Add(drone.GetComponent<Drone>());
+                if (!restoring) MatchReporter.Event("drone_built", drone.GetInstanceID().ToString(), position: drone.transform.position);
                 slot.occupiedDrone = drone.GetComponent<Drone>();
                 if (!restoring) SaveGameManager.Instance.Save();
                 CheckDroneCanBuild();
@@ -168,7 +169,7 @@ public class DroneManager : MonoBehaviour, IResettable
         droneInitialHP = initdroneInitialHP;
         droneInitialDamage = initdroneInitialDamage;
 
-        // UI sync (keine init-vars nötig)
+        // UI sync (keine init-vars nÃ¶tig)
         txtDroneCount.gameObject.SetActive(false);
         txtDroneBuildTime.gameObject.SetActive(false);
         txtDroneBuildTime.text = droneBuildCountdown.ToString("F0");

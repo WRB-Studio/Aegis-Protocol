@@ -54,6 +54,8 @@ public class Enemy : MonoBehaviour
         speed = enemyType == eEnemyType.Fast
             ? Mathf.Min(speed * factor, 5f)
             : Mathf.Clamp(speed * factor / 3f, speed, 3f);
+        if (enemyType == eEnemyType.Fast && level < 3)
+            speed *= 0.8f;
 
         damage = Mathf.RoundToInt(damage * factor);
         fireRate = Mathf.Min(fireRate * factor, 6f);
@@ -122,10 +124,15 @@ public class Enemy : MonoBehaviour
         Projectile newProjectile = ProjectileManager.Instance.spawnProjectile(projectilePrefab, firePoint.position);
         newProjectile.transform.rotation = transform.rotation;
         newProjectile.GetComponent<Projectile>().damage = damage;
+        MatchReporter.Event("enemy_fired", enemyType + ":" + GetInstanceID(), newProjectile.GetInstanceID().ToString(),
+            damage, position: firePoint.position);
     }
 
     public void TakeDamage(int amount, Stats.eDeadBy deadBy)
     {
+        MatchReporter.Event("enemy_damage", deadBy.ToString(), enemyType + ":" + GetInstanceID(),
+            Mathf.Min(Mathf.Max(0, amount), Mathf.Max(0, currentHP)), Mathf.Max(0, currentHP - amount),
+            "requested=" + amount, transform.position);
         currentHP -= amount;
 
         if (currentHP <= 0)
@@ -147,7 +154,7 @@ public class Enemy : MonoBehaviour
     {
         if (other.CompareTag("Station"))
         {
-            other.GetComponent<StationModule>().TakeDamage(damage);
+            other.GetComponent<StationModule>().TakeDamage(damage, enemyType + ":" + GetInstanceID());
             ExplosionManager.Instance.CreateShipExplosion(other.ClosestPoint(transform.position));
             EnemySpawner.RemoveEnemy(this, Stats.eDeadBy.stationCollision);
         }

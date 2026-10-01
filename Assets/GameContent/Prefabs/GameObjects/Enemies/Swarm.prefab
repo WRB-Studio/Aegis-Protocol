@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8804122764210649813}
   - component: {fileID: 6900782518540320929}
   - component: {fileID: 1101914152310585403}
+  - component: {fileID: 900000000000000004}
   m_Layer: 0
   m_Name: Swarm
   m_TagString: Enemy
@@ -79,7 +80,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 30
-  m_Sprite: {fileID: 1370933802, guid: c39cc719a3bcba144bf8d35eaed84cdf, type: 3}
+  m_Sprite: {fileID: 21300000, guid: f7c35eb73e824d2cbf71e9959cd67b70, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -173,3 +174,24 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 0
+--- !u!114 &900000000000000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 600174475038239713}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70c4c9ec0dca49ca8123427dc9fc7933, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  variants:
+    - {fileID: 21300000, guid: f7c35eb73e824d2cbf71e9959cd67b70, type: 3}
+    - {fileID: 21300000, guid: d7f8e0709301459db51bee0d7bd38ebc, type: 3}
+    - {fileID: 21300000, guid: 6a71c175488b45b6b1118f7c08c75c81, type: 3}
+    - {fileID: 21300000, guid: 47249ad184ea4cfababa7caf3f15d3f3, type: 3}
+  variant3FirstWave: 10
+  variant4FirstWave: 20
+  variant3Scale: 1
+  variant4Scale: 1

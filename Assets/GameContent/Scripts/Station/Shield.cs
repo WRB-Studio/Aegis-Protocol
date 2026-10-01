@@ -80,7 +80,7 @@ public class Shield : MonoBehaviour, IResettable
         damageRegenDelay = initdamageRegenDelay;
         regenCountdown = initregenCountdown;
 
-        // visuals/state sync (keine init vars nötig)
+        // visuals/state sync (keine init vars nÃ¶tig)
         if (shieldIsActive) activateShield();
         else deactivateShield();
 
@@ -95,6 +95,7 @@ public class Shield : MonoBehaviour, IResettable
     {
         var module = StationModule.GetModuleByType(StationModule.eModuleType.Shield);
         if (!module || !module.isBuilt || currentShieldPoints <= 0f) return;
+        if (!shieldIsActive) MatchReporter.Event("shield_activated", remaining: currentShieldPoints);
 
         shieldObject.SetActive(true);
         GetComponent<Collider2D>().enabled = true;
@@ -106,6 +107,7 @@ public class Shield : MonoBehaviour, IResettable
 
     public void deactivateShield()
     {
+        if (shieldIsActive) MatchReporter.Event("shield_deactivated", remaining: currentShieldPoints);
         shieldObject.SetActive(false);
         GetComponent<Collider2D>().enabled = false;
         sliderShieldPoints.gameObject.SetActive(false);
@@ -183,17 +185,19 @@ public class Shield : MonoBehaviour, IResettable
     }
 
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(int damage, string source = "unknown")
     {
         Stats.Instance.shieldDamageTaken += damage;
         currentShieldPoints -= damage;
         if (currentShieldPoints < 0) currentShieldPoints = 0;
+        MatchReporter.Event("shield_damage", source, "Shield", damage, currentShieldPoints);
 
         refreshShieldPointSlider();
         PlayDamageEffect();
 
         if (currentShieldPoints == 0)
         {
+            MatchReporter.Event("shield_depleted", value: rechargeTime);
             shieldObject.SetActive(false);
             GetComponent<Collider2D>().enabled = false;
             rechargeCountdown = rechargeTime;
@@ -218,7 +222,7 @@ public class Shield : MonoBehaviour, IResettable
         {
             SoundManager.Instance.PlayStationHitSound();
             var enemy = collision.GetComponent<Enemy>();
-            TakeDamage(Mathf.Max(1, enemy.maxHP));
+            TakeDamage(Mathf.Max(1, enemy.maxHP), enemy.enemyType + ":" + enemy.GetInstanceID());
             EnemySpawner.RemoveEnemy(enemy, Stats.eDeadBy.shieldCollision);
         }
     }

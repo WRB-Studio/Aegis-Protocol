@@ -33,6 +33,7 @@ public class UpgradeUI : MonoBehaviour, IResettable
     // Runtime UI cache
     readonly Dictionary<eUpgradeName, ButtonRefs> uiByUpgrade = new();
     readonly List<GameObject> spawnedButtons = new();
+    bool layoutRebuildPending;
 
     // --- INIT SNAPSHOT ---
     eUpgradeName initSelectedUpgrade;
@@ -114,6 +115,7 @@ public class UpgradeUI : MonoBehaviour, IResettable
     void ClearButtons()
     {
         StopAllCoroutines();
+        layoutRebuildPending = false;
 
         foreach (var go in spawnedButtons)
             if (go) Destroy(go);
@@ -131,19 +133,12 @@ public class UpgradeUI : MonoBehaviour, IResettable
                 continue;
 
             UpdateButtonUI(ui, upgrade);
-            ui.marker.enabled = holdSelection && currentSelectedUpgrade == upgrade.upgradeName;
-
-            if (ui.marker.enabled)
-            {
-                if(upgrade.level < upgrade.maxLevel && Mathf.RoundToInt(upgrade.cost) <= ResourceManager.Instance.curMaterials)
-                    ui.marker.color = colorBtnFrameSelected;
-                else
-                    ui.marker.color = colorBtnFrameCantBuy;
-            }
-            else
-            {
-                ui.marker.color = colorBtnFrameUnselected;
-            }
+            bool selected = holdSelection && currentSelectedUpgrade == upgrade.upgradeName;
+            bool affordable = upgrade.level < upgrade.maxLevel &&
+                Mathf.RoundToInt(upgrade.cost) <= ResourceManager.Instance.curMaterials;
+            ui.marker.enabled = true;
+            ui.marker.color = affordable ? Color.white : colorBtnFrameCantBuy;
+            ui.infoText.fontStyle = selected ? FontStyles.Bold : FontStyles.Normal;
         }
 
         if (currentSelectedUpgrade != eUpgradeName.None)
@@ -187,7 +182,11 @@ public class UpgradeUI : MonoBehaviour, IResettable
             }
         }
 
-        StartCoroutine(DelayedLayoutRebuild());
+        if (!layoutRebuildPending)
+        {
+            layoutRebuildPending = true;
+            StartCoroutine(DelayedLayoutRebuild());
+        }
     }
 
     void UpdateButtonUI(ButtonRefs ui, UpgradeAttribute upgrade)
@@ -226,6 +225,8 @@ public class UpgradeUI : MonoBehaviour, IResettable
         Stats.Instance.AddUpgrade(cost);
 
         upgrade.Upgrade();
+        MatchReporter.Event("upgrade_bought", upgrade.ownerModule.moduleType.ToString(), upgrade.upgradeName.ToString(),
+            cost, upgrade.level, "value=" + upgrade.currentValue);
 
         RefreshAll(true);
 
@@ -260,6 +261,7 @@ public class UpgradeUI : MonoBehaviour, IResettable
     IEnumerator DelayedLayoutRebuild()
     {
         yield return null;
+        layoutRebuildPending = false;
 
         var layoutRoot = infoPanel.GetComponentInChildren<VerticalLayoutGroup>()?.transform as RectTransform;
         if (layoutRoot != null)
@@ -297,7 +299,10 @@ public class UpgradeUI : MonoBehaviour, IResettable
             case eUpgradeName.DeflectionChance: return value.ToString("0.##") + " %";
             case eUpgradeName.FireRange: return value.ToString("0.##") + " m";
             case eUpgradeName.RotationSpeed: return value.ToString("0.##") + " deg/s";
-            case eUpgradeName.StructuralIntegrity: return value.ToString("0.##") + " HP";
+            case eUpgradeName.StructuralIntegrity:
+                var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
+                int coreHP = core.BaseHP + Mathf.RoundToInt(value) - Mathf.RoundToInt(upgrade.baseValue);
+                return Mathf.Max(1, coreHP) + " HP";
             case eUpgradeName.AutoCollecting: return value > 0f ? "On" : "Off";
             case eUpgradeName.CollectingEfficiency: return "x" + value.ToString("0.##");
             default: return value.ToString("0.##");

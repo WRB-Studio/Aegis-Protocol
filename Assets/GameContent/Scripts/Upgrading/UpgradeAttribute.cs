@@ -184,7 +184,7 @@ public class UpgradeAttribute : IResettable
                     float currentHP = module.currentHP;
                     float pct = currentMaxHP > 0 ? (currentHP / currentMaxHP) : 1f;
 
-                    module.maxHP = Mathf.Max(1, Mathf.RoundToInt(value));
+                    module.maxHP = Mathf.Max(1, module.BaseHP + Mathf.RoundToInt(value) - Mathf.RoundToInt(baseValue));
                     module.currentHP = Mathf.Clamp(Mathf.RoundToInt(module.maxHP * pct), 0, module.maxHP);
                 }
                 break;
@@ -268,7 +268,7 @@ public class UpgradeAttribute : IResettable
 
         ApplyUpgradeEffect();
 
-        SaveGameManager.Instance.Save();
+        SaveGameManager.Instance.RequestSave();
     }
 
     public void RecalculateFromLevel()

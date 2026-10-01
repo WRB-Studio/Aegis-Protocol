@@ -22,6 +22,7 @@ public class StationModule : MonoBehaviour, IResettable
     public string description;
 
     public int maxHP = 10;
+    public int BaseHP { get; private set; }
     public int currentHP;
     public int cost;
     public bool isBuilt = false;
@@ -64,6 +65,7 @@ public class StationModule : MonoBehaviour, IResettable
 
     public void Init()
     {
+        BaseHP = maxHP;
         wasDestroyed = false;
 
         currentHP = maxHP;
@@ -74,7 +76,7 @@ public class StationModule : MonoBehaviour, IResettable
         RefreshCollider();
     }
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(int damage, string source = "unknown")
     {
         if (!isBuilt || currentHP <= 0 || damage <= 0) return;
 
@@ -83,6 +85,7 @@ public class StationModule : MonoBehaviour, IResettable
 
         currentHP -= damage;
         if (currentHP < 0) currentHP = 0;
+        MatchReporter.Event("module_damage", source, moduleType.ToString(), damage, currentHP, position: transform.position);
 
         if (UIManager.Instance.stationUI.activeSelf)
         {
@@ -97,6 +100,7 @@ public class StationModule : MonoBehaviour, IResettable
 
     public void Die()
     {
+        MatchReporter.Event("module_destroyed", target: moduleType.ToString(), position: transform.position);
         wasDestroyed = true;
 
         if (moduleType == eModuleType.Core)
@@ -108,6 +112,7 @@ public class StationModule : MonoBehaviour, IResettable
 
                 if (module.isBuilt)
                 {
+                    MatchReporter.Event("module_destroyed", "core_destroyed", module.moduleType.ToString(), position: module.transform.position);
                     ExplosionManager.Instance.CreateModuleExplosion(module.transform.position);
                     Stats.Instance.modulesDestroyed++;
                 }

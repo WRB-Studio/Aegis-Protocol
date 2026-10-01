@@ -65,7 +65,11 @@ public class TimeController : MonoBehaviour, IResettable
 
     void Apply()
     {
-        Time.timeScale = paused ? 0f : stationUIOpen ? stationUITimeModulation : current;
+        float scale = paused ? 0f : stationUIOpen ? stationUITimeModulation : current;
+        if (Time.timeScale != scale)
+            MatchReporter.Event("time_scale_changed", value: scale,
+                detail: paused ? "paused" : stationUIOpen ? "station_menu" : "normal");
+        Time.timeScale = scale;
     }
 
     public void SetPaused(bool value)

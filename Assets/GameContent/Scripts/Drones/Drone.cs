@@ -160,6 +160,7 @@ public class Drone : MonoBehaviour
     public void TakeDamage(int damage, Stats.eDeadBy deadBy)
     {
         currentHP -= damage;
+        MatchReporter.Event("drone_damage", deadBy.ToString(), GetInstanceID().ToString(), damage, Mathf.Max(0, currentHP), position: transform.position);
 
         if (currentHP <= 0)
         {
@@ -172,6 +173,7 @@ public class Drone : MonoBehaviour
         ExplosionManager.Instance.CreateDroneExplosion(transform.position);
 
         Stats.Instance.dronesDestroyed++;
+        MatchReporter.Event("drone_destroyed", deadBy.ToString(), GetInstanceID().ToString(), position: transform.position);
         DroneManager.Instance.RemoveDrone(this, deadBy);
     }
 
