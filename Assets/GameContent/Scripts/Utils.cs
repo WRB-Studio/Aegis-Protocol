@@ -60,6 +60,8 @@ public class Utils : MonoBehaviour
 
     public static Sprite GetSymbolByName(UpgradeAttribute.eUpgradeName upgradeName)
     {
+        if (upgradeName == UpgradeAttribute.eUpgradeName.TargetPriority)
+            upgradeName = UpgradeAttribute.eUpgradeName.FireRange;
         if (upgradeSymbols == null)
         {
             upgradeSymbols = new Dictionary<string, Sprite>(System.StringComparer.OrdinalIgnoreCase);

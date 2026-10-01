@@ -378,7 +378,7 @@ public class ModulesUI : MonoBehaviour, IResettable
         }
         else if (currentSelectedModule.moduleType == StationModule.eModuleType.Drone)
         {
-            DroneManager.Instance.AfterModulInit();
+            DroneManager.Instance.AfterModulInit(true);
         }
 
         RefreshPanel();

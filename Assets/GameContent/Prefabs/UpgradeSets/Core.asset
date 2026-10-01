@@ -13,4 +13,15 @@ MonoBehaviour:
   m_Name: Core
   m_EditorClassIdentifier: 
   moduleType: 1
-  upgradeAttributes: []
+  upgradeAttributes:
+  - upgradeName: 5
+    description: Increase HP of all modules
+    level: 0
+    maxLevel: 100
+    baseValue: 3
+    upgradeValue: 2.47
+    maxValue: 250
+    currentValue: 0
+    baseCost: 12
+    costMultiplier: 1.3
+    cost: 0

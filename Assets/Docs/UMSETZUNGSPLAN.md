@@ -37,6 +37,11 @@ Grundlage: [Projektanalyse](PROJEKTANALYSE.md).
 
 ## Umgesetzt
 
+- [x] Structural Integrity zum Core verschoben; vorhandene HP-Upgrades bleiben beim Laden erhalten.
+- [x] CommandUnit behält Drehgeschwindigkeit und bietet Zielpriorisierung: einmalig 40 Material, danach kostenlos zwischen nächstem Gegner, Artillery und stärkstem Gegner wechseln. Auswahl bleibt bei Modulverlust gespeichert.
+- [x] Drohnenmodul erzeugt beim Bau eine Startdrohne; insgesamt vier Plätze, keine zusätzliche Startdrohne beim Laden oder Wiederaufbau mit vorhandenen Drohnen.
+- [x] Radar gibt beim Bau sofort 3,0 statt 2,5 Reichweite; 16 Upgrades mit je +0,1 bis 4,6. Ältere Upgrade-Level werden beim Laden begrenzt.
+- [x] Upgrade-Infos unterscheiden dauerhafte Verbesserungen und Funktionen, die ein aktives Modul benötigen.
 - [x] Frühen Runner-Einstieg entschärft: Einzelgegner in Welle 2, Zweiergruppen in Welle 3.
 - [x] Wellenbonus eingeführt: 15 Material nach Welle 1, danach +3 pro Welle; direkte Gutschrift und HUD-Rückmeldung.
 - [x] Upgrade-Rahmen zeigen die Bezahlbarkeit dauerhaft: rot bei fehlendem Material, weiß bei bezahlbaren Upgrades.

@@ -3905,13 +3905,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moduleType: 1
-  description: The station center.
+  description: The station center. Upgrade structural integrity to reinforce all modules.
   maxHP: 4
   currentHP: 0
   cost: 0
   isBuilt: 1
   wasDestroyed: 0
-  upgradeSet: {fileID: 0}
+  upgradeSet: {fileID: 11400000, guid: 97310975edc17054ebfe05b74259cc24, type: 2}
   linePoint: {fileID: 0}
 --- !u!1 &395734472
 GameObject:
@@ -6528,10 +6528,10 @@ MonoBehaviour:
   gun: {fileID: 643963050}
   firePoint: {fileID: 1937120079}
   projectilePrefab: {fileID: 7573106881634174774, guid: 900d40b8e7dba004e8c5634dd0678347, type: 3}
-  fireRate: 0
-  fireRange: 0
-  rotationSpeed: 0
-  damage: 0
+  fireRate: 0.5
+  fireRange: 2.5
+  rotationSpeed: 1
+  damage: 1
   initialFireRate: 0
   initialFireRange: 0
   initialDamage: 0
@@ -7013,7 +7013,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moduleType: 4
-  description: Deploys combat drones after buying a Drone Count upgrade.
+  description: Deploys one combat drone immediately. Upgrade slots to deploy up to four drones.
   maxHP: 3
   currentHP: 0
   cost: 500
@@ -12122,7 +12122,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moduleType: 5
-  description: Enables enemy detection and analysis.
+  description: Increases tower range immediately and unlocks further range upgrades.
   maxHP: 3
   currentHP: 0
   cost: 350
@@ -12819,7 +12819,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moduleType: 7
-  description: Enables technical upgrades for turrets and modules.
+  description: Improves turret rotation and unlocks target prioritization.
   maxHP: 3
   currentHP: 0
   cost: 40

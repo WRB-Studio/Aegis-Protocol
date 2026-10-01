@@ -29,6 +29,7 @@ public class UpgradeAttribute : IResettable
         DeflectionChance,
 
         TimeMultiplier,
+        TargetPriority,
     }
 
     [Header("Name & Description")]
@@ -61,6 +62,9 @@ public class UpgradeAttribute : IResettable
     // We will pull safe defaults from the current scene state.
     private bool baseValueAutoFilled;
     internal StationModule ownerModule;
+
+    public bool IsPermanent => upgradeName == eUpgradeName.StructuralIntegrity ||
+        upgradeName == eUpgradeName.DroneHP || upgradeName == eUpgradeName.DroneDamage;
 
     public void Init()
     {
@@ -152,9 +156,7 @@ public class UpgradeAttribute : IResettable
         // Ensure we never apply "zero" defaults by accident.
         TryAutoFillBaseValue();
         // Reinforcement and installed drone equipment survive the loss of their upgrade module.
-        bool permanent = upgradeName == eUpgradeName.StructuralIntegrity ||
-            upgradeName == eUpgradeName.DroneHP || upgradeName == eUpgradeName.DroneDamage;
-        float value = ownerModule && !ownerModule.isBuilt && !permanent ? baseValue : currentValue;
+        float value = ownerModule && !ownerModule.isBuilt && !IsPermanent ? baseValue : currentValue;
 
         switch (upgradeName)
         {
@@ -180,6 +182,7 @@ public class UpgradeAttribute : IResettable
                 Tower.Instance.rotationSpeed = Mathf.Max(0.1f, value);
                 break;
 
+            // Core reinforcement applies to all modules.
             case eUpgradeName.StructuralIntegrity:
                 foreach (var module in StationModule.allModules)
                 {
@@ -206,7 +209,8 @@ public class UpgradeAttribute : IResettable
 
             // Drone
             case eUpgradeName.DroneCount:
-                DroneManager.Instance.currentDroneSlots = Mathf.Max(0, Mathf.RoundToInt(value));
+                DroneManager.Instance.currentDroneSlots = ownerModule && !ownerModule.isBuilt
+                    ? 0 : Mathf.Max(1, Mathf.RoundToInt(value));
                 break;
 
             case eUpgradeName.DroneHP:

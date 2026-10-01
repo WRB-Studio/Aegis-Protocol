@@ -15,6 +15,7 @@ public class SaveGame
 
     // Progress
     public int currentWaveIndex;
+    public string towerTargetPriority;
 
     // Shield
     public float currentShieldPoints;

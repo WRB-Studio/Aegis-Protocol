@@ -200,7 +200,7 @@ public class SaveGameManager : MonoBehaviour
             if (upgrade == null ||
                 !Enum.TryParse(upgrade.upgradeName, out UpgradeAttribute.eUpgradeName name)) return false;
             var runtimeUpgrade = UpgradeAttribute.GetUpgradeByName(name);
-            if (runtimeUpgrade == null || upgrade.level < 0 || upgrade.level > runtimeUpgrade.maxLevel)
+            if (runtimeUpgrade == null || upgrade.level < 0)
                 return false;
         }
 
@@ -231,6 +231,7 @@ public class SaveGameManager : MonoBehaviour
 
         data.material = ResourceManager.Instance.curMaterials;
         data.currentWaveIndex = EnemySpawner.Instance.currentWaveIndex;
+        data.towerTargetPriority = Tower.Instance.SelectedPriority.ToString();
         data.currentShieldPoints = Shield.Instance.currentShieldPoints;
         data.shieldRechargeCountdown = Shield.Instance.rechargeCountdown;
 
@@ -287,11 +288,12 @@ public class SaveGameManager : MonoBehaviour
         {
             var upgradeAttribute = UpgradeAttribute.GetUpgradeByName(ParseUpgradeName(loadedUpgradeAttribute.upgradeName));
             if (upgradeAttribute == null) continue;
-            upgradeAttribute.level = loadedUpgradeAttribute.level;
+            upgradeAttribute.level = Mathf.Clamp(loadedUpgradeAttribute.level, 0, upgradeAttribute.maxLevel);
             upgradeAttribute.RecalculateFromLevel();
         }
 
         UpgradeAttribute.ApplyAllUpgradeEffect();
+        Tower.Instance.RestoreTargetPriority(data.towerTargetPriority);
 
         // Restore current HP only after upgrades have established maximum HP.
         foreach (var loadedModule in data.modules)

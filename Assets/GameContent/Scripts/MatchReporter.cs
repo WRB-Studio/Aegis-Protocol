@@ -69,7 +69,7 @@ public sealed class MatchReporter : IDisposable
             detail = detail, position = position, state = state
         };
         if (kind == "module_built" || kind == "module_repaired" || kind == "module_destroyed" ||
-            kind == "upgrade_bought" || kind == "shield_depleted" || kind == "shield_activated" ||
+            kind == "upgrade_bought" || kind == "target_priority_changed" || kind == "shield_depleted" || kind == "shield_activated" ||
             kind == "self_destruct" || kind == "app_paused" || kind == "app_resumed")
             Report.timeline.Add(entry);
         try { writer.WriteLine(JsonUtility.ToJson(entry)); }
@@ -199,6 +199,7 @@ public sealed class MatchReporter : IDisposable
         var state = new MatchState
         {
             stats = Stats.Instance ? Stats.Instance.GetStatsData() : new StatsData(),
+            towerTargetPriority = Tower.Instance ? Tower.Instance.EffectivePriority.ToString() : "Nearest",
             materials = ResourceManager.Instance ? ResourceManager.Instance.curMaterials : 0,
             activeEnemies = EnemySpawner.Instance ? EnemySpawner.Instance.instantiatedEnemies.Count : 0,
             activeDrones = DroneManager.Instance ? DroneManager.Instance.allDrones.Count : 0,
@@ -314,6 +315,7 @@ public class MatchWaveReport
 [Serializable]
 public class MatchState
 {
+    public string towerTargetPriority;
     public StatsData stats;
     public int materials, activeEnemies, activeDrones;
     public float timeScale, shield, shieldMax, shieldRecharge;

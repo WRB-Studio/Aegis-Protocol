@@ -331,6 +331,69 @@ public class GameFlowTests
     }
 
     [UnityTest]
+    public IEnumerator DroneModuleBuildGivesOneStarterWithoutDuplicatingOnLoadOrRebuild()
+    {
+        var module = StationModule.GetModuleByType(StationModule.eModuleType.Drone);
+        ResourceManager.Instance.curMaterials = module.cost;
+        ModulesUI.Instance.SelectModule(StationModule.eModuleType.Drone);
+        ModulesUI.Instance.BuySelectedModule();
+        Assert.That(DroneManager.Instance.allDrones, Has.Count.EqualTo(1));
+        Assert.That(DroneManager.Instance.currentDroneSlots, Is.EqualTo(1));
+        Assert.That(ResourceManager.Instance.curMaterials, Is.Zero);
+        Assert.That(Stats.Instance.dronesBuilt, Is.EqualTo(1));
+        ModulesUI.Instance.BuySelectedModule();
+        Assert.That(DroneManager.Instance.allDrones, Has.Count.EqualTo(1));
+
+        yield return ReloadMainScene();
+        module = StationModule.GetModuleByType(StationModule.eModuleType.Drone);
+        Assert.That(DroneManager.Instance.allDrones, Has.Count.EqualTo(1));
+        Assert.That(Stats.Instance.dronesBuilt, Is.EqualTo(1));
+        module.TakeDamage(module.currentHP);
+        ResourceManager.Instance.curMaterials = module.cost;
+        ModulesUI.Instance.SelectModule(StationModule.eModuleType.Drone);
+        ModulesUI.Instance.BuySelectedModule();
+        Assert.That(DroneManager.Instance.allDrones, Has.Count.EqualTo(1));
+        Assert.That(Stats.Instance.dronesBuilt, Is.EqualTo(1));
+        var count = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.DroneCount);
+        Assert.That(count.CalculateValue(count.maxLevel), Is.EqualTo(4f));
+    }
+
+    [UnityTest]
+    public IEnumerator RadarBuildImprovesRangeAndOldLevelsLoadWithinNewLimits()
+    {
+        var tower = Tower.Instance;
+        var radar = StationModule.GetModuleByType(StationModule.eModuleType.Radar);
+        Assert.That(tower.initialFireRange, Is.EqualTo(2.5f));
+        Assert.That(tower.EffectiveFireRange, Is.EqualTo(2.5f));
+        ResourceManager.Instance.curMaterials = radar.cost;
+        ModulesUI.Instance.SelectModule(StationModule.eModuleType.Radar);
+        ModulesUI.Instance.BuySelectedModule();
+        Assert.That(tower.EffectiveFireRange, Is.EqualTo(3f));
+        var range = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.FireRange);
+        range.Upgrade();
+        Assert.That(tower.EffectiveFireRange, Is.EqualTo(3.1f).Within(0.001f));
+        radar.TakeDamage(radar.currentHP);
+        Assert.That(tower.EffectiveFireRange, Is.EqualTo(2.5f));
+        range.level = 84;
+        SaveGameManager.Instance.Save();
+
+        yield return ReloadMainScene();
+        range = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.FireRange);
+        Assert.That(range.level, Is.EqualTo(16));
+        Assert.That(range.currentValue, Is.EqualTo(4.6f).Within(0.001f));
+        Assert.That(Tower.Instance.EffectiveFireRange, Is.EqualTo(2.5f));
+        radar = StationModule.GetModuleByType(StationModule.eModuleType.Radar);
+        ResourceManager.Instance.curMaterials = radar.cost;
+        ModulesUI.Instance.SelectModule(StationModule.eModuleType.Radar);
+        ModulesUI.Instance.BuySelectedModule();
+        Assert.That(Tower.Instance.EffectiveFireRange, Is.EqualTo(4.6f).Within(0.001f));
+        Assert.That(range.IsPermanent, Is.False);
+        Assert.That(UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.StructuralIntegrity).IsPermanent, Is.True);
+        Assert.That(UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.DroneHP).IsPermanent, Is.True);
+        Assert.That(UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.DroneDamage).IsPermanent, Is.True);
+    }
+
+    [UnityTest]
     public IEnumerator DroneUpgrades_UpdateExistingDronesAndPreserveDamageTaken()
     {
         var module = StationModule.GetModuleByType(StationModule.eModuleType.Drone);
@@ -393,7 +456,7 @@ public class GameFlowTests
         Assert.That(manager.allDrones, Has.Count.EqualTo(1));
         Assert.That(drone.currentHP, Is.EqualTo(damagedHP));
         Assert.That(drone.damage, Is.EqualTo(upgradedDamage));
-        Assert.That(manager.currentDroneSlots, Is.EqualTo(1));
+        Assert.That(manager.currentDroneSlots, Is.EqualTo(2));
     }
 
     [UnityTest]
@@ -985,6 +1048,8 @@ public class GameFlowTests
         var extractor = StationModule.GetModuleByType(StationModule.eModuleType.Extractor);
         var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
         var integrity = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.StructuralIntegrity);
+        Assert.That(core.upgradeSet.upgradeAttributes, Does.Contain(integrity));
+        Assert.That(command.upgradeSet.upgradeAttributes.Contains(integrity), Is.False);
         var efficiency = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.CollectingEfficiency);
         var rotation = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.RotationSpeed);
         command.isBuilt = true;
@@ -1036,6 +1101,108 @@ public class GameFlowTests
         Assert.That(ResourceManager.Instance.collectingEffeciency, Is.EqualTo(upgradedEfficiency));
         Assert.That(radar.isBuilt, Is.False);
         Assert.That(radar.currentHP, Is.Zero);
+    }
+
+    [UnityTest]
+    public IEnumerator TargetPriorityChargesOnceAndPersistsThroughModuleLossAndLoad()
+    {
+        var command = StationModule.GetModuleByType(StationModule.eModuleType.CommandUnit);
+        command.isBuilt = true;
+        command.gameObject.SetActive(true);
+        var upgrade = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.TargetPriority);
+        UpgradeUI.Instance.Show(command.upgradeSet);
+        UpgradeUI.Instance.currentSelectedUpgrade = upgrade.upgradeName;
+        var click = typeof(UpgradeUI).GetMethod("OnUpgradeClicked", BindingFlags.Instance | BindingFlags.NonPublic);
+        int price = Mathf.RoundToInt(upgrade.cost);
+        ResourceManager.Instance.curMaterials = price - 1;
+        click.Invoke(UpgradeUI.Instance, new object[] { upgrade });
+        Assert.That(upgrade.level, Is.Zero);
+        ResourceManager.Instance.curMaterials = price;
+        click.Invoke(UpgradeUI.Instance, new object[] { upgrade });
+        Assert.That(upgrade.level, Is.EqualTo(1));
+        Assert.That(ResourceManager.Instance.curMaterials, Is.Zero);
+        Assert.That(Tower.Instance.EffectivePriority, Is.EqualTo(Tower.TargetPriority.ArtilleryFirst));
+        click.Invoke(UpgradeUI.Instance, new object[] { upgrade });
+        Assert.That(Tower.Instance.SelectedPriority, Is.EqualTo(Tower.TargetPriority.Strongest));
+        click.Invoke(UpgradeUI.Instance, new object[] { upgrade });
+        Assert.That(Tower.Instance.SelectedPriority, Is.EqualTo(Tower.TargetPriority.Nearest));
+        click.Invoke(UpgradeUI.Instance, new object[] { upgrade });
+        Assert.That(Tower.Instance.SelectedPriority, Is.EqualTo(Tower.TargetPriority.ArtilleryFirst));
+        Assert.That(ResourceManager.Instance.curMaterials, Is.Zero);
+        Assert.That(Stats.Instance.boughtUpgrades, Is.EqualTo(1));
+
+        command.TakeDamage(command.currentHP);
+        Assert.That(Tower.Instance.EffectivePriority, Is.EqualTo(Tower.TargetPriority.Nearest));
+        yield return ReloadMainScene();
+        Assert.That(Tower.Instance.SelectedPriority, Is.EqualTo(Tower.TargetPriority.ArtilleryFirst));
+        Assert.That(Tower.Instance.EffectivePriority, Is.EqualTo(Tower.TargetPriority.Nearest));
+        command = StationModule.GetModuleByType(StationModule.eModuleType.CommandUnit);
+        ResourceManager.Instance.curMaterials = command.cost;
+        ModulesUI.Instance.SelectModule(command.moduleType);
+        ModulesUI.Instance.BuySelectedModule();
+        Assert.That(Tower.Instance.EffectivePriority, Is.EqualTo(Tower.TargetPriority.ArtilleryFirst));
+        GameManager.Instance.GameOver();
+        GameManager.Instance.Replay();
+        GameManager.isInit = false;
+        Assert.That(Tower.Instance.SelectedPriority, Is.EqualTo(Tower.TargetPriority.Nearest));
+        Assert.That(UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.TargetPriority).level, Is.Zero);
+    }
+
+    [Test]
+    public void TargetPrioritySelectsReachableEnemiesAndFallsBackToNearest()
+    {
+        var command = StationModule.GetModuleByType(StationModule.eModuleType.CommandUnit);
+        command.isBuilt = true;
+        var upgrade = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.TargetPriority);
+        upgrade.level = 1;
+        var tower = Tower.Instance;
+        var findTarget = typeof(Tower).GetMethod("FindTarget", BindingFlags.Instance | BindingFlags.NonPublic);
+        var currentTarget = typeof(Tower).GetField("currentTarget", BindingFlags.Instance | BindingFlags.NonPublic);
+        var enemies = new Enemy[3];
+        try
+        {
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                enemies[i] = new GameObject("Priority test enemy").AddComponent<Enemy>();
+                enemies[i].transform.position = tower.transform.position + Vector3.up * (1f + i * 0.5f);
+                enemies[i].maxHP = i == 2 ? 10 : i + 1;
+                enemies[i].enemyType = i == 1 ? Enemy.eEnemyType.Ranged : Enemy.eEnemyType.Normal;
+                EnemySpawner.Instance.instantiatedEnemies.Add(enemies[i]);
+            }
+            tower.SetTargetPriority(Tower.TargetPriority.Nearest);
+            findTarget.Invoke(tower, null);
+            Assert.That(currentTarget.GetValue(tower), Is.EqualTo(enemies[0].transform));
+            tower.SetTargetPriority(Tower.TargetPriority.ArtilleryFirst);
+            findTarget.Invoke(tower, null);
+            Assert.That(currentTarget.GetValue(tower), Is.EqualTo(enemies[1].transform));
+            tower.SetTargetPriority(Tower.TargetPriority.Strongest);
+            findTarget.Invoke(tower, null);
+            Assert.That(currentTarget.GetValue(tower), Is.EqualTo(enemies[2].transform));
+            enemies[2].transform.position = tower.transform.position + Vector3.up * (tower.EffectiveFireRange + 1f);
+            findTarget.Invoke(tower, null);
+            Assert.That(currentTarget.GetValue(tower), Is.EqualTo(enemies[1].transform));
+            tower.SetTargetPriority(Tower.TargetPriority.ArtilleryFirst);
+            enemies[1].enemyType = Enemy.eEnemyType.Normal;
+            findTarget.Invoke(tower, null);
+            Assert.That(currentTarget.GetValue(tower), Is.EqualTo(enemies[0].transform));
+            enemies[1].enemyType = Enemy.eEnemyType.Ranged;
+            command.isBuilt = false;
+            findTarget.Invoke(tower, null);
+            Assert.That(currentTarget.GetValue(tower), Is.EqualTo(enemies[0].transform));
+            tower.RestoreTargetPriority("invalid");
+            Assert.That(tower.SelectedPriority, Is.EqualTo(Tower.TargetPriority.Nearest));
+            tower.RestoreTargetPriority(null);
+            Assert.That(tower.SelectedPriority, Is.EqualTo(Tower.TargetPriority.Nearest));
+        }
+        finally
+        {
+            foreach (var enemy in enemies)
+            {
+                if (!enemy) continue;
+                EnemySpawner.Instance.instantiatedEnemies.Remove(enemy);
+                UnityEngine.Object.DestroyImmediate(enemy.gameObject);
+            }
+        }
     }
 
     [UnityTest]

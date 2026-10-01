@@ -71,11 +71,14 @@ public class DroneManager : MonoBehaviour, IResettable
         }
     }
 
-    public void AfterModulInit()
+    public void AfterModulInit(bool giveStarter = false)
     {
         droneBuildCountdown = droneBuildTime;
         txtDroneCount.gameObject.SetActive(true);
         txtDroneCount.text = allDrones.Count.ToString() + "/" + currentDroneSlots.ToString();
+        if (giveStarter && allDrones.Count == 0 && currentDroneSlots > 0)
+            SpawnDrone();
+        CheckDroneCanBuild();
     }
 
     public void AfterModuleOff()

@@ -17,8 +17,8 @@ MonoBehaviour:
   - upgradeName: 8
     description: Increase active drones
     level: 0
-    maxLevel: 4
-    baseValue: 0
+    maxLevel: 3
+    baseValue: 1
     upgradeValue: 1
     maxValue: 4
     currentValue: 0

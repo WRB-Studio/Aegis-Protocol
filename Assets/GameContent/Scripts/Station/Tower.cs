@@ -1,11 +1,38 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System;
 using Unity.Collections;
 using UnityEngine;
 
 public class Tower : MonoBehaviour, IResettable
 {
     public static Tower Instance;
+
+    public enum TargetPriority { Nearest, ArtilleryFirst, Strongest }
+    public TargetPriority SelectedPriority { get; private set; }
+    public TargetPriority EffectivePriority
+    {
+        get
+        {
+            var command = StationModule.GetModuleByType(StationModule.eModuleType.CommandUnit);
+            var upgrade = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.TargetPriority);
+            return command && command.isBuilt && upgrade != null && upgrade.level > 0
+                ? SelectedPriority : TargetPriority.Nearest;
+        }
+    }
+
+    public void SetTargetPriority(TargetPriority priority)
+    {
+        SelectedPriority = priority;
+        MatchReporter.Event("target_priority_changed", "CommandUnit", priority.ToString());
+        SaveGameManager.Instance?.RequestSave();
+    }
+
+    public void RestoreTargetPriority(string priority)
+    {
+        SelectedPriority = Enum.TryParse(priority, out TargetPriority parsed) && Enum.IsDefined(typeof(TargetPriority), parsed)
+            ? parsed : TargetPriority.Nearest;
+    }
 
     [Header("Gun Setup")]
     public Transform gun; // Gun object (child of Tower)
@@ -62,14 +89,7 @@ public class Tower : MonoBehaviour, IResettable
 
     public void UpdateNormal()
     {
-        float effectiveRange = EffectiveFireRange;
-        if (currentTarget && (!EnemySpawner.Instance ||
-            !EnemySpawner.Instance.instantiatedEnemies.Contains(currentTarget.GetComponent<Enemy>()) ||
-            Vector3.Distance(transform.position, currentTarget.position) >= effectiveRange))
-            currentTarget = null;
-
-        if (currentTarget == null)
-            FindTarget();
+        FindTarget();
 
         if (currentTarget != null)
         {
@@ -95,18 +115,29 @@ public class Tower : MonoBehaviour, IResettable
         float fireRange = EffectiveFireRange;
 
         float shortestDistance = fireRange;
+        int highestPriority = -1;
+        var priority = EffectivePriority;
         Transform nearest = null;
 
         var enemies = EnemySpawner.Instance ? EnemySpawner.Instance.instantiatedEnemies : null;
-        if (enemies == null) return;
+        if (enemies == null)
+        {
+            currentTarget = null;
+            return;
+        }
 
         for (int i = enemies.Count - 1; i >= 0; i--)
         {
             var enemy = enemies[i];
             if (!enemy) continue;
             float dist = Vector3.Distance(transform.position, enemy.transform.position);
-            if (dist < shortestDistance)
+            if (dist >= fireRange || Utils.IsOutOfView(enemy.transform.position)) continue;
+            int rank = priority == TargetPriority.ArtilleryFirst
+                ? (enemy.enemyType == Enemy.eEnemyType.Ranged ? 1 : 0)
+                : priority == TargetPriority.Strongest ? enemy.maxHP : 0;
+            if (rank > highestPriority || (rank == highestPriority && dist < shortestDistance))
             {
+                highestPriority = rank;
                 shortestDistance = dist;
                 nearest = enemy.transform;
             }
@@ -171,5 +202,6 @@ public class Tower : MonoBehaviour, IResettable
 
         fireCooldown = initfireCooldown;
         currentTarget = initcurrentTarget;
+        SelectedPriority = TargetPriority.Nearest;
     }
 }

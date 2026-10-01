@@ -153,6 +153,7 @@ public class GameManager : MonoBehaviour
         DroneManager.Instance.Init();
         EnemySpawner.Instance.Init();
         ProjectileManager.Instance.Init();
+        Tower.Instance.Init();
         UpgradeManager.Instance.Init();
         ResourceManager.Instance.Init();
 
@@ -162,8 +163,6 @@ public class GameManager : MonoBehaviour
         UpgradeUI.Instance.Init();
         UpgradeAttribute.ApplyAllUpgradeEffect();
         TimeController.Instance.Init();
-
-        Tower.Instance.Init();
 
         SoundManager.Instance.Init();
     }

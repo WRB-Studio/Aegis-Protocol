@@ -133,6 +133,8 @@ public class UpgradeUI : MonoBehaviour, IResettable
             bool selected = holdSelection && currentSelectedUpgrade == upgrade.upgradeName;
             bool affordable = upgrade.level < upgrade.maxLevel &&
                 Mathf.RoundToInt(upgrade.cost) <= ResourceManager.Instance.curMaterials;
+            if (upgrade.upgradeName == eUpgradeName.TargetPriority && upgrade.level > 0)
+                affordable = upgrade.ownerModule && upgrade.ownerModule.isBuilt;
             ui.marker.enabled = true;
             ui.marker.color = affordable ? Color.white : colorBtnFrameCantBuy;
             ui.infoText.fontStyle = selected ? FontStyles.Bold : FontStyles.Normal;
@@ -165,8 +167,17 @@ public class UpgradeUI : MonoBehaviour, IResettable
         if (desc)
         {
             string current = GetValueWithUnit(upgrade, upgrade.currentValue);
-            if (upgrade.level >= upgrade.maxLevel)
-                desc.text = upgrade.description + "\n" + current + " (MAX)";
+            string persistence = upgrade.IsPermanent
+                ? "Permanent: survives module loss."
+                : "Requires an active module.";
+            if (upgrade.upgradeName == eUpgradeName.DroneHP || upgrade.upgradeName == eUpgradeName.DroneDamage)
+                persistence = "Installed on drones: survives module loss.";
+            else if (upgrade.upgradeName == eUpgradeName.DroneCount)
+                persistence = "Module required to build drones. Existing drones survive module loss.";
+            if (upgrade.upgradeName == eUpgradeName.TargetPriority && upgrade.level > 0)
+                desc.text = upgrade.description + "\n" + current + "\nTap again to switch for free.\n" + persistence;
+            else if (upgrade.level >= upgrade.maxLevel)
+                desc.text = upgrade.description + "\n" + current + " (MAX)\n" + persistence;
             else
             {
                 int price = Mathf.RoundToInt(upgrade.cost);
@@ -174,7 +185,7 @@ public class UpgradeUI : MonoBehaviour, IResettable
                 string action = price <= ResourceManager.Instance.curMaterials
                     ? "Tap again to buy for " + price + " M"
                     : "Need " + price + " M";
-                desc.text = upgrade.description + "\n" + current + " -> " + next + "\n" + action;
+                desc.text = upgrade.description + "\n" + current + " -> " + next + "\n" + action + "\n" + persistence;
             }
         }
 
@@ -188,6 +199,13 @@ public class UpgradeUI : MonoBehaviour, IResettable
     void UpdateButtonUI(ButtonRefs ui, UpgradeAttribute upgrade)
     {
         ui.infoText.text = GetValueWithUnit(upgrade, upgrade.currentValue);
+
+        if (upgrade.upgradeName == eUpgradeName.TargetPriority && upgrade.level > 0)
+        {
+            ui.costText.text = "Switch";
+            ui.button.interactable = true;
+            return;
+        }
 
         if (upgrade.level >= upgrade.maxLevel)
         {
@@ -210,9 +228,19 @@ public class UpgradeUI : MonoBehaviour, IResettable
             return;
         }
 
-        if (upgrade.level >= upgrade.maxLevel || !upgrade.ownerModule ||
+        if (!upgrade.ownerModule ||
             !upgrade.ownerModule.isBuilt || currentUpgradeSet == null ||
             !currentUpgradeSet.upgradeAttributes.Contains(upgrade)) return;
+
+        if (upgrade.upgradeName == eUpgradeName.TargetPriority && upgrade.level > 0)
+        {
+            var next = (Tower.TargetPriority)(((int)Tower.Instance.SelectedPriority + 1) % 3);
+            Tower.Instance.SetTargetPriority(next);
+            SoundManager.Instance.PlayUpgradeSound();
+            RefreshAll(true);
+            return;
+        }
+        if (upgrade.level >= upgrade.maxLevel) return;
 
         int cost = Mathf.RoundToInt(upgrade.cost);
         if (!ResourceManager.Instance.SpendMaterial(cost, false)) return;
@@ -221,6 +249,8 @@ public class UpgradeUI : MonoBehaviour, IResettable
         Stats.Instance.AddUpgrade(cost);
 
         upgrade.Upgrade();
+        if (upgrade.upgradeName == eUpgradeName.TargetPriority)
+            Tower.Instance.SetTargetPriority(Tower.TargetPriority.ArtilleryFirst);
         MatchReporter.Event("upgrade_bought", upgrade.ownerModule.moduleType.ToString(), upgrade.upgradeName.ToString(),
             cost, upgrade.level, "value=" + upgrade.currentValue);
 
@@ -261,6 +291,14 @@ public class UpgradeUI : MonoBehaviour, IResettable
 
         switch (upgrade.upgradeName)
         {
+            case eUpgradeName.TargetPriority:
+                if (upgrade.level == 0) return value > 0 ? "Artillery" : "Locked";
+                switch (Tower.Instance.SelectedPriority)
+                {
+                    case Tower.TargetPriority.ArtilleryFirst: return "Artillery";
+                    case Tower.TargetPriority.Strongest: return "Strongest";
+                    default: return "Nearest";
+                }
             case eUpgradeName.FireRate: return value.ToString("0.##") + " rps";
             case eUpgradeName.Damage: return value.ToString("0.##") + " dmg";
             case eUpgradeName.DroneCount: return value.ToString("0.##") + " pcs";
