@@ -29,68 +29,68 @@ public class GameManager : MonoBehaviour
     {
         var sb = new System.Text.StringBuilder(256);
 
-        sb.AppendLine($"<align=center>Play time 00:00:00</align>");
+        sb.AppendLine($"<align=center><color=#9BACB0>Play time</color> 00:00:00</align>");
         sb.AppendLine();
 
-        sb.AppendLine($"Time: 999");
-        sb.AppendLine($"Waves: 999");
-        sb.AppendLine($"Kills: 999");
-        sb.AppendLine($"Upgrades: 999");
-        sb.AppendLine($"Resources: 999");
+        sb.AppendLine($"<color=#9BACB0>Time</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Waves</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Kills</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Upgrades</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Resources</color>  <b>999</b>");
 
         // modules penalty in red, as negative
         sb.AppendLine($"<color=#FF4D4D>Modules: -999</color>");
         sb.AppendLine("");
-        sb.AppendLine($"<size=120%><b>Score</b>: 999999</size>");
-        sb.AppendLine($"Best: 999999");
+        sb.AppendLine($"<size=120%><color=#94ECF4><b>SCORE</b></color>  <b>999999</b></size>");
+        sb.AppendLine($"<color=#9BACB0>Best</color>  <b>999999</b>");
 
         txtGameOverStats.text = sb.ToString();
 
 
         sb = new System.Text.StringBuilder(256);
 
-        sb.AppendLine($"<align=center>Play time: 00:00:00</align>");
+        sb.AppendLine($"<align=center><color=#9BACB0>Play time</color> 00:00:00</align>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Waves:</b> 999");
+        sb.AppendLine($"<color=#94ECF4><b>Waves</b></color>  999");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Enemies</b>");
-        sb.AppendLine($"Spawned: 999");
-        sb.AppendLine($"Killed: 999");
+        sb.AppendLine($"<color=#94ECF4><b>Enemies</b></color>");
+        sb.AppendLine($"<color=#9BACB0>Spawned</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Killed</color>  <b>999</b>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Projectiles</b>");
-        sb.AppendLine($"Tower shots: 999");
-        sb.AppendLine($"Tower hits: 999");
-        sb.AppendLine($"Drone shots: 999");
-        sb.AppendLine($"Drone hits: 999");
-        sb.AppendLine($"Enemy shots: 999");
-        sb.AppendLine($"Enemy hits: 999");
+        sb.AppendLine($"<color=#94ECF4><b>Projectiles</b></color>");
+        sb.AppendLine($"<color=#9BACB0>Tower shots</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Tower hits</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Drone shots</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Drone hits</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Enemy shots</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Enemy hits</color>  <b>999</b>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Modules</b>");
-        sb.AppendLine($"Built: 999");
-        sb.AppendLine($"Lost: 999");
-        sb.AppendLine($"Damage: 999");
+        sb.AppendLine($"<color=#94ECF4><b>Modules</b></color>");
+        sb.AppendLine($"<color=#9BACB0>Built</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Lost</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Damage</color>  <b>999</b>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Shield</b>");
-        sb.AppendLine($"Damage: 999");
-        sb.AppendLine($"Deflected: 999");
-        sb.AppendLine($"Deflected hits: 999");
+        sb.AppendLine($"<color=#94ECF4><b>Shield</b></color>");
+        sb.AppendLine($"<color=#9BACB0>Damage</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Deflected</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Deflected hits</color>  <b>999</b>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Upgrading</b>");
-        sb.AppendLine($"Bought: 999");
-        sb.AppendLine($"Spent: 999 M");
+        sb.AppendLine($"<color=#94ECF4><b>Upgrading</b></color>");
+        sb.AppendLine($"<color=#9BACB0>Bought</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Spent</color>  <b>999 M</b>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Resources</b>");
-        sb.AppendLine($"Dropped: 999");
-        sb.AppendLine($"Collected: 999 M");
-        sb.AppendLine($"Auto-collected: 999 M");
-        sb.AppendLine($"Total: 999 M");
+        sb.AppendLine($"<color=#94ECF4><b>Resources</b></color>");
+        sb.AppendLine($"<color=#9BACB0>Dropped</color>  <b>999</b>");
+        sb.AppendLine($"<color=#9BACB0>Collected</color>  <b>999 M</b>");
+        sb.AppendLine($"<color=#9BACB0>Auto-collected</color>  <b>999 M</b>");
+        sb.AppendLine($"<color=#9BACB0>Total</color>  <b>999 M</b>");
 
         txtDetails.text = sb.ToString();
     }
@@ -218,21 +218,21 @@ public class GameManager : MonoBehaviour
         var b = FindAnyObjectByType<ScoreManager>().GetBreakdown(Stats.Instance);
         var sb = new System.Text.StringBuilder(256);
 
-        sb.AppendLine($"<align=center>Play time {FormatTimeSmart(b.playTimeSeconds)}</align>");
+        sb.AppendLine($"<align=center><color=#9BACB0>Play time</color> {FormatTimeSmart(b.playTimeSeconds)}</align>");
         sb.AppendLine();
 
-        sb.AppendLine($"Time: {b.timeScore}");
-        sb.AppendLine($"Waves: {b.wavesScore}");
-        sb.AppendLine($"Kills: {b.killsScore}");
-        sb.AppendLine($"Upgrades: {b.upgradesScore}");
-        sb.AppendLine($"Resources: {b.resourcesScore}");
+        sb.AppendLine($"<color=#9BACB0>Time</color>  <b>{b.timeScore}</b>");
+        sb.AppendLine($"<color=#9BACB0>Waves</color>  <b>{b.wavesScore}</b>");
+        sb.AppendLine($"<color=#9BACB0>Kills</color>  <b>{b.killsScore}</b>");
+        sb.AppendLine($"<color=#9BACB0>Upgrades</color>  <b>{b.upgradesScore}</b>");
+        sb.AppendLine($"<color=#9BACB0>Resources</color>  <b>{b.resourcesScore}</b>");
 
         // modules penalty in red, as negative
         sb.AppendLine($"<color=#FF4D4D>Modules: -{b.modulesPenalty}</color>");
         sb.AppendLine("");
-        sb.AppendLine($"<size=120%><b>Score</b>: {b.totalScore}</size>");
+        sb.AppendLine($"<size=120%><color=#94ECF4><b>SCORE</b></color>  <b>{b.totalScore}</b></size>");
         if (SaveGameManager.Instance.bestSaveGame.score != 0 && SaveGameManager.Instance.bestSaveGame.score > b.totalScore)
-            sb.AppendLine($"Best: {SaveGameManager.Instance.bestSaveGame.score}");
+            sb.AppendLine($"<color=#9BACB0>Best</color>  <b>{SaveGameManager.Instance.bestSaveGame.score}</b>");
 
         txtGameOverStats.text = sb.ToString();
 
@@ -253,48 +253,48 @@ public class GameManager : MonoBehaviour
         var s = Stats.Instance;
         var sb = new System.Text.StringBuilder(512);
 
-        sb.AppendLine($"<align=center>Play time: {FormatTimeSmart(s.playTime)}</align>");
+        sb.AppendLine($"<align=center><color=#9BACB0>Play time</color> {FormatTimeSmart(s.playTime)}</align>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Waves:</b> {s.wavesCompleted}");
+        sb.AppendLine($"<color=#94ECF4><b>Waves</b></color>  {s.wavesCompleted}");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Enemies</b>");
-        sb.AppendLine($"Spawned: {s.enemiesSpawned}");
-        sb.AppendLine($"Killed: {s.GetTotalKills()}");
+        sb.AppendLine($"<color=#94ECF4><b>Enemies</b></color>");
+        sb.AppendLine($"<color=#9BACB0>Spawned</color>  <b>{s.enemiesSpawned}</b>");
+        sb.AppendLine($"<color=#9BACB0>Killed</color>  <b>{s.GetTotalKills()}</b>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Projectiles</b>");
-        sb.AppendLine($"Tower shots: {s.towerProjectilesFired}");
-        sb.AppendLine($"Tower hits: {s.towerProjectilesHit}");
-        sb.AppendLine($"Drone shots: {s.droneProjectilesFired}");
-        sb.AppendLine($"Drone hits: {s.droneProjectilesHit}");
-        sb.AppendLine($"Enemy shots: {s.enemyProjectilesFired}");
-        sb.AppendLine($"Enemy hits: {s.enemyProjectilesHit}");
+        sb.AppendLine($"<color=#94ECF4><b>Projectiles</b></color>");
+        sb.AppendLine($"<color=#9BACB0>Tower shots</color>  <b>{s.towerProjectilesFired}</b>");
+        sb.AppendLine($"<color=#9BACB0>Tower hits</color>  <b>{s.towerProjectilesHit}</b>");
+        sb.AppendLine($"<color=#9BACB0>Drone shots</color>  <b>{s.droneProjectilesFired}</b>");
+        sb.AppendLine($"<color=#9BACB0>Drone hits</color>  <b>{s.droneProjectilesHit}</b>");
+        sb.AppendLine($"<color=#9BACB0>Enemy shots</color>  <b>{s.enemyProjectilesFired}</b>");
+        sb.AppendLine($"<color=#9BACB0>Enemy hits</color>  <b>{s.enemyProjectilesHit}</b>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Modules</b>");
-        sb.AppendLine($"Built: {s.modulesBuilt}");
-        sb.AppendLine($"Lost: {s.modulesDestroyed}");
-        sb.AppendLine($"Damage: {s.modulesDamageTaken}");
+        sb.AppendLine($"<color=#94ECF4><b>Modules</b></color>");
+        sb.AppendLine($"<color=#9BACB0>Built</color>  <b>{s.modulesBuilt}</b>");
+        sb.AppendLine($"<color=#9BACB0>Lost</color>  <b>{s.modulesDestroyed}</b>");
+        sb.AppendLine($"<color=#9BACB0>Damage</color>  <b>{s.modulesDamageTaken}</b>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Shield</b>");
-        sb.AppendLine($"Damage: {s.shieldDamageTaken}");
-        sb.AppendLine($"Deflected: {s.deflectedProjectilesFired}");
-        sb.AppendLine($"Deflected hits: {s.deflectedProjectilesHit}");
+        sb.AppendLine($"<color=#94ECF4><b>Shield</b></color>");
+        sb.AppendLine($"<color=#9BACB0>Damage</color>  <b>{s.shieldDamageTaken}</b>");
+        sb.AppendLine($"<color=#9BACB0>Deflected</color>  <b>{s.deflectedProjectilesFired}</b>");
+        sb.AppendLine($"<color=#9BACB0>Deflected hits</color>  <b>{s.deflectedProjectilesHit}</b>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Upgrading</b>");
-        sb.AppendLine($"Bought: {s.boughtUpgrades}");
-        sb.AppendLine($"Spent: {s.totalUpgradeCosts} M");
+        sb.AppendLine($"<color=#94ECF4><b>Upgrading</b></color>");
+        sb.AppendLine($"<color=#9BACB0>Bought</color>  <b>{s.boughtUpgrades}</b>");
+        sb.AppendLine($"<color=#9BACB0>Spent</color>  <b>{s.totalUpgradeCosts} M</b>");
         sb.AppendLine();
 
-        sb.AppendLine($"<b>Resources</b>");
-        sb.AppendLine($"Dropped: {s.resourcesSpawned}");
-        sb.AppendLine($"Collected: {s.resourcesCollectedManually} M");
-        sb.AppendLine($"Auto-collected: {s.resourcesCollectedAutomatically} M");
-        sb.AppendLine($"Total: {s.resourcesCollectedManually + s.resourcesCollectedAutomatically} M");
+        sb.AppendLine($"<color=#94ECF4><b>Resources</b></color>");
+        sb.AppendLine($"<color=#9BACB0>Dropped</color>  <b>{s.resourcesSpawned}</b>");
+        sb.AppendLine($"<color=#9BACB0>Collected</color>  <b>{s.resourcesCollectedManually} M</b>");
+        sb.AppendLine($"<color=#9BACB0>Auto-collected</color>  <b>{s.resourcesCollectedAutomatically} M</b>");
+        sb.AppendLine($"<color=#9BACB0>Total</color>  <b>{s.resourcesCollectedManually + s.resourcesCollectedAutomatically} M</b>");
 
         return sb.ToString();
     }

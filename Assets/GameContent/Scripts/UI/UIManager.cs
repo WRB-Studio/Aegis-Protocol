@@ -146,8 +146,16 @@ public class UIManager : MonoBehaviour, IResettable
 
         string formatted = Regex.Replace(title, "([a-z])([A-Z])", "$1 $2");
         txtTitle.text = char.ToUpper(formatted[0]) + formatted.Substring(1);
+        txtTitle.color = new Color32(148, 236, 244, 255);
+        txtTitle.fontStyle = FontStyles.Bold;
 
         txtInfo.text = info;
+        txtInfo.color = Color.white;
+        if (showBtnBuy && ResourceManager.Instance.curMaterials < cost)
+        {
+            txtInfo.text += "\n<size=85%><color=#FF7777>Missing " +
+                (cost - ResourceManager.Instance.curMaterials).ToString("N0") + " M</color></size>";
+        }
         txtBuyCost.text = Utils.FormatNumber(cost) + " M";
         btnBuy.gameObject.SetActive(showBtnBuy);
         StartCoroutine(DelayedLayoutRebuild());

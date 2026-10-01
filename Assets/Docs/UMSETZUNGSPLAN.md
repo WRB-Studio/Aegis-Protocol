@@ -37,6 +37,7 @@ Grundlage: [Projektanalyse](PROJEKTANALYSE.md).
 
 ## Umgesetzt
 
+- [x] Einheitliche Textformatierung: Cyan-Titel, hervorgehobene Werte, grüne Verbesserungen, rote Materialdefizite und kleinere Hinweise; verständliche Upgrade-Namen und klarere Statistik-Gruppen.
 - [x] UI-Texte gekürzt; Modul- und Upgrade-Infos mit begrenzter Breite und Zeilenumbruch, kompakteres HUD, gekürzte Zahlen auf Kaufbuttons und Statistik ohne breite Tabulator-Abstände.
 - [x] Structural Integrity zum Core verschoben; vorhandene HP-Upgrades bleiben beim Laden erhalten.
 - [x] CommandUnit behält Drehgeschwindigkeit und bietet Zielpriorisierung: einmalig 40 Material, danach kostenlos zwischen nächstem Gegner, Artillery und stärkstem Gegner wechseln. Auswahl bleibt bei Modulverlust gespeichert.

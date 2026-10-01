@@ -161,32 +161,42 @@ public class UpgradeUI : MonoBehaviour, IResettable
 
         if (title)
         {
-            string formatted = Regex.Replace(upgrade.upgradeName.ToString(), "([a-z])([A-Z])", "$1 $2");
-            title.text = char.ToUpper(formatted[0]) + formatted.Substring(1);
+            title.text = GetUpgradeTitle(upgrade.upgradeName);
+            title.color = new Color32(148, 236, 244, 255);
+            title.fontStyle = FontStyles.Bold;
         }
 
         if (desc)
         {
+            desc.color = Color.white;
             string current = GetValueWithUnit(upgrade, upgrade.currentValue);
-            string persistence = upgrade.IsPermanent
-                ? "Permanent"
-                : "Active module required";
-            if (upgrade.upgradeName == eUpgradeName.DroneHP || upgrade.upgradeName == eUpgradeName.DroneDamage)
-                persistence = "Existing drones keep this upgrade";
-            else if (upgrade.upgradeName == eUpgradeName.DroneCount)
-                persistence = "Existing drones stay if module is lost";
+            string note = upgrade.IsPermanent
+                ? "\n<size=75%><color=#9BACB0>Permanent upgrade</color></size>" : "";
             if (upgrade.upgradeName == eUpgradeName.TargetPriority && upgrade.level > 0)
-                desc.text = "Target: " + current + "\nTap again to switch (free)\n" + persistence;
+            {
+                string focus = Tower.Instance.SelectedPriority == Tower.TargetPriority.ArtilleryFirst
+                    ? "Artillery first" : Tower.Instance.SelectedPriority == Tower.TargetPriority.Strongest
+                    ? "Strongest enemy" : "Nearest enemy";
+                desc.text = "<b>" + focus + "</b>\n" +
+                    "<size=85%><color=#94ECF4>Switch target  |  Free</color></size>";
+            }
             else if (upgrade.level >= upgrade.maxLevel)
-                desc.text = upgrade.description + "\n" + current + " (MAX)\n" + persistence;
+                desc.text = "<b>" + current + "</b>\n<size=85%><color=#9BACB0>Fully upgraded</color></size>" + note;
             else
             {
                 int price = Mathf.RoundToInt(upgrade.cost);
                 string next = GetValueWithUnit(upgrade, upgrade.CalculateValue(upgrade.level + 1));
                 string action = price <= ResourceManager.Instance.curMaterials
-                    ? "Tap again: " + Utils.FormatNumber(price) + " M"
-                    : "Need " + Utils.FormatNumber(price) + " M";
-                desc.text = upgrade.description + "\n" + current + " -> " + next + "\n" + action + "\n" + persistence;
+                    ? "<color=#94ECF4>Upgrade  " + price.ToString("N0") + " M</color>"
+                    : "<color=#FF7777>" + price.ToString("N0") + " M  (missing " +
+                        (price - ResourceManager.Instance.curMaterials).ToString("N0") + " M)</color>";
+                int unitStart = next.LastIndexOf(' ');
+                if (unitStart > 0 && current.EndsWith(next.Substring(unitStart), System.StringComparison.Ordinal))
+                    current = current.Substring(0, current.Length - (next.Length - unitStart));
+                string values = upgrade.upgradeName == eUpgradeName.TargetPriority
+                    ? "Unlock target selection"
+                    : "<b>" + current + "</b>  <color=#9BACB0>></color>  <color=#A8E6AD><b>" + next + "</b></color>";
+                desc.text = values + "\n<size=85%>" + action + "</size>" + note;
             }
         }
 
@@ -194,6 +204,25 @@ public class UpgradeUI : MonoBehaviour, IResettable
         {
             layoutRebuildPending = true;
             StartCoroutine(DelayedLayoutRebuild());
+        }
+    }
+
+    string GetUpgradeTitle(eUpgradeName name)
+    {
+        switch (name)
+        {
+            case eUpgradeName.StructuralIntegrity: return "Structural Integrity";
+            case eUpgradeName.TargetPriority: return "Target Priority";
+            case eUpgradeName.DroneCount: return "Drone Slots";
+            case eUpgradeName.DroneHP: return "Drone Health";
+            case eUpgradeName.DroneBuildTime: return "Drone Build Speed";
+            case eUpgradeName.ShieldCapacity: return "Shield Strength";
+            case eUpgradeName.RechargeTime: return "Shield Recharge";
+            case eUpgradeName.DeflectionChance: return "Shot Reflection";
+            case eUpgradeName.AutoCollecting: return "Auto Collection";
+            case eUpgradeName.CollectingEfficiency: return "Material Yield";
+            case eUpgradeName.TimeMultiplier: return "Game Speed";
+            default: return Regex.Replace(name.ToString(), "([a-z])([A-Z])", "$1 $2");
         }
     }
 
@@ -310,7 +339,7 @@ public class UpgradeUI : MonoBehaviour, IResettable
             case eUpgradeName.RechargeTime: return value.ToString("0.##") + " s";
             case eUpgradeName.DeflectionChance: return value.ToString("0.##") + " %";
             case eUpgradeName.FireRange: return value.ToString("0.##") + " m";
-            case eUpgradeName.RotationSpeed: return value.ToString("0.##") + " deg/s";
+            case eUpgradeName.RotationSpeed: return (value * 100f).ToString("0.#") + " deg/s";
             case eUpgradeName.StructuralIntegrity:
                 var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
                 int coreHP = core.BaseHP + Mathf.RoundToInt(value) - Mathf.RoundToInt(upgrade.baseValue);

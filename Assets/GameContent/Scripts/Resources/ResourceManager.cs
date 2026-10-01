@@ -106,11 +106,14 @@ public class ResourceManager : MonoBehaviour, IResettable
         displayedCoreMaxHP = core ? core.maxHP : 0;
         displayedMaterials = curMaterials;
         displayedHint = TutorialHint();
-        string hint = displayedHint == 0 ? "\nTap station: build" :
-            displayedHint == 1 ? "\nTap drops: collect" : "";
-        txtMaterial.text = $"Wave {displayedWave}\nCore {displayedCoreHP}/{displayedCoreMaxHP}  |  {Utils.FormatNumber(curMaterials)} M{hint}";
+        string hint = displayedHint == 0 ? "\n<size=85%><color=#9BACB0>Tap station to build</color></size>" :
+            displayedHint == 1 ? "\n<size=85%><color=#9BACB0>Tap drops to collect</color></size>" : "";
+        string hpColor = displayedCoreHP <= 1 ? "#FF7777" : "#FFFFFF";
+        txtMaterial.color = Color.white;
+        txtMaterial.text = $"<color=#94ECF4><b>WAVE {displayedWave}</b></color>\n" +
+            $"Core <color={hpColor}><b>{displayedCoreHP}/{displayedCoreMaxHP}</b></color>  |  <b>{Utils.FormatNumber(curMaterials)} M</b>{hint}";
         if (waveBonusDisplayTime > 0f)
-            txtMaterial.text += $"\nWave bonus +{Utils.FormatNumber(lastWaveBonus)} M";
+            txtMaterial.text += $"\n<size=85%><color=#A8E6AD>Wave bonus <b>+{Utils.FormatNumber(lastWaveBonus)} M</b></color></size>";
     }
 
     int TutorialHint()
