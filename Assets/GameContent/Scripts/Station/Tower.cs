@@ -22,6 +22,15 @@ public class Tower : MonoBehaviour, IResettable
     public float initialFireRange;
     public int initialDamage;
 
+    public float EffectiveFireRange
+    {
+        get
+        {
+            var radar = StationModule.GetModuleByType(StationModule.eModuleType.Radar);
+            return radar && radar.isBuilt ? fireRange : initialFireRange;
+        }
+    }
+
     [Range(0f, 45f)] public float aimToleranceAngle = 5f; // Degree tolerance for firing
 
     private float fireCooldown = 0f;
@@ -53,9 +62,7 @@ public class Tower : MonoBehaviour, IResettable
 
     public void UpdateNormal()
     {
-        float effectiveRange = fireRange;
-        var radar = StationModule.GetModuleByType(StationModule.eModuleType.Radar);
-        if (!radar || !radar.isBuilt) effectiveRange = initialFireRange;
+        float effectiveRange = EffectiveFireRange;
         if (currentTarget && (!EnemySpawner.Instance ||
             !EnemySpawner.Instance.instantiatedEnemies.Contains(currentTarget.GetComponent<Enemy>()) ||
             Vector3.Distance(transform.position, currentTarget.position) >= effectiveRange))
@@ -85,9 +92,7 @@ public class Tower : MonoBehaviour, IResettable
 
     void FindTarget()
     {
-        float fireRange = this.fireRange;
-        if (StationModule.GetModuleByType(StationModule.eModuleType.Radar).isBuilt == false)
-            fireRange = initialFireRange;
+        float fireRange = EffectiveFireRange;
 
         float shortestDistance = fireRange;
         Transform nearest = null;

@@ -179,6 +179,47 @@ public class GameFlowTests
     }
 
     [UnityTest]
+    public IEnumerator ArtilleryMustEnterActualTowerRangeBeforeFiring()
+    {
+        var tower = Tower.Instance;
+        var radar = StationModule.GetModuleByType(StationModule.eModuleType.Radar);
+        float originalBaseRange = tower.initialFireRange;
+        float originalRange = tower.fireRange;
+        bool originalBuilt = radar.isBuilt;
+        var enemyObject = new GameObject("Artillery range test");
+        var enemy = enemyObject.AddComponent<Enemy>();
+        enemy.enemyType = Enemy.eEnemyType.Ranged;
+        enemy.fireRange = 5f;
+        typeof(Enemy).GetField("target", BindingFlags.Instance | BindingFlags.NonPublic)
+            .SetValue(enemy, tower.transform.position + Vector3.up * 0.25f);
+        var inRange = typeof(Enemy).GetMethod("TargetInFireRange", BindingFlags.Instance | BindingFlags.NonPublic);
+        try
+        {
+            tower.initialFireRange = 1f;
+            tower.fireRange = 2f;
+            foreach (bool built in new[] { false, true })
+            {
+                radar.isBuilt = built;
+                float range = built ? 2f : 1f;
+                enemy.transform.position = tower.transform.position + Vector3.up * range * 1.05f;
+                Assert.That((bool)inRange.Invoke(enemy, null), Is.False, "Enemy range must not allow firing from outside turret range.");
+                enemy.transform.position = tower.transform.position + Vector3.up * range * 0.85f;
+                Assert.That((bool)inRange.Invoke(enemy, null), Is.True);
+            }
+            radar.isBuilt = false;
+            Assert.That((bool)inRange.Invoke(enemy, null), Is.False, "Radar loss must force artillery to approach again.");
+        }
+        finally
+        {
+            tower.initialFireRange = originalBaseRange;
+            tower.fireRange = originalRange;
+            radar.isBuilt = originalBuilt;
+            UnityEngine.Object.Destroy(enemyObject);
+        }
+        yield break;
+    }
+
+    [UnityTest]
     public IEnumerator DroneUpgrades_UpdateExistingDronesAndPreserveDamageTaken()
     {
         var module = StationModule.GetModuleByType(StationModule.eModuleType.Drone);

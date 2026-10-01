@@ -2916,7 +2916,6 @@ MonoBehaviour:
   contentContainer: {fileID: 1854781289}
   buttonPrefab: {fileID: 5810159539177515529, guid: 7659ea950f0b07d498a73aa692491f88, type: 3}
   infoPanel: {fileID: 1618929541}
-  fireRangeCircle: {fileID: 1256045459}
   infoTitlePath: TextGrp/txtTitle
   infoDescPath: TextGrp/txtInfo
   colorBtnFrameSelected: {r: 0, g: 1, b: 0.45098042, a: 1}
@@ -9226,6 +9225,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1256045460}
   - component: {fileID: 1256045461}
+  - component: {fileID: 1256045462}
   m_Layer: 0
   m_Name: FireRangeCircle
   m_TagString: Untagged
@@ -9307,6 +9307,18 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &1256045462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1256045459}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9d3783e7c9b4807af16444992d19a66, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
 --- !u!1 &1258707771
 GameObject:
   m_ObjectHideFlags: 0

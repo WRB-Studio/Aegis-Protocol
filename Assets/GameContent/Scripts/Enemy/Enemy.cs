@@ -120,7 +120,13 @@ public class Enemy : MonoBehaviour
 
     private bool TargetInFireRange()
     {
-        return Vector2.Distance(transform.position, target) <= fireRange && !Utils.IsOutOfView(transform.position);
+        var tower = Tower.Instance;
+        if (!tower || GameManager.gameOver) return false;
+
+        // Stay inside the turret's range, including after radar loss. The target has a random offset.
+        return Vector2.Distance(transform.position, target) <= fireRange &&
+            Vector3.Distance(transform.position, tower.transform.position) < tower.EffectiveFireRange * 0.9f &&
+            !Utils.IsOutOfView(transform.position);
     }
 
     public void Fire()

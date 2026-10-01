@@ -15,7 +15,6 @@ public class UpgradeUI : MonoBehaviour, IResettable
     [SerializeField] Transform contentContainer;
     [SerializeField] GameObject buttonPrefab;
     [SerializeField] GameObject infoPanel;
-    [SerializeField] GameObject fireRangeCircle;
 
     [Header("Info Panel Paths")]
     [SerializeField] string infoTitlePath = "TextGrp/txtTitle";
@@ -53,7 +52,6 @@ public class UpgradeUI : MonoBehaviour, IResettable
 
     public void Init()
     {
-        if (fireRangeCircle) fireRangeCircle.SetActive(false);
     }
 
     public void Show(UpgradeSet upgradeSet, bool holdSelection = false)
@@ -90,7 +88,6 @@ public class UpgradeUI : MonoBehaviour, IResettable
         if (panel) panel.SetActive(false);
 
         ClearButtons();
-        UpdateFireRangePreview();
     }
 
     void RebuildButtons()
@@ -148,7 +145,6 @@ public class UpgradeUI : MonoBehaviour, IResettable
             if (selected != null) RefreshInfoPanel(selected);
         }
 
-        UpdateFireRangePreview();
     }
 
     void RefreshInfoPanel(UpgradeAttribute upgrade)
@@ -235,29 +231,6 @@ public class UpgradeUI : MonoBehaviour, IResettable
         DroneManager.Instance.RefreshUIDroneCount();
     }
 
-    void UpdateFireRangePreview()
-    {
-        if (!fireRangeCircle || currentUpgradeSet == null)
-        {
-            if (fireRangeCircle) fireRangeCircle.SetActive(false);
-            return;
-        }
-
-        if (currentSelectedUpgrade != eUpgradeName.FireRange)
-        {
-            fireRangeCircle.SetActive(false);
-            return;
-        }
-
-        float fireRange = currentUpgradeSet.upgradeAttributes[0].currentValue;
-        if (StationModule.GetModuleByType(StationModule.eModuleType.Radar).isBuilt == false)
-            fireRange = Tower.Instance.initialFireRange;
-
-        fireRangeCircle.SetActive(true);
-        float scale = fireRange * 2f;
-        fireRangeCircle.transform.localScale = new Vector3(scale, scale, scale);
-    }
-
     IEnumerator DelayedLayoutRebuild()
     {
         yield return null;
@@ -340,7 +313,6 @@ public class UpgradeUI : MonoBehaviour, IResettable
         currentUpgradeSet = null;
 
         if (infoPanel) infoPanel.SetActive(false);
-        if (fireRangeCircle) fireRangeCircle.SetActive(false);
 
         ClearButtons();
 
