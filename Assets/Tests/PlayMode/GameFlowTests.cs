@@ -186,6 +186,10 @@ public class GameFlowTests
         module.gameObject.SetActive(true);
         var manager = DroneManager.Instance;
         manager.AfterModulInit();
+        var count = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.DroneCount);
+        count.level = 1;
+        count.RecalculateFromLevel();
+        count.ApplyUpgradeEffect();
         var drone = manager.SpawnDrone(true).GetComponent<Drone>();
         int originalHP = drone.maxHP;
         drone.currentHP = originalHP - 1;
@@ -202,7 +206,42 @@ public class GameFlowTests
         damage.RecalculateFromLevel();
         damage.ApplyUpgradeEffect();
         Assert.That(drone.damage, Is.EqualTo(manager.droneInitialDamage));
-        yield break;
+        int upgradedHP = drone.maxHP;
+        int damagedHP = drone.currentHP;
+        int upgradedDamage = drone.damage;
+
+        module.TakeDamage(module.currentHP);
+        Assert.That(module.isBuilt, Is.False);
+        Assert.That(manager.allDrones, Has.Count.EqualTo(1));
+        Assert.That(drone.maxHP, Is.EqualTo(upgradedHP));
+        Assert.That(drone.currentHP, Is.EqualTo(damagedHP));
+        Assert.That(drone.damage, Is.EqualTo(upgradedDamage));
+        float countdown = manager.droneBuildCountdown;
+        drone.transform.position = StationModule.GetModuleByType(StationModule.eModuleType.Core).transform.position + Vector3.up * 10f;
+        Vector3 position = drone.transform.position;
+        manager.UpdateNormal();
+        Assert.That(drone.transform.position, Is.Not.EqualTo(position), "Surviving drones must remain active.");
+        Assert.That(manager.droneBuildCountdown, Is.EqualTo(countdown));
+        Assert.That(manager.allDrones, Has.Count.EqualTo(1));
+
+        yield return ReloadMainScene();
+        manager = DroneManager.Instance;
+        module = StationModule.GetModuleByType(StationModule.eModuleType.Drone);
+        Assert.That(module.isBuilt, Is.False);
+        Assert.That(manager.allDrones, Has.Count.EqualTo(1));
+        drone = manager.allDrones[0];
+        Assert.That(drone.maxHP, Is.EqualTo(upgradedHP));
+        Assert.That(drone.currentHP, Is.EqualTo(damagedHP));
+        Assert.That(drone.damage, Is.EqualTo(upgradedDamage));
+
+        ResourceManager.Instance.curMaterials = module.cost;
+        ModulesUI.Instance.SelectModule(StationModule.eModuleType.Drone);
+        ModulesUI.Instance.BuySelectedModule();
+        Assert.That(module.isBuilt, Is.True);
+        Assert.That(manager.allDrones, Has.Count.EqualTo(1));
+        Assert.That(drone.currentHP, Is.EqualTo(damagedHP));
+        Assert.That(drone.damage, Is.EqualTo(upgradedDamage));
+        Assert.That(manager.currentDroneSlots, Is.EqualTo(1));
     }
 
     [UnityTest]
@@ -788,13 +827,14 @@ public class GameFlowTests
     }
 
     [UnityTest]
-    public IEnumerator ModuleLossAndLoadKeepOnlyBuiltModuleEffects()
+    public IEnumerator CommandUnitLossAndLoadPreservePurchasedHP()
     {
         var command = StationModule.GetModuleByType(StationModule.eModuleType.CommandUnit);
         var extractor = StationModule.GetModuleByType(StationModule.eModuleType.Extractor);
         var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
         var integrity = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.StructuralIntegrity);
         var efficiency = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.CollectingEfficiency);
+        var rotation = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.RotationSpeed);
         command.isBuilt = true;
         command.gameObject.SetActive(true);
         extractor.isBuilt = true;
@@ -803,14 +843,20 @@ public class GameFlowTests
         integrity.RecalculateFromLevel();
         efficiency.level = 1;
         efficiency.RecalculateFromLevel();
+        rotation.level = 1;
+        rotation.RecalculateFromLevel();
         UpgradeAttribute.ApplyAllUpgradeEffect();
         int upgradedHP = core.maxHP;
+        core.TakeDamage(1);
+        int damagedHP = core.currentHP;
         float upgradedEfficiency = ResourceManager.Instance.collectingEffeciency;
         Assert.That(upgradedHP, Is.GreaterThan(Mathf.RoundToInt(integrity.baseValue)));
         Assert.That(upgradedEfficiency, Is.GreaterThan(efficiency.baseValue));
 
         command.TakeDamage(command.currentHP);
-        Assert.That(core.maxHP, Is.EqualTo(core.BaseHP));
+        Assert.That(core.maxHP, Is.EqualTo(upgradedHP));
+        Assert.That(core.currentHP, Is.EqualTo(damagedHP));
+        Assert.That(Tower.Instance.rotationSpeed, Is.EqualTo(rotation.baseValue));
         Assert.That(ResourceManager.Instance.collectingEffeciency, Is.EqualTo(upgradedEfficiency));
         Assert.That(integrity.currentValue, Is.GreaterThan(integrity.baseValue));
 
@@ -819,7 +865,10 @@ public class GameFlowTests
         command = StationModule.GetModuleByType(StationModule.eModuleType.CommandUnit);
         core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
         Assert.That(command.isBuilt, Is.False);
-        Assert.That(core.maxHP, Is.EqualTo(core.BaseHP));
+        Assert.That(core.maxHP, Is.EqualTo(upgradedHP));
+        Assert.That(core.currentHP, Is.EqualTo(damagedHP));
+        rotation = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.RotationSpeed);
+        Assert.That(Tower.Instance.rotationSpeed, Is.EqualTo(rotation.baseValue));
         Assert.That(ResourceManager.Instance.collectingEffeciency, Is.EqualTo(upgradedEfficiency));
 
         var radar = StationModule.GetModuleByType(StationModule.eModuleType.Radar);
@@ -830,6 +879,8 @@ public class GameFlowTests
         ModulesUI.Instance.BuySelectedModule();
         Assert.That(command.isBuilt, Is.True);
         Assert.That(core.maxHP, Is.EqualTo(upgradedHP));
+        Assert.That(core.currentHP, Is.EqualTo(damagedHP));
+        Assert.That(Tower.Instance.rotationSpeed, Is.EqualTo(rotation.currentValue));
         Assert.That(ResourceManager.Instance.collectingEffeciency, Is.EqualTo(upgradedEfficiency));
         Assert.That(radar.isBuilt, Is.False);
         Assert.That(radar.currentHP, Is.Zero);

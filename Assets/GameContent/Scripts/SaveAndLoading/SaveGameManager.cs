@@ -303,18 +303,17 @@ public class SaveGameManager : MonoBehaviour
         if (data.stats != null) Stats.Instance.ApplyStatsData(data.stats);
 
         var droneModule = StationModule.GetModuleByType(StationModule.eModuleType.Drone);
-        if (droneModule && droneModule.isBuilt)
+        foreach (var loadedDrone in data.drones)
         {
-            foreach (var loadedDrone in data.drones)
-            {
-                GameObject droneObj = DroneManager.Instance.SpawnDrone(true);
-                if (!droneObj) break;
-                var drone = droneObj.GetComponent<Drone>();
-                drone.currentHP = Mathf.Clamp(loadedDrone.currentHP, 0, drone.maxHP);
-            }
-
-            DroneManager.Instance.AfterModulInit();
+            GameObject droneObj = DroneManager.Instance.SpawnDrone(true);
+            if (!droneObj) break;
+            var drone = droneObj.GetComponent<Drone>();
+            drone.currentHP = Mathf.Clamp(loadedDrone.currentHP, 0, drone.maxHP);
         }
+        if (droneModule && droneModule.isBuilt)
+            DroneManager.Instance.AfterModulInit();
+        else
+            DroneManager.Instance.AfterModuleOff();
         DroneManager.Instance.droneBuildCountdown = data.droneBuildCountdown;
         DroneManager.Instance.CheckDroneCanBuild();
 

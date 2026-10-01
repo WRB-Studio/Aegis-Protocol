@@ -49,14 +49,14 @@ public class DroneManager : MonoBehaviour, IResettable
 
     public void UpdateNormal()
     {
-        if (!StationModule.GetModuleByType(StationModule.eModuleType.Drone).isBuilt) return;
-
         for (int i = allDrones.Count - 1; i >= 0; i--)
         {
             var drone = allDrones[i];
             if (!drone) continue;
             drone.UpdateNormal();
         }
+
+        if (!StationModule.GetModuleByType(StationModule.eModuleType.Drone).isBuilt) return;
 
         if (allDrones.Count < currentDroneSlots)
         {
@@ -82,13 +82,6 @@ public class DroneManager : MonoBehaviour, IResettable
     {
         txtDroneCount.gameObject.SetActive(false);
         txtDroneBuildTime.gameObject.SetActive(false);
-
-        for (int i = allDrones.Count - 1; i >= 0; i--)
-        {
-            var drone = allDrones[i];
-            if (!drone) continue;
-            RemoveDrone(drone, Stats.eDeadBy.None);
-        }
     }
 
     public void RefreshUIDroneCount()

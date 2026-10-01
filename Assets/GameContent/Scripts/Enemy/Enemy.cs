@@ -18,6 +18,7 @@ public class Enemy : MonoBehaviour
 
     public int maxHP = 3;
     private int currentHP;
+    private int materialReward = 1;
 
     public float speed = 2f;
     public int damage = 1;
@@ -47,6 +48,7 @@ public class Enemy : MonoBehaviour
     public void InitWithLevel(int level)
     {
         float factor = 1.005f + level / 10f;
+        materialReward = Mathf.Max(1, level + 1);
 
         maxHP = Mathf.RoundToInt(maxHP * factor);
         currentHP = maxHP;
@@ -57,7 +59,9 @@ public class Enemy : MonoBehaviour
         if (enemyType == eEnemyType.Fast && level < 3)
             speed *= 0.8f;
 
-        damage = Mathf.RoundToInt(damage * factor);
+        damage = enemyType == eEnemyType.Ranged
+            ? Mathf.Max(1, Mathf.RoundToInt(damage * factor * 0.5f))
+            : Mathf.RoundToInt(damage * factor);
         fireRate = Mathf.Min(fireRate * factor, 6f);
     }
 
@@ -145,7 +149,7 @@ public class Enemy : MonoBehaviour
     {
         ExplosionManager.Instance.CreateShipExplosion(transform.position);
 
-        ResourceManager.Instance.SpawnMaterial(1, transform.position);
+        ResourceManager.Instance.SpawnMaterial(materialReward, transform.position);
 
         EnemySpawner.RemoveEnemy(this, deadBy);
     }

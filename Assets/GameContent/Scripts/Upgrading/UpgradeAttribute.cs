@@ -151,7 +151,10 @@ public class UpgradeAttribute : IResettable
     {
         // Ensure we never apply "zero" defaults by accident.
         TryAutoFillBaseValue();
-        float value = ownerModule && !ownerModule.isBuilt ? baseValue : currentValue;
+        // Reinforcement and installed drone equipment survive the loss of their upgrade module.
+        bool permanent = upgradeName == eUpgradeName.StructuralIntegrity ||
+            upgradeName == eUpgradeName.DroneHP || upgradeName == eUpgradeName.DroneDamage;
+        float value = ownerModule && !ownerModule.isBuilt && !permanent ? baseValue : currentValue;
 
         switch (upgradeName)
         {
