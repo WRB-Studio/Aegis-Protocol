@@ -212,6 +212,7 @@ MonoBehaviour:
   swarmGroupSize: 3
   launchInterval: 3
   shieldHealthRatio: 0.6
+  shieldSprite: {fileID: 21300000, guid: 4410014c8f994b143acc5d607485d61f, type: 3}
   rotationSpeed: 30
   movementSmoothTime: 1
   rotationSmoothTime: 0.9

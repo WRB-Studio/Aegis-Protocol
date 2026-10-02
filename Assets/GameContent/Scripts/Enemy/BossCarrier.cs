@@ -11,6 +11,7 @@ public sealed class BossCarrier : MonoBehaviour
     [SerializeField, Min(1)] int swarmGroupSize = 3;
     [SerializeField, Min(0.1f)] float launchInterval = 3f;
     [SerializeField, Range(0f, 2f)] float shieldHealthRatio = 0.6f;
+    [SerializeField] Sprite shieldSprite;
     [SerializeField, Min(1f)] float rotationSpeed = 30f;
     [SerializeField, Min(0.1f)] float movementSmoothTime = 1f;
     [SerializeField, Min(0.1f)] float rotationSmoothTime = 0.9f;
@@ -30,7 +31,8 @@ public sealed class BossCarrier : MonoBehaviour
     bool initialized, firstBoss, launchingSwarm;
     readonly List<Enemy> swarms = new();
     SpriteRenderer ship;
-    LineRenderer shieldRing, healthBar, shieldBar;
+    SpriteRenderer shieldVisual, shieldHitVisual;
+    LineRenderer healthBar, shieldBar;
     Material visualMaterial;
     Mesh haloMesh;
     GameObject halo;
@@ -155,7 +157,7 @@ public sealed class BossCarrier : MonoBehaviour
         if (!initialized || ShieldPoints <= 0) return amount;
         int absorbed = Mathf.Min(amount, ShieldPoints);
         ShieldPoints -= absorbed;
-        hitFlash = 0.2f;
+        hitFlash = 1f / 6f;
         MatchReporter.Event("boss_shield_damage", enemy.GetInstanceID().ToString(), value: absorbed,
             remaining: ShieldPoints, position: transform.position);
         if (ShieldPoints == 0) BeginAttack();
@@ -182,11 +184,26 @@ public sealed class BossCarrier : MonoBehaviour
     {
         visualMaterial = new Material(Shader.Find("Sprites/Default"));
         CreateHalo();
-        shieldRing = CreateLine("Carrier Shield", 0.04f, new Color(0.2f, 0.85f, 1f, 0.75f));
-        shieldRing.loop = true;
-        shieldRing.positionCount = 48;
+        shieldVisual = CreateShieldSprite("Carrier Shield", ship.sortingOrder - 1);
+        shieldHitVisual = CreateShieldSprite("Carrier Shield Hit", ship.sortingOrder + 1);
         healthBar = CreateLine("Carrier HP", 0.07f, new Color(1f, 0.35f, 0.25f));
-        shieldBar = CreateLine("Carrier Shield Points", 0.06f, new Color(0.2f, 0.85f, 1f));
+        shieldBar = CreateLine("Carrier Shield Points", 0.06f, new Color(1f, 0.3f, 0.2f));
+    }
+
+    SpriteRenderer CreateShieldSprite(string name, int sortingOrder)
+    {
+        var child = new GameObject(name, typeof(SpriteRenderer));
+        child.transform.SetParent(transform, false);
+        child.transform.localPosition = ship.sprite.bounds.center;
+        float diameter = (ship.sprite.bounds.extents.magnitude + 0.1f) * 2f;
+        child.transform.localScale = Vector3.one * (diameter / shieldSprite.bounds.size.x);
+        var renderer = child.GetComponent<SpriteRenderer>();
+        renderer.sprite = shieldSprite;
+        renderer.sharedMaterial = visualMaterial;
+        renderer.sortingLayerID = ship.sortingLayerID;
+        renderer.sortingOrder = sortingOrder;
+        renderer.color = new Color(1f, 0.2f, 0.12f, 1f);
+        return renderer;
     }
 
     LineRenderer CreateLine(string label, float width, Color color)
@@ -242,20 +259,19 @@ public sealed class BossCarrier : MonoBehaviour
         var renderer = halo.GetComponent<MeshRenderer>();
         renderer.sharedMaterial = visualMaterial;
         renderer.sortingLayerID = ship.sortingLayerID;
-        renderer.sortingOrder = ship.sortingOrder - 1;
+        renderer.sortingOrder = ship.sortingOrder - 2;
     }
 
     void RefreshVisuals()
     {
-        if (!shieldRing) return;
-        shieldRing.enabled = ShieldPoints > 0;
-        float radius = ship.bounds.extents.magnitude + 0.1f;
-        for (int i = 0; i < shieldRing.positionCount; i++)
-        {
-            float angle = i * Mathf.PI * 2f / shieldRing.positionCount;
-            shieldRing.SetPosition(i, transform.position + new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * radius);
-        }
-        shieldRing.startColor = shieldRing.endColor = hitFlash > 0f ? Color.white : new Color(0.2f, 0.85f, 1f, 0.75f);
+        if (!shieldVisual) return;
+        shieldVisual.enabled = ShieldPoints > 0;
+        shieldHitVisual.enabled = ShieldPoints > 0 && hitFlash > 0f;
+        float elapsed = 1f / 6f - hitFlash;
+        float flashAlpha = elapsed < 1f / 15f
+            ? Mathf.SmoothStep(0f, 1f, elapsed * 15f)
+            : Mathf.SmoothStep(1f, 0f, (elapsed - 1f / 15f) * 10f);
+        shieldHitVisual.color = new Color(1f, 0.35f, 0.25f, flashAlpha);
         float barY = side > 0f ? ship.bounds.max.y + 0.15f : ship.bounds.min.y - 0.15f;
         Vector3 barCenter = new Vector3(ship.bounds.center.x, barY, transform.position.z);
         UpdateBar(healthBar, barCenter, Mathf.Clamp01((float)enemy.CurrentHP / enemy.maxHP));
@@ -272,8 +288,8 @@ public sealed class BossCarrier : MonoBehaviour
 
     public void HideVisuals()
     {
-        if (!shieldRing) return;
-        shieldRing.enabled = healthBar.enabled = shieldBar.enabled = false;
+        if (!shieldVisual) return;
+        shieldVisual.enabled = shieldHitVisual.enabled = healthBar.enabled = shieldBar.enabled = false;
         if (halo) halo.SetActive(false);
     }
 

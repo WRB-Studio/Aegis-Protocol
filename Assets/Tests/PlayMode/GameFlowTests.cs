@@ -657,7 +657,7 @@ public class GameFlowTests
         Assert.That(carrier.ShieldPoints, Is.Zero);
         Assert.That(enemy.CurrentHP, Is.EqualTo(hp - 3));
         Assert.That(carrier.CurrentPhase, Is.EqualTo(BossCarrier.Phase.Attack));
-        Assert.That(enemy.transform.Find("Carrier Shield").GetComponent<LineRenderer>().enabled, Is.False);
+        Assert.That(enemy.transform.Find("Carrier Shield").GetComponent<SpriteRenderer>().enabled, Is.False);
     }
 
     IEnumerator WaitForCarrierLaunch(BossCarrier carrier)
@@ -666,6 +666,38 @@ public class GameFlowTests
         float deadline = Time.time + 6f;
         while ((bool)field.GetValue(carrier) && Time.time < deadline) yield return null;
         Assert.That((bool)field.GetValue(carrier), Is.False, "The staggered launch must complete.");
+    }
+
+    [UnityTest]
+    public IEnumerator CarrierShieldUsesCoreSpriteWithRedTintAndShortHitFlash()
+    {
+        var enemy = CreateCarrier(10);
+        var carrier = enemy.GetComponent<BossCarrier>();
+        var shield = enemy.transform.Find("Carrier Shield").GetComponent<SpriteRenderer>();
+        var flash = enemy.transform.Find("Carrier Shield Hit").GetComponent<SpriteRenderer>();
+        Assert.That(shield.sprite, Is.SameAs(Shield.Instance.shieldObject.GetComponent<SpriteRenderer>().sprite));
+        Assert.That(shield.color.r, Is.GreaterThan(shield.color.g * 3f));
+        Assert.That(shield.sortingOrder, Is.LessThan(enemy.GetComponent<SpriteRenderer>().sortingOrder));
+        Assert.That(shield.enabled, Is.True);
+        Assert.That(flash.enabled, Is.False);
+        enemy.TakeDamage(1, Stats.eDeadBy.towerProjectile);
+        float elapsed = 0f;
+        float brightestFlash = 0f;
+        while (elapsed < 0.25f)
+        {
+            carrier.Tick();
+            brightestFlash = Mathf.Max(brightestFlash, flash.color.a);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        Assert.That(brightestFlash, Is.GreaterThan(0.5f));
+        Assert.That(flash.enabled, Is.False);
+        Assert.That(shield.enabled, Is.True);
+        enemy.TakeDamage(carrier.ShieldPoints, Stats.eDeadBy.towerProjectile);
+        Assert.That(shield.enabled, Is.False);
+        Assert.That(flash.enabled, Is.False);
+        var first = CreateCarrier(5);
+        Assert.That(first.transform.Find("Carrier Shield").GetComponent<SpriteRenderer>().enabled, Is.False);
     }
 
     [UnityTest]
