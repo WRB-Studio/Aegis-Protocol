@@ -15,6 +15,90 @@ public class GameFlowTests
 {
     string saveDirectory;
 
+    [UnityTest]
+    public IEnumerator SpawnAreasKeepAllShipVariantsOutsideDifferentViewports()
+    {
+        var camera = Camera.main;
+        var spawner = EnemySpawner.Instance;
+        var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+        var place = typeof(EnemySpawner).GetMethod("PlaceOutsideView", flags);
+        var getBounds = typeof(EnemySpawner).GetMethod("GetCameraBounds", BindingFlags.NonPublic | BindingFlags.Static);
+        var prefabs = (System.Collections.Generic.List<GameObject>)typeof(EnemySpawner)
+            .GetField("enemyPrefabs", flags).GetValue(spawner);
+        float originalAspect = camera.aspect;
+        Vector3 originalPosition = camera.transform.position;
+        try
+        {
+            camera.transform.position += new Vector3(1.5f, -0.75f, 0f);
+            foreach (float aspect in new[] { 9f / 20f, 9f / 16f, 3f / 4f, 16f / 9f })
+            {
+                camera.aspect = aspect;
+                var view = (Bounds)getBounds.Invoke(null, new object[] { camera });
+                Assert.That(view.size.x, Is.EqualTo(camera.orthographicSize * 2f * aspect).Within(0.001f));
+                foreach (var prefab in prefabs)
+                {
+                    var go = UnityEngine.Object.Instantiate(prefab);
+                    try
+                    {
+                        var enemy = go.GetComponent<Enemy>();
+                        var variants = (Sprite[])typeof(EnemyVisualVariant).GetField("variants", flags)
+                            .GetValue(go.GetComponent<EnemyVisualVariant>());
+                        // Exercise future larger designs as well as every existing sprite.
+                        go.transform.localScale = prefab.transform.localScale * 1.5f;
+                        foreach (var sprite in variants)
+                        {
+                            go.GetComponent<SpriteRenderer>().sprite = sprite;
+                            foreach (bool top in new[] { true, false })
+                            foreach (float edge in new[] { -1f, 0f, 1f })
+                            foreach (float groupRadius in new[] { 0f, 0.5f })
+                            {
+                                Vector2 offset = new Vector2(edge * groupRadius, top ? -groupRadius : groupRadius);
+                                place.Invoke(spawner, new object[] { enemy, view, view.center.x + edge * view.extents.x,
+                                    top, offset, groupRadius, 0f });
+                                Assert.That(enemy.transform.position.x, Is.InRange(view.min.x, view.max.x));
+                                foreach (var renderer in go.GetComponentsInChildren<SpriteRenderer>())
+                                {
+                                    if (top) Assert.That(renderer.bounds.min.y, Is.GreaterThanOrEqualTo(view.max.y + 0.199f));
+                                    else Assert.That(renderer.bounds.max.y, Is.LessThanOrEqualTo(view.min.y - 0.199f));
+                                }
+                            }
+                        }
+                    }
+                    finally { UnityEngine.Object.DestroyImmediate(go); }
+                }
+            }
+        }
+        finally
+        {
+            camera.aspect = originalAspect;
+            camera.transform.position = originalPosition;
+        }
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator ActualWaveSpawnsOutsideCameraBeforeEnemiesMove()
+    {
+        var spawner = EnemySpawner.Instance;
+        spawner.ResetScript();
+        var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+        typeof(EnemySpawner).GetField("firstWaveDelay", flags).SetValue(spawner, 0f);
+        var routine = (IEnumerator)typeof(EnemySpawner).GetMethod("SpawnWave", flags).Invoke(spawner, null);
+        Assert.That(routine.MoveNext(), Is.True);
+        Assert.That(routine.MoveNext(), Is.True);
+        Assert.That(spawner.instantiatedEnemies.Count, Is.GreaterThan(0));
+        foreach (var enemy in spawner.instantiatedEnemies)
+        foreach (var renderer in enemy.GetComponentsInChildren<SpriteRenderer>())
+        {
+            Vector3 min = Camera.main.WorldToViewportPoint(renderer.bounds.min);
+            Vector3 max = Camera.main.WorldToViewportPoint(renderer.bounds.max);
+            Assert.That(min.y > 1f || max.y < 0f, Is.True, "A ship appeared inside the camera at spawn.");
+        }
+        (routine as IDisposable)?.Dispose();
+        spawner.ResetScript();
+        yield return null;
+    }
+
     [UnitySetUp]
     public IEnumerator SetUp()
     {

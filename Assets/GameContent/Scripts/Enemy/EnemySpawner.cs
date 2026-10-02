@@ -21,8 +21,10 @@ public class EnemySpawner : MonoBehaviour, IResettable
     [SerializeField] float swarmSpawnRadius = 0.5f;
 
     [Header("Spawn Areas")]
-    [SerializeField] Collider2D topArea;
-    [SerializeField] Collider2D bottomArea;
+    [Tooltip("Clearance between the camera edge and the entire ship, in world units.")]
+    [SerializeField, Min(0f)] float spawnEdgeMargin = 0.2f;
+    [Tooltip("Depth of the random spawn strip beyond that clearance.")]
+    [SerializeField, Min(0f)] float spawnStripDepth = 0.25f;
 
     [Header("Runtime")]
     public List<Enemy> instantiatedEnemies = new List<Enemy>();
@@ -133,6 +135,14 @@ public class EnemySpawner : MonoBehaviour, IResettable
             yield break;
         }
 
+        if (!Camera.main || !Camera.main.orthographic)
+        {
+            Debug.LogError("Enemy spawning requires an orthographic Main Camera.");
+            enableSpawning = false;
+            waveIsRunning = false;
+            yield break;
+        }
+
         SaveGameManager.Instance.CaptureWaveCheckpoint();
         EnemyWave wave = hasAuthoredWave ? waves[currentWaveIndex] : GenerateProceduralWave(currentWaveIndex);
         MatchReporter.Current?.BeginWave(currentWaveIndex + 1, hasAuthoredWave);
@@ -149,15 +159,21 @@ public class EnemySpawner : MonoBehaviour, IResettable
                     continue;
                 }
 
-                Vector2 basePos = GetRandomPointInArea();
                 int groupSize = Random.Range(instr.swarmGroupSize.x, instr.swarmGroupSize.y + 1);
+                bool fromTop = Random.value < 0.5f;
+                Bounds view = GetCameraBounds(Camera.main);
+                Vector2 basePos = new Vector2(Random.Range(view.min.x, view.max.x),
+                    fromTop ? view.max.y : view.min.y);
+                float groupRadius = groupSize > 1 ? Mathf.Max(0f, swarmSpawnRadius) : 0f;
+                float stripOffset = Random.Range(0f, Mathf.Max(0f, spawnStripDepth));
 
                 for (int s = 0; s < groupSize; s++)
                 {
-                    Vector2 pos = basePos + Random.insideUnitCircle * swarmSpawnRadius;
-
-                    var go = Instantiate(prefab, pos, Quaternion.identity, spawnParent);
+                    Vector2 offset = groupSize > 1 ? Random.insideUnitCircle * groupRadius : Vector2.zero;
+                    var go = Instantiate(prefab, basePos, Quaternion.identity, spawnParent);
                     var enemy = go.GetComponent<Enemy>();
+                    // Awake has selected the actual sprite and variant scale before measuring it.
+                    PlaceOutsideView(enemy, view, basePos.x, fromTop, offset, groupRadius, stripOffset);
                     enemy.InitWithLevel(currentWaveIndex);
 
                     instantiatedEnemies.Add(enemy);
@@ -227,20 +243,56 @@ public class EnemySpawner : MonoBehaviour, IResettable
             RemoveEnemy(e, Stats.eDeadBy.None);
     }
 
-    Vector2 GetRandomPointInArea()
+    static Bounds GetCameraBounds(Camera camera)
     {
-        Collider2D area = (Random.value < 0.5f ? topArea : bottomArea) ?? topArea ?? bottomArea;
-        if (!area) return Vector2.zero;
+        Vector3 min = camera.ViewportToWorldPoint(new Vector3(0f, 0f, camera.nearClipPlane));
+        Vector3 max = camera.ViewportToWorldPoint(new Vector3(1f, 1f, camera.nearClipPlane));
+        return new Bounds((min + max) * 0.5f, new Vector3(max.x - min.x, max.y - min.y, 0f));
+    }
 
-        Bounds b = area.bounds;
-
-        for (int i = 0; i < 100; i++)
+    void PlaceOutsideView(Enemy enemy, Bounds view, float entryX, bool fromTop,
+        Vector2 groupOffset, float groupRadius, float stripOffset)
+    {
+        float radius = 0.1f;
+        foreach (var renderer in enemy.GetComponentsInChildren<SpriteRenderer>())
         {
-            Vector2 p = new Vector2(Random.Range(b.min.x, b.max.x), Random.Range(b.min.y, b.max.y));
-            if (area.OverlapPoint(p)) return p;
+            Bounds bounds = renderer.bounds;
+            radius = Mathf.Max(radius, Vector2.Distance(bounds.center, enemy.transform.position) +
+                ((Vector2)bounds.extents).magnitude);
+        }
+        foreach (var collider in enemy.GetComponentsInChildren<Collider2D>())
+        {
+            Bounds bounds = collider.bounds;
+            radius = Mathf.Max(radius, Vector2.Distance(bounds.center, enemy.transform.position) +
+                ((Vector2)bounds.extents).magnitude);
         }
 
-        return area.bounds.center;
+        // An enclosing radius keeps every variant off-screen even while it turns towards the core.
+        float halfWidth = Mathf.Max(0f, view.extents.x - radius);
+        float x = Mathf.Clamp(entryX + groupOffset.x, view.center.x - halfWidth, view.center.x + halfWidth);
+        float distance = view.extents.y + radius + Mathf.Max(0f, spawnEdgeMargin) +
+            groupRadius + stripOffset;
+        float y = view.center.y + (fromTop ? distance : -distance) + groupOffset.y;
+        enemy.transform.position = new Vector3(x, y, 0f);
+
+        var core = StationModule.GetModuleByType(StationModule.eModuleType.Core);
+        Vector2 direction = (core ? (Vector2)core.transform.position : (Vector2)view.center) - new Vector2(x, y);
+        enemy.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f);
+    }
+
+    void OnDrawGizmos()
+    {
+        var camera = Camera.main;
+        if (!camera || !camera.orthographic) return;
+        Bounds view = GetCameraBounds(camera);
+        float depth = Mathf.Max(0.01f, spawnStripDepth);
+        Gizmos.color = new Color(1f, 0.35f, 0.2f, 0.8f);
+        for (int side = -1; side <= 1; side += 2)
+        {
+            Vector3 center = new Vector3(view.center.x,
+                view.center.y + side * (view.extents.y + Mathf.Max(0f, spawnEdgeMargin) + depth * 0.5f), 0f);
+            Gizmos.DrawWireCube(center, new Vector3(view.size.x, depth, 0f));
+        }
     }
 
     EnemyWave GenerateProceduralWave(int waveIndex)

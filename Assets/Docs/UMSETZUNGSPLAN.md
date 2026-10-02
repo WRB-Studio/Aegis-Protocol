@@ -37,6 +37,8 @@ Grundlage: [Projektanalyse](PROJEKTANALYSE.md).
 
 ## Umgesetzt
 
+- [x] Spawn-Flächen durch kamerabasierte Streifen oben/unten ersetzt: Displayformat wird berücksichtigt, vollständige Schiffsgröße und Schwarmversatz halten Gegner außerhalb des Bildes. Einzelgegner ohne zusätzlichen Gruppenversatz; direkt zur Basis ausgerichtet. Abstand und Streifentiefe am EnemySpawner einstellbar, Vorschau über Scene-Gizmos. Zwei PlayMode-Tests prüfen alle Designs auf vier Displayformaten und den tatsächlichen Wellenstart.
+
 - [x] Vorhandene Symbole für alle 8 Module und 16 Upgrades beibehalten. Modul-Symbole als einzelne PNG-Sprites aus dem bisherigen Atlas übernommen; feste Sprite-Verweise, vorbereitete Prefabs und Editor-Anordnung bleiben erhalten. Neue SVG-Entwürfe nach dem [Alt/Neu-Vergleich](UI_SYMBOL_COMPARISON.png) verworfen; der Entwurfs-Export überschreibt keine Spiel-Sprites.
 
 - [x] Upgrade-UI im Editor vorbereitet: 16 Prefab-Varianten unter `Assets/GameContent/Prefabs/UI/Upgrades`, Einzel-Sprites unter `Assets/GameContent/Images/UI/UpgradeS` und alle Buttons als sichtbare Instanzen im `Canvas/UpgradePanel`. Links mittiges Vertical Layout; im Spiel werden nur die Upgrades des ausgewählten Moduls eingeblendet. Kein Erzeugen oder Löschen von Buttons zur Laufzeit. CommandUnit mit Geschütz-Drehsymbol, kompakter Zielanzeige, helleren Preisen und kürzerer Beschreibung; MAX neutral statt rot.
