@@ -1,7 +1,8 @@
 {
   "name": "Aegis.PlayModeTests",
   "references": [
-    "Aegis.Runtime"
+    "Aegis.Runtime",
+    "Unity.TextMeshPro"
   ],
   "optionalUnityReferences": [
     "TestAssemblies"

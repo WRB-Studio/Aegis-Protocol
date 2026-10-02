@@ -13,7 +13,6 @@ public class UpgradeUI : MonoBehaviour, IResettable
     [Header("UI")]
     [SerializeField] GameObject panel;
     [SerializeField] Transform contentContainer;
-    [SerializeField] GameObject buttonPrefab;
     [SerializeField] GameObject infoPanel;
 
     [Header("Info Panel Paths")]
@@ -31,27 +30,42 @@ public class UpgradeUI : MonoBehaviour, IResettable
 
     // Runtime UI cache
     readonly Dictionary<eUpgradeName, ButtonRefs> uiByUpgrade = new();
-    readonly List<GameObject> spawnedButtons = new();
+    UpgradeButtonView[] preparedButtons;
     bool layoutRebuildPending;
+    bool IsCommandSet => currentUpgradeSet && currentUpgradeSet.moduleType == StationModule.eModuleType.CommandUnit;
+    static readonly Color CommandCyan = new Color32(148, 236, 244, 255);
 
     // --- INIT SNAPSHOT ---
     eUpgradeName initSelectedUpgrade;
 
-    const string PATH_INFO_TEXT = "Info/txtInfo";
-    const string PATH_COST_TEXT = "Cost/txtCost";
-    const string PATH_SYMBOL_IMG = "ImgSymbol";
-    const string PATH_MARKER_IMG = "SelectionMarker";
-
-
     void Awake()
     {
         Instance = this;
+        preparedButtons = contentContainer.GetComponentsInChildren<UpgradeButtonView>(true);
+        foreach (var view in preparedButtons)
+        {
+            var capturedView = view;
+            view.button.onClick.AddListener(() => OnPreparedButtonClicked(capturedView));
+        }
+        ClearButtons();
         if (infoPanel) infoPanel.SetActive(false);
         if (panel) panel.SetActive(false);
     }
 
     public void Init()
     {
+    }
+
+    void Update()
+    {
+        if (!IsCommandSet || !panel.activeInHierarchy) return;
+        float glowAlpha = 0.12f + 0.08f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 3f));
+        foreach (var entry in uiByUpgrade)
+        {
+            var ui = entry.Value;
+            if (ui.glow && ui.glow.enabled)
+                ui.glow.effectColor = new Color(CommandCyan.r, CommandCyan.g, CommandCyan.b, glowAlpha);
+        }
     }
 
     public void Show(UpgradeSet upgradeSet, bool holdSelection = false)
@@ -94,19 +108,23 @@ public class UpgradeUI : MonoBehaviour, IResettable
     {
         ClearButtons();
 
-        foreach (var upgrade in currentUpgradeSet.upgradeAttributes)
+        foreach (var view in preparedButtons)
         {
-            var go = Instantiate(buttonPrefab, contentContainer);
-            spawnedButtons.Add(go);
-
-            var refs = BuildRefs(go.transform);
-            uiByUpgrade[upgrade.upgradeName] = refs;
-
-            refs.symbol.sprite = Utils.GetSymbolByName(upgrade.upgradeName);
-
-            var capturedUpgrade = upgrade;
-            refs.button.onClick.AddListener(() => OnUpgradeClicked(capturedUpgrade));
+            if (view.moduleType != currentUpgradeSet.moduleType ||
+                !currentUpgradeSet.upgradeAttributes.Exists(upgrade => upgrade.upgradeName == view.upgradeName))
+                continue;
+            view.gameObject.SetActive(true);
+            uiByUpgrade[view.upgradeName] = BuildRefs(view);
         }
+        LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)contentContainer);
+    }
+
+    void OnPreparedButtonClicked(UpgradeButtonView view)
+    {
+        if (!currentUpgradeSet || !view.gameObject.activeInHierarchy ||
+            view.moduleType != currentUpgradeSet.moduleType) return;
+        var upgrade = currentUpgradeSet.upgradeAttributes.Find(item => item.upgradeName == view.upgradeName);
+        if (upgrade != null) OnUpgradeClicked(upgrade);
     }
 
     void ClearButtons()
@@ -114,10 +132,8 @@ public class UpgradeUI : MonoBehaviour, IResettable
         StopAllCoroutines();
         layoutRebuildPending = false;
 
-        foreach (var go in spawnedButtons)
-            if (go) Destroy(go);
-
-        spawnedButtons.Clear();
+        foreach (var view in preparedButtons)
+            view.gameObject.SetActive(false);
         uiByUpgrade.Clear();
     }
 
@@ -135,9 +151,19 @@ public class UpgradeUI : MonoBehaviour, IResettable
                 Mathf.RoundToInt(upgrade.cost) <= ResourceManager.Instance.curMaterials;
             if (upgrade.upgradeName == eUpgradeName.TargetPriority && upgrade.level > 0)
                 affordable = upgrade.ownerModule && upgrade.ownerModule.isBuilt;
+            bool maxed = upgrade.level >= upgrade.maxLevel && upgrade.upgradeName != eUpgradeName.TargetPriority;
             ui.marker.enabled = true;
-            ui.marker.color = affordable ? Color.white : colorBtnFrameCantBuy;
+            ui.marker.color = maxed ? new Color32(174, 193, 195, 255) : affordable ? Color.white : colorBtnFrameCantBuy;
             ui.infoText.fontStyle = selected ? FontStyles.Bold : FontStyles.Normal;
+            if (IsCommandSet)
+            {
+                ui.marker.color = maxed ? new Color32(174, 193, 195, 255) : !affordable ? colorBtnFrameCantBuy : selected ? CommandCyan : Color.white;
+                ui.infoText.color = selected ? CommandCyan : Color.white;
+                ui.infoText.fontStyle = FontStyles.Bold;
+                ui.costText.color = maxed ? new Color32(174, 193, 195, 255) : !affordable ? colorBtnFrameCantBuy : Color.white;
+                ui.symbol.color = selected ? CommandCyan : Color.white;
+                ui.glow.enabled = selected;
+            }
         }
 
         if (currentSelectedUpgrade != eUpgradeName.None)
@@ -229,6 +255,8 @@ public class UpgradeUI : MonoBehaviour, IResettable
     void UpdateButtonUI(ButtonRefs ui, UpgradeAttribute upgrade)
     {
         ui.infoText.text = GetValueWithUnit(upgrade, upgrade.currentValue);
+        if (IsCommandSet && upgrade.upgradeName == eUpgradeName.RotationSpeed)
+            ui.infoText.text = (upgrade.currentValue * 100f).ToString("0.#") + "\n<size=60%>deg/s</size>";
 
         if (upgrade.upgradeName == eUpgradeName.TargetPriority && upgrade.level > 0)
         {
@@ -301,15 +329,16 @@ public class UpgradeUI : MonoBehaviour, IResettable
             LayoutRebuilder.ForceRebuildLayoutImmediate(layoutRoot);
     }
 
-    ButtonRefs BuildRefs(Transform root)
+    ButtonRefs BuildRefs(UpgradeButtonView view)
     {
         return new ButtonRefs
         {
-            button = root.GetComponent<Button>(),
-            infoText = root.Find(PATH_INFO_TEXT).GetComponent<TextMeshProUGUI>(),
-            costText = root.Find(PATH_COST_TEXT).GetComponent<TextMeshProUGUI>(),
-            symbol = root.Find(PATH_SYMBOL_IMG).GetComponent<Image>(),
-            marker = root.Find(PATH_MARKER_IMG).GetComponent<Image>(),
+            button = view.button,
+            infoText = view.valueText,
+            costText = view.priceText,
+            symbol = view.symbol,
+            marker = view.marker,
+            glow = view.selectionGlow,
         };
     }
 
@@ -394,5 +423,6 @@ public class UpgradeUI : MonoBehaviour, IResettable
         public TextMeshProUGUI costText;
         public Image symbol;
         public Image marker;
+        public Outline glow;
     }
 }

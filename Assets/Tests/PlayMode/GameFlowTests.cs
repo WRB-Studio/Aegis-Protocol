@@ -55,6 +55,7 @@ public class GameFlowTests
             UnityEngine.Object.Destroy(SaveGameManager.Instance.gameObject);
         yield return null;
 
+        MatchReporter.Current?.Dispose();
         SaveGameManager.SaveDirectoryOverride = null;
         if (Directory.Exists(saveDirectory)) Directory.Delete(saveDirectory, true);
     }
@@ -540,12 +541,13 @@ public class GameFlowTests
         ResourceManager.Instance.curMaterials = 0;
         UpgradeUI.Instance.Show(module.upgradeSet);
 
-        var button = UnityEngine.Object.FindObjectsByType<UnityEngine.UI.Button>(
+        var view = UnityEngine.Object.FindObjectsByType<UpgradeButtonView>(
             FindObjectsInactive.Include, FindObjectsSortMode.None)
-            .First(item => item.gameObject.name == "btnUpgrade(Clone)");
+            .First(item => item.moduleType == module.moduleType && item.gameObject.activeSelf);
+        var button = view.button;
         Assert.That(button.interactable, Is.True);
         Assert.That(button.image.color.grayscale, Is.LessThan(0.5f));
-        var marker = button.transform.Find("SelectionMarker").GetComponent<Image>();
+        var marker = view.marker;
         Assert.That(marker.enabled, Is.True);
         Assert.That(marker.color, Is.EqualTo(UpgradeUI.Instance.colorBtnFrameCantBuy));
 
@@ -555,6 +557,48 @@ public class GameFlowTests
         UpgradeUI.Instance.Refresh();
         Assert.That(marker.color, Is.EqualTo(Color.white));
         yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator PreparedUpgradeButtonsReuseInstancesAndShowOnlySelectedModule()
+    {
+        var views = UnityEngine.Object.FindObjectsByType<UpgradeButtonView>(
+            FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Assert.That(views.Length, Is.EqualTo(16));
+        var instanceIds = views.Select(view => view.GetInstanceID()).OrderBy(id => id).ToArray();
+        Assert.That(views.All(view => !view.gameObject.activeSelf), Is.True);
+        foreach (var module in StationModule.allModules.Where(item => item.upgradeSet))
+        {
+            module.isBuilt = true;
+            UpgradeUI.Instance.Show(module.upgradeSet);
+            var visible = views.Where(view => view.gameObject.activeInHierarchy).ToArray();
+            Assert.That(visible.Length, Is.EqualTo(module.upgradeSet.upgradeAttributes.Count));
+            Assert.That(visible.All(view => view.moduleType == module.moduleType), Is.True);
+            foreach (var view in visible)
+            {
+                Assert.That(((RectTransform)view.transform).rect.height, Is.GreaterThanOrEqualTo(190f), view.name);
+                Assert.That(view.symbol.sprite, Is.Not.Null, view.name);
+                Assert.That(view.valueText.text, Is.Not.Empty, view.name);
+                Assert.That(view.button, Is.InstanceOf<UpgradeButton>(), view.name);
+            }
+            UpgradeUI.Instance.Hide();
+            Assert.That(views.All(view => !view.gameObject.activeSelf), Is.True);
+        }
+        yield return null;
+        Assert.That(UnityEngine.Object.FindObjectsByType<UpgradeButtonView>(
+            FindObjectsInactive.Include, FindObjectsSortMode.None)
+            .Select(view => view.GetInstanceID()).OrderBy(id => id).ToArray(), Is.EqualTo(instanceIds));
+
+        var command = StationModule.GetModuleByType(StationModule.eModuleType.CommandUnit);
+        var rotation = command.upgradeSet.upgradeAttributes.Single(
+            upgrade => upgrade.upgradeName == UpgradeAttribute.eUpgradeName.RotationSpeed);
+        rotation.level = rotation.maxLevel;
+        rotation.RecalculateFromLevel();
+        ResourceManager.Instance.curMaterials = 0;
+        UpgradeUI.Instance.Show(command.upgradeSet);
+        var rotationView = views.Single(view => view.upgradeName == rotation.upgradeName);
+        Assert.That(rotationView.priceText.text, Is.EqualTo("MAX"));
+        Assert.That(rotationView.marker.color, Is.Not.EqualTo(UpgradeUI.Instance.colorBtnFrameCantBuy));
     }
 
     [Test]
@@ -767,8 +811,8 @@ public class GameFlowTests
         int costs = Stats.Instance.totalUpgradeCosts;
         var container = (Transform)typeof(UpgradeUI).GetField("contentContainer",
             BindingFlags.Instance | BindingFlags.NonPublic).GetValue(UpgradeUI.Instance);
-        int index = owner.upgradeSet.upgradeAttributes.IndexOf(upgrade);
-        var button = container.GetChild(index).GetComponent<UpgradeButton>();
+        var button = container.GetComponentsInChildren<UpgradeButtonView>()
+            .Single(view => view.upgradeName == upgrade.upgradeName).button as UpgradeButton;
         Assert.That(button, Is.Not.Null, "The prefab must use press-triggered upgrade buttons.");
         var pointer = new PointerEventData(EventSystem.current)
         {

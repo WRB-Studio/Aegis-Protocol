@@ -37,6 +37,7 @@ Grundlage: [Projektanalyse](PROJEKTANALYSE.md).
 
 ## Umgesetzt
 
+- [x] Upgrade-UI im Editor vorbereitet: 16 Prefab-Varianten unter `Assets/GameContent/Prefabs/UI/Upgrades`, Einzel-Sprites unter `Assets/GameContent/Images/UI/UpgradeS` und alle Buttons als sichtbare Instanzen im `Canvas/UpgradePanel`. Links mittiges Vertical Layout; im Spiel werden nur die Upgrades des ausgewählten Moduls eingeblendet. Kein Erzeugen oder Löschen von Buttons zur Laufzeit. CommandUnit mit Geschütz-Drehsymbol, kompakter Zielanzeige, helleren Preisen und kürzerer Beschreibung; MAX neutral statt rot.
 - [x] Einheitliche Textformatierung: Cyan-Titel, hervorgehobene Werte, grüne Verbesserungen, rote Materialdefizite und kleinere Hinweise; verständliche Upgrade-Namen und klarere Statistik-Gruppen.
 - [x] UI-Texte gekürzt; Modul- und Upgrade-Infos mit begrenzter Breite und Zeilenumbruch, kompakteres HUD, gekürzte Zahlen auf Kaufbuttons und Statistik ohne breite Tabulator-Abstände.
 - [x] Structural Integrity zum Core verschoben; vorhandene HP-Upgrades bleiben beim Laden erhalten.
