@@ -37,6 +37,8 @@ Grundlage: [Projektanalyse](PROJEKTANALYSE.md).
 
 ## Umgesetzt
 
+- [x] Gelegentliche antippbare Sternschnuppen: erste nach 18–25 aktiven Echtzeit-Sekunden, danach 35–55 Sekunden Abstand nach dem vorherigen Flug. Cyanfarbener Lichtkern mit Schweif und weichen Fades, 7 Sekunden Flugzeit, große Tippfläche. Zufällige Start- und Zielpunkte an allen vier Bildschirmseiten; horizontale, vertikale und diagonale Bahnen durch den spielbaren Bereich statt kurzer Eckpassagen. Treffer erzeugt 8–12 Basis-Material als manuellen Drop zur Basis; übliche Sammel-Effizienz und Einkommensanzeige gelten. Kein Auto-Sammeln der Sternschnuppe, keine Mehrfachbelohnung, Pause stoppt sie; Replay und Game-over räumen sie auf. Prefab und Werte am ResourceManager vorbereitet.
+
 - [x] Spawn-Flächen durch kamerabasierte Streifen oben/unten ersetzt: Displayformat wird berücksichtigt, vollständige Schiffsgröße und Schwarmversatz halten Gegner außerhalb des Bildes. Einzelgegner ohne zusätzlichen Gruppenversatz; direkt zur Basis ausgerichtet. Abstand und Streifentiefe am EnemySpawner einstellbar, Vorschau über Scene-Gizmos. Zwei PlayMode-Tests prüfen alle Designs auf vier Displayformaten und den tatsächlichen Wellenstart.
 
 - [x] Vorhandene Symbole für alle 8 Module und 16 Upgrades beibehalten. Modul-Symbole als einzelne PNG-Sprites aus dem bisherigen Atlas übernommen; feste Sprite-Verweise, vorbereitete Prefabs und Editor-Anordnung bleiben erhalten. Neue SVG-Entwürfe nach dem [Alt/Neu-Vergleich](UI_SYMBOL_COMPARISON.png) verworfen; der Entwurfs-Export überschreibt keine Spiel-Sprites.

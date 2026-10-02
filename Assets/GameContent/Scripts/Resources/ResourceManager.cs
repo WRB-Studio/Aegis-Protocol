@@ -14,6 +14,17 @@ public class ResourceManager : MonoBehaviour, IResettable
     [HideInInspector] public float collectingEffeciency = 1;
     public TextMeshProUGUI txtMaterial;
 
+    [Header("Shooting stars (real seconds while playing)")]
+    [SerializeField] ShootingStar shootingStarPrefab;
+    [SerializeField] Vector2 firstStarDelay = new Vector2(18f, 25f);
+    [SerializeField] Vector2 starInterval = new Vector2(35f, 55f);
+    [SerializeField, Min(1f)] float starFlightDuration = 7f;
+    [SerializeField] Vector2Int starReward = new Vector2Int(8, 12);
+    ShootingStar shootingStar;
+    float starCountdown;
+    int bonusTapFrame = -1;
+    public bool ConsumedBonusTap => bonusTapFrame == Time.frameCount;
+
     [HideInInspector] public bool autoCollecting = false;
 
     [HideInInspector] public List<CollectEffect> collectEffects = new List<CollectEffect>();
@@ -41,11 +52,13 @@ public class ResourceManager : MonoBehaviour, IResettable
     {
         var p = GameObject.Find("ResourceParent");
         spawnParent = p ? p.transform : transform;
+        starCountdown = Random.Range(firstStarDelay.x, firstStarDelay.y);
         RefreshUI();
     }
 
     public void UpdateNormal()
     {
+        UpdateShootingStar();
         if (waveBonusDisplayTime > 0f)
         {
             waveBonusDisplayTime -= Time.unscaledDeltaTime;
@@ -57,7 +70,13 @@ public class ResourceManager : MonoBehaviour, IResettable
             displayedMaterials != curMaterials || displayedHint != TutorialHint()))
             RefreshUI();
 
-        if (!autoCollecting && Utils.TryGetPointerDown(out var screenPosition) && !Utils.IsPointerOverUI())
+        bool pointerDown = Utils.TryGetPointerDown(out var screenPosition) && !Utils.IsPointerOverUI();
+        if (pointerDown && shootingStar && shootingStar.TryCollect(screenPosition))
+        {
+            bonusTapFrame = Time.frameCount;
+            shootingStar = null;
+        }
+        else if (!autoCollecting && pointerDown)
         {
             Vector2 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
             foreach (var collider in Physics2D.OverlapPointAll(worldPosition))
@@ -122,13 +141,68 @@ public class ResourceManager : MonoBehaviour, IResettable
         return !autoCollecting && Stats.Instance.resourcesCollectedManually == 0 ? 1 : 2;
     }
 
-    public void SpawnMaterial(int amount, Vector3 spawnPosition)
+    void UpdateShootingStar()
+    {
+        if (Time.timeScale <= 0f || GameManager.gameOver || !shootingStarPrefab) return;
+        if (shootingStar)
+        {
+            if (shootingStar.Tick(Time.unscaledDeltaTime))
+            {
+                Destroy(shootingStar.gameObject);
+                shootingStar = null;
+            }
+            return;
+        }
+        starCountdown -= Time.unscaledDeltaTime;
+        if (starCountdown > 0f || !Camera.main) return;
+
+        ChooseStarPath(out Vector2 start, out Vector2 end);
+        float depth = -Camera.main.transform.position.z;
+        Vector3 from = Camera.main.ViewportToWorldPoint(new Vector3(start.x, start.y, depth));
+        Vector3 to = Camera.main.ViewportToWorldPoint(new Vector3(end.x, end.y, depth));
+        shootingStar = Instantiate(shootingStarPrefab, from, Quaternion.identity, spawnParent);
+        shootingStar.Init(from, to, starFlightDuration, Random.Range(Mathf.Max(1, starReward.x), Mathf.Max(1, starReward.x, starReward.y) + 1));
+        starCountdown = Random.Range(Mathf.Max(1f, starInterval.x), Mathf.Max(1f, starInterval.x, starInterval.y));
+        MatchReporter.Event("shooting_star_spawned", position: from);
+    }
+
+    static void ChooseStarPath(out Vector2 from, out Vector2 to)
+    {
+        int entry = Random.Range(0, 4);
+        for (int attempt = 0; attempt < 32; attempt++)
+        {
+            int exit = (entry + Random.Range(1, 4)) % 4;
+            from = StarEdgePoint(entry, Random.Range(0.1f, 0.9f));
+            to = StarEdgePoint(exit, Random.Range(0.1f, 0.9f));
+            Vector2 middle = (from + to) * 0.5f;
+            // Skip brief corner clips: the star should cross a useful, tappable part of the screen.
+            if (middle.x >= 0.15f && middle.x <= 0.85f && middle.y >= 0.15f && middle.y <= 0.85f &&
+                Vector2.Distance(from, to) >= 0.8f) return;
+        }
+        float position = Random.Range(0.2f, 0.8f);
+        from = StarEdgePoint(entry, position);
+        to = StarEdgePoint(entry ^ 1, 1f - position);
+    }
+
+    static Vector2 StarEdgePoint(int edge, float position)
+    {
+        switch (edge)
+        {
+            case 0: return new Vector2(-0.15f, position);
+            case 1: return new Vector2(1.15f, position);
+            case 2: return new Vector2(position, -0.15f);
+            default: return new Vector2(position, 1.15f);
+        }
+    }
+
+    public void SpawnMaterial(int amount, Vector3 spawnPosition, bool collectedManually = false)
     {
         GameObject effect = Instantiate(collectEffectPrefab, spawnPosition, Quaternion.identity, spawnParent);
         effect.transform.GetComponent<CollectEffect>()
             .init(StationModule.GetModuleByType(StationModule.eModuleType.Core).transform,
                                                 amount,
-                                                autoCollecting);
+                                                autoCollecting || collectedManually);
+        effect.GetComponent<CollectEffect>().collectedManually = collectedManually;
 
         collectEffects.Add(effect.GetComponent<CollectEffect>());
         MatchReporter.Event("material_spawned", value: amount, position: spawnPosition);
@@ -250,8 +324,17 @@ public class ResourceManager : MonoBehaviour, IResettable
         initautoCollecting = autoCollecting;
     }
 
+    public void ClearShootingStar()
+    {
+        if (shootingStar) Destroy(shootingStar.gameObject);
+        shootingStar = null;
+    }
+
     public void ResetScript()
     {
+        ClearShootingStar();
+        bonusTapFrame = -1;
+        starCountdown = Random.Range(firstStarDelay.x, firstStarDelay.y);
         StopAllCoroutines();
         foreach (var label in incomeLabels)
             if (label) Destroy(label);

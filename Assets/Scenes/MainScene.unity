@@ -12211,6 +12211,11 @@ MonoBehaviour:
   curMaterials: 500
   collectingEffeciency: 1
   txtMaterial: {fileID: 1531995868}
+  shootingStarPrefab: {fileID: 8412722333827956917, guid: c9776c4fb07133745a117eb02870d862, type: 3}
+  firstStarDelay: {x: 18, y: 25}
+  starInterval: {x: 35, y: 55}
+  starFlightDuration: 7
+  starReward: {x: 8, y: 12}
   autoCollecting: 0
   collectEffects: []
 --- !u!1 &1699285992
@@ -15160,6 +15165,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: btnModule-TemporalModulator
       objectReference: {fileID: 0}
+    - target: {fileID: 7875482972943617132, guid: 099344356c15df04b9cfaf3d18cd4672, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7875482972943617132, guid: 099344356c15df04b9cfaf3d18cd4672, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8251555906388376003, guid: 099344356c15df04b9cfaf3d18cd4672, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -15256,6 +15269,30 @@ PrefabInstance:
     - target: {fileID: 1394673320971506298, guid: 34505c83cdadd834e8d347df91fec49a, type: 3}
       propertyPath: m_Name
       value: btnModule-Shield
+      objectReference: {fileID: 0}
+    - target: {fileID: 2503862187500315135, guid: 34505c83cdadd834e8d347df91fec49a, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2503862187500315135, guid: 34505c83cdadd834e8d347df91fec49a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3665225342358504406, guid: 34505c83cdadd834e8d347df91fec49a, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3665225342358504406, guid: 34505c83cdadd834e8d347df91fec49a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3916111557054620261, guid: 34505c83cdadd834e8d347df91fec49a, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 23.73
+      objectReference: {fileID: 0}
+    - target: {fileID: 3916111557054620261, guid: 34505c83cdadd834e8d347df91fec49a, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 22.35
       objectReference: {fileID: 0}
     - target: {fileID: 4429216625362867280, guid: 34505c83cdadd834e8d347df91fec49a, type: 3}
       propertyPath: m_Pivot.x
@@ -15550,6 +15587,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1459620790466945979, guid: b981abac5692d794ca7306e687206a65, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1459620790466945979, guid: b981abac5692d794ca7306e687206a65, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2712508361018642494, guid: b981abac5692d794ca7306e687206a65, type: 3}
       propertyPath: m_Name
       value: btnModule-CommanUnit
@@ -15570,6 +15615,14 @@ PrefabInstance:
     - target: {fileID: 1467370899521192405, guid: fa63b165b23b4854689545a67e4bfa9a, type: 3}
       propertyPath: m_Name
       value: btnModule-Core
+      objectReference: {fileID: 0}
+    - target: {fileID: 2718054955355304528, guid: fa63b165b23b4854689545a67e4bfa9a, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2718054955355304528, guid: fa63b165b23b4854689545a67e4bfa9a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4210941508323264511, guid: fa63b165b23b4854689545a67e4bfa9a, type: 3}
       propertyPath: m_Pivot.x
@@ -15744,6 +15797,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6487316726392087352, guid: 4eedd8ebaa89e4447942109dcdbe07a0, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6487316726392087352, guid: 4eedd8ebaa89e4447942109dcdbe07a0, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7773998743661662397, guid: 4eedd8ebaa89e4447942109dcdbe07a0, type: 3}
       propertyPath: m_Name
       value: btnModule-Extractor
@@ -15914,9 +15975,33 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 343493265}
     m_Modifications:
+    - target: {fileID: 4257501070918291582, guid: 3d6712286d887bd4aaac8a5d5304f93c, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 42.99
+      objectReference: {fileID: 0}
+    - target: {fileID: 4257501070918291582, guid: 3d6712286d887bd4aaac8a5d5304f93c, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 31.29
+      objectReference: {fileID: 0}
+    - target: {fileID: 4588596064337487265, guid: 3d6712286d887bd4aaac8a5d5304f93c, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 23.73
+      objectReference: {fileID: 0}
+    - target: {fileID: 4588596064337487265, guid: 3d6712286d887bd4aaac8a5d5304f93c, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 22.35
+      objectReference: {fileID: 0}
     - target: {fileID: 6506397990603711393, guid: 3d6712286d887bd4aaac8a5d5304f93c, type: 3}
       propertyPath: m_Name
       value: btnModule-Drone
+      objectReference: {fileID: 0}
+    - target: {fileID: 7759139327115415588, guid: 3d6712286d887bd4aaac8a5d5304f93c, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7759139327115415588, guid: 3d6712286d887bd4aaac8a5d5304f93c, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8387457819619976587, guid: 3d6712286d887bd4aaac8a5d5304f93c, type: 3}
       propertyPath: m_Pivot.x
@@ -16056,6 +16141,14 @@ PrefabInstance:
     - target: {fileID: 6266525728158440615, guid: 178114991e93d0141baec76501f0ea3b, type: 3}
       propertyPath: m_Name
       value: btnModule-AmmoFabricator
+      objectReference: {fileID: 0}
+    - target: {fileID: 7427127831416500002, guid: 178114991e93d0141baec76501f0ea3b, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7427127831416500002, guid: 178114991e93d0141baec76501f0ea3b, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8708353093898623629, guid: 178114991e93d0141baec76501f0ea3b, type: 3}
       propertyPath: m_Pivot.x
@@ -16281,6 +16374,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2811720193527751625, guid: 97fd714b233d58a4fb6847da374381cd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4092928697600611942, guid: 97fd714b233d58a4fb6847da374381cd, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4092928697600611942, guid: 97fd714b233d58a4fb6847da374381cd, type: 3}
+      propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

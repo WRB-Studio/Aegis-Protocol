@@ -16,6 +16,101 @@ public class GameFlowTests
     string saveDirectory;
 
     [UnityTest]
+    public IEnumerator ShootingStarPathsUseEveryEdgeAndCrossThePlayableScreen()
+    {
+        var choose = typeof(ResourceManager).GetMethod("ChooseStarPath", BindingFlags.Static | BindingFlags.NonPublic);
+        var state = UnityEngine.Random.state;
+        var entries = new System.Collections.Generic.HashSet<int>();
+        var exits = new System.Collections.Generic.HashSet<int>();
+        try
+        {
+            UnityEngine.Random.InitState(73129);
+            for (int i = 0; i < 1000; i++)
+            {
+                var args = new object[] { Vector2.zero, Vector2.zero };
+                choose.Invoke(null, args);
+                var from = (Vector2)args[0];
+                var to = (Vector2)args[1];
+                int entry = from.x < 0f ? 0 : from.x > 1f ? 1 : from.y < 0f ? 2 : 3;
+                int exit = to.x < 0f ? 0 : to.x > 1f ? 1 : to.y < 0f ? 2 : 3;
+                Assert.That(from.x < 0f || from.x > 1f || from.y < 0f || from.y > 1f, Is.True);
+                Assert.That(to.x < 0f || to.x > 1f || to.y < 0f || to.y > 1f, Is.True);
+                Assert.That(exit, Is.Not.EqualTo(entry));
+                Vector2 middle = (from + to) * 0.5f;
+                Assert.That(middle.x, Is.InRange(0.149f, 0.851f));
+                Assert.That(middle.y, Is.InRange(0.149f, 0.851f));
+                Assert.That(Vector2.Distance(from, to), Is.GreaterThanOrEqualTo(0.799f));
+                entries.Add(entry);
+                exits.Add(exit);
+            }
+            Assert.That(entries.Count, Is.EqualTo(4));
+            Assert.That(exits.Count, Is.EqualTo(4));
+        }
+        finally { UnityEngine.Random.state = state; }
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator ShootingStarRequiresTapAndAwardsOnlyOnce()
+    {
+        var resources = ResourceManager.Instance;
+        var prefab = (ShootingStar)typeof(ResourceManager).GetField("shootingStarPrefab",
+            BindingFlags.NonPublic | BindingFlags.Instance).GetValue(resources);
+        Assert.That(prefab, Is.Not.Null);
+        var star = UnityEngine.Object.Instantiate(prefab);
+        Vector3 position = Camera.main.ViewportToWorldPoint(new Vector3(0.45f, 0.75f, -Camera.main.transform.position.z));
+        star.Init(position, position, 7f, 10);
+        int effectsBefore = resources.collectEffects.Count;
+        int materialsBefore = resources.curMaterials;
+        resources.autoCollecting = true;
+        Assert.That(star.Tick(3f), Is.False);
+        Assert.That(resources.curMaterials, Is.EqualTo(materialsBefore));
+        Assert.That(resources.collectEffects.Count, Is.EqualTo(effectsBefore));
+        Assert.That(star.TryCollect(new Vector2(-1000f, -1000f)), Is.False);
+        Vector2 screen = Camera.main.WorldToScreenPoint(position);
+        Assert.That(star.TryCollect(screen), Is.True);
+        Assert.That(star.TryCollect(screen), Is.False);
+        Assert.That(resources.collectEffects.Count, Is.EqualTo(effectsBefore + 1));
+        var drop = resources.collectEffects.Last();
+        Assert.That(drop.flyToStation, Is.True);
+        Assert.That(drop.collectedManually, Is.True);
+        Assert.That(drop.material, Is.EqualTo(10));
+        StationModule.GetModuleByType(StationModule.eModuleType.Extractor).isBuilt = false;
+        drop.duration = 0.001f;
+        yield return null;
+        drop.UpdateNormal();
+        Assert.That(resources.curMaterials, Is.EqualTo(materialsBefore + 10));
+    }
+
+    [UnityTest]
+    public IEnumerator ShootingStarExpiryPauseAndReplayDoNotAwardMaterials()
+    {
+        var resources = ResourceManager.Instance;
+        var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+        var prefab = (ShootingStar)typeof(ResourceManager).GetField("shootingStarPrefab", flags).GetValue(resources);
+        var star = UnityEngine.Object.Instantiate(prefab);
+        Vector3 position = Camera.main.ViewportToWorldPoint(new Vector3(0.45f, 0.75f, -Camera.main.transform.position.z));
+        star.Init(position, position + Vector3.right, 7f, 10);
+        typeof(ResourceManager).GetField("shootingStar", flags).SetValue(resources, star);
+        int materialsBefore = resources.curMaterials;
+        int effectsBefore = resources.collectEffects.Count;
+        Time.timeScale = 0f;
+        resources.UpdateNormal();
+        Assert.That(star.transform.position, Is.EqualTo(position));
+        Assert.That(star.TryCollect(Camera.main.WorldToScreenPoint(position)), Is.False);
+        Time.timeScale = 8f;
+        Assert.That(star.Tick(1f), Is.False, "Speed mode must not multiply the supplied real elapsed time.");
+        Assert.That(star.Tick(6f), Is.True);
+        Assert.That(star.TryCollect(Camera.main.WorldToScreenPoint(star.transform.position)), Is.False);
+        Assert.That(resources.curMaterials, Is.EqualTo(materialsBefore));
+        Assert.That(resources.collectEffects.Count, Is.EqualTo(effectsBefore));
+        resources.ResetScript();
+        yield return null;
+        Assert.That(star == null, Is.True);
+        Assert.That(typeof(ResourceManager).GetField("shootingStar", flags).GetValue(resources), Is.Null);
+    }
+
+    [UnityTest]
     public IEnumerator SpawnAreasKeepAllShipVariantsOutsideDifferentViewports()
     {
         var camera = Camera.main;

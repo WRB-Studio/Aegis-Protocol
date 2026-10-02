@@ -51,6 +51,7 @@ public class UIManager : MonoBehaviour, IResettable
 
     public void UpdateNormal()
     {
+        if (ResourceManager.Instance.ConsumedBonusTap) return;
         if (!Utils.TryGetPointerDown(out var screenPosition) || Utils.IsPointerOverUI()) return;
 
         Vector2 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);

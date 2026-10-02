@@ -197,6 +197,7 @@ public class GameManager : MonoBehaviour
     {
         if (gameOver) return;
         gameOver = true;
+        ResourceManager.Instance.ClearShootingStar();
 
         Time.timeScale = 1f;
 
