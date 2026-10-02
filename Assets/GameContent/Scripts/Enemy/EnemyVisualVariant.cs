@@ -20,6 +20,8 @@ public sealed class EnemyVisualVariant : MonoBehaviour
         if (availableVariants > 2 && wave < variant3FirstWave) availableVariants = 2;
 
         int selectedVariant = Random.Range(0, availableVariants);
+        if (GetComponent<Enemy>().enemyType == Enemy.eEnemyType.Boss)
+            selectedVariant = Mathf.Max(0, wave / 5 - 1) % variants.Length;
         GetComponent<SpriteRenderer>().sprite = variants[selectedVariant];
 
         if (selectedVariant == 2) transform.localScale *= variant3Scale;

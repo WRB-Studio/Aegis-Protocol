@@ -3332,6 +3332,7 @@ GameObject:
   m_Component:
   - component: {fileID: 360636940}
   - component: {fileID: 360636941}
+  - component: {fileID: 360636942}
   m_Layer: 0
   m_Name: EnemySpawner
   m_TagString: Untagged
@@ -3375,9 +3376,9 @@ MonoBehaviour:
   - {fileID: 600174475038239713, guid: f1aef9d5aa1341947a592ec1c8f3c3f5, type: 3}
   - {fileID: 8138643798955235728, guid: 39c81695ba45ba044a7115315cc0d395, type: 3}
   - {fileID: 1657425260252085685, guid: 79c79616f491bb946a44a067d22cb59b, type: 3}
-  timeBetweenWaves: 2
-  firstWaveDelay: 5
-  earlyWaveDelay: 5
+  timeBetweenWaves: 5
+  timeAfterBossWave: 10
+  bossArrivalDelay: 8
   backgroundGrid: {fileID: 1591490613}
   gridDistortionShader: {fileID: 4800000, guid: c378fd3020a34a7b85621719cc35d5ce, type: 3}
   currentWaveIndex: 0
@@ -3402,7 +3403,7 @@ MonoBehaviour:
       delayBetweenSpawns: {x: 1.2, y: 1.6}
       swarmGroupSize: {x: 1, y: 1}
     - type: 2
-      amount: {x: 1, y: 1}
+      amount: {x: 2, y: 2}
       delayBetweenSpawns: {x: 1.4, y: 1.8}
       swarmGroupSize: {x: 1, y: 1}
     - type: 1
@@ -3428,7 +3429,7 @@ MonoBehaviour:
       delayBetweenSpawns: {x: 1.2, y: 1.6}
       swarmGroupSize: {x: 1, y: 1}
     - type: 2
-      amount: {x: 2, y: 2}
+      amount: {x: 3, y: 3}
       delayBetweenSpawns: {x: 1.4, y: 1.8}
       swarmGroupSize: {x: 1, y: 1}
     - type: 1
@@ -3470,6 +3471,10 @@ MonoBehaviour:
     - type: 1
       amount: {x: 10, y: 10}
       delayBetweenSpawns: {x: 0.25, y: 0.4}
+      swarmGroupSize: {x: 1, y: 1}
+    - type: 6
+      amount: {x: 1, y: 1}
+      delayBetweenSpawns: {x: 0, y: 0}
       swarmGroupSize: {x: 1, y: 1}
     delayBetweenSpawnsTypes: {x: 1.1, y: 1.1}
   - enemies:
@@ -3627,6 +3632,10 @@ MonoBehaviour:
       amount: {x: 3, y: 3}
       delayBetweenSpawns: {x: 0.55, y: 0.75}
       swarmGroupSize: {x: 1, y: 1}
+    - type: 6
+      amount: {x: 1, y: 1}
+      delayBetweenSpawns: {x: 0, y: 0}
+      swarmGroupSize: {x: 1, y: 1}
     delayBetweenSpawnsTypes: {x: 1.1, y: 1.1}
   - enemies:
     - type: 1
@@ -3706,6 +3715,21 @@ MonoBehaviour:
   spawnEdgeMargin: 0.2
   spawnStripDepth: 0.25
   instantiatedEnemies: []
+--- !u!114 &360636942
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 360636939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f9d2047d6d74ef18f059d098a90cd45, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  enableBossTesting: 1
+  bossTestWave: 5
+  testMaterials: 1000000
 --- !u!1 &367822790
 GameObject:
   m_ObjectHideFlags: 0

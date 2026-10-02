@@ -38,6 +38,12 @@ public class TimeController : MonoBehaviour, IResettable
 
     public void RefreshPanel()
     {
+        var upgrade = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.TimeMultiplier);
+        if (upgrade != null)
+        {
+            current = Mathf.Clamp(current, minTimeModulation, Mathf.Max(minTimeModulation, upgrade.currentValue));
+            Apply();
+        }
         bool unlocked = StationModule
             .GetModuleByType(StationModule.eModuleType.TemporalModulator)
             .isBuilt;

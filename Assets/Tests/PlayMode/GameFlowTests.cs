@@ -177,7 +177,7 @@ public class GameFlowTests
         var spawner = EnemySpawner.Instance;
         spawner.ResetScript();
         var flags = BindingFlags.NonPublic | BindingFlags.Instance;
-        typeof(EnemySpawner).GetField("firstWaveDelay", flags).SetValue(spawner, 0f);
+        typeof(EnemySpawner).GetField("timeBetweenWaves", flags).SetValue(spawner, 0f);
         var routine = (IEnumerator)typeof(EnemySpawner).GetMethod("SpawnWave", flags).Invoke(spawner, null);
         Assert.That(routine.MoveNext(), Is.True);
         Assert.That(routine.MoveNext(), Is.True);
@@ -303,14 +303,16 @@ public class GameFlowTests
         var generate = typeof(EnemySpawner).GetMethod("GenerateProceduralWave",
             BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.That(generate, Is.Not.Null);
-        foreach (int waveIndex in new[] { 0, 9, 18, 19, 29, 49, 99 })
+        foreach (int waveIndex in new[] { 0, 4, 9, 14, 18, 19, 24, 29, 49, 99 })
         {
             var wave = (EnemyWave)generate.Invoke(EnemySpawner.Instance, new object[] { waveIndex });
             int count = wave.enemies.Sum(instruction => instruction.amount.x * instruction.swarmGroupSize.x);
             Assert.That(count, Is.InRange(2, 50), $"Wave {waveIndex + 1}");
             int bosses = wave.enemies.Where(instruction => instruction.type == Enemy.eEnemyType.Boss)
                 .Sum(instruction => instruction.amount.x * instruction.swarmGroupSize.x);
-            Assert.That(bosses, Is.EqualTo((waveIndex + 1) % 10 == 0 && waveIndex >= 19 ? 1 : 0));
+            Assert.That(bosses, Is.EqualTo((waveIndex + 1) % 5 == 0 ? (waveIndex >= 24 ? 2 : 1) : 0));
+            Assert.That(count, Is.EqualTo(Mathf.Clamp(2 + waveIndex * 2, 2, 50)));
+            if (bosses > 0) Assert.That(wave.enemies.Last().type, Is.EqualTo(Enemy.eEnemyType.Boss));
         }
     }
 
@@ -328,14 +330,14 @@ public class GameFlowTests
             Is.EqualTo(new[] { Enemy.eEnemyType.Normal, Enemy.eEnemyType.Fast, Enemy.eEnemyType.Normal,
                 Enemy.eEnemyType.Fast, Enemy.eEnemyType.Normal }));
         Assert.That(waves[1].enemies.Where(instruction => instruction.type == Enemy.eEnemyType.Fast)
-            .Sum(instruction => instruction.amount.x), Is.EqualTo(2));
+            .Select(instruction => instruction.amount.x), Is.EqualTo(new[] { 1, 2 }));
         Assert.That(waves[2].enemies.Where(instruction => instruction.type == Enemy.eEnemyType.Fast)
-            .All(instruction => instruction.amount.y <= 2 && instruction.delayBetweenSpawns.x >= 0.8f), Is.True);
+            .Select(instruction => instruction.amount.x), Is.EqualTo(new[] { 2, 2, 3 }));
         Assert.That(waves[3].enemies.Any(instruction => instruction.type == Enemy.eEnemyType.Tank), Is.True);
         Assert.That(waves[5].enemies.Any(instruction => instruction.type == Enemy.eEnemyType.Ranged), Is.True);
         Assert.That(waves[10].enemies.Any(instruction => instruction.type == Enemy.eEnemyType.Swarm), Is.True);
 
-        foreach (int waveIndex in new[] { 9, 19 })
+        foreach (int waveIndex in new[] { 4, 9, 14, 19 })
             Assert.That(waves[waveIndex].enemies.Count(instruction => instruction.type == Enemy.eEnemyType.Boss), Is.EqualTo(1));
     }
 
@@ -355,6 +357,733 @@ public class GameFlowTests
             var variants = prefab.GetComponent<EnemyVisualVariant>();
             Assert.That(variants, Is.Not.Null, prefab.name);
             Assert.That(((Sprite[])variantsField.GetValue(variants)), Has.Length.EqualTo(4), prefab.name);
+        }
+    }
+
+    Enemy CreateCarrier(int wave, bool top = true)
+    {
+        var spawner = EnemySpawner.Instance;
+        spawner.currentWaveIndex = wave - 1;
+        var prefabs = (System.Collections.Generic.List<GameObject>)typeof(EnemySpawner)
+            .GetField("enemyPrefabs", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(spawner);
+        var prefab = prefabs.First(p => p.GetComponent<Enemy>().enemyType == Enemy.eEnemyType.Boss);
+        var enemy = UnityEngine.Object.Instantiate(prefab,
+            Tower.Instance.transform.position + Vector3.up * (top ? 6f : -6f), Quaternion.identity).GetComponent<Enemy>();
+        enemy.InitWithLevel(wave - 1);
+        spawner.instantiatedEnemies.Add(enemy);
+        return enemy;
+    }
+
+    [UnityTest]
+    public IEnumerator BossTestButtonPreparesUpgradesThenSpawnsOutsideCameraAndUsesSeparateSave()
+    {
+        var spawner = EnemySpawner.Instance;
+        spawner.ResetScript();
+        ResourceManager.Instance.curMaterials = 123;
+        SaveGameManager.Instance.Save();
+        string normalSavePath = Path.Combine(saveDirectory, "savegame.json");
+        string originalSave = File.ReadAllText(normalSavePath);
+        var controls = spawner.GetComponent<BossTestControls>();
+        Assert.That(controls.enableBossTesting, Is.True);
+        GameManager.isInit = true;
+        yield return null;
+        var button = UIManager.Instance.stationUI.GetComponentInParent<Canvas>().rootCanvas
+            .GetComponentsInChildren<Button>(true).Single(b => b.name == "Boss Test Button");
+        Assert.That(button.gameObject.activeSelf, Is.True);
+        SaveGameManager.Instance.Save();
+        originalSave = File.ReadAllText(normalSavePath);
+        button.onClick.Invoke();
+        GameManager.isInit = false;
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(1000000));
+        Assert.That(spawner.instantiatedEnemies, Is.Empty);
+        Assert.That(spawner.IsBossTestActive, Is.True);
+        Assert.That(SaveGameManager.Instance.HasWaveCheckpoint, Is.False);
+        Assert.That(spawner.currentWaveIndex, Is.EqualTo(4));
+        Assert.That(ProjectileManager.Instance.allProjectiles, Is.Empty);
+        Assert.That(File.ReadAllText(normalSavePath), Is.EqualTo(originalSave));
+        string testSavePath = Path.Combine(saveDirectory, "BossTests", "savegame.json");
+        Assert.That(JsonUtility.FromJson<SaveGame>(File.ReadAllText(testSavePath)).material, Is.EqualTo(1000000));
+        spawner.UpdateNormal();
+        Assert.That(typeof(EnemySpawner).GetField("waveIsRunning", BindingFlags.Instance | BindingFlags.NonPublic)
+            .GetValue(spawner), Is.False, "Preparation must not start normal waves.");
+        var radar = StationModule.GetModuleByType(StationModule.eModuleType.Radar);
+        radar.isBuilt = true;
+        radar.gameObject.SetActive(true);
+        var range = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.FireRange);
+        ResourceManager.Instance.curMaterials -= 10;
+        range.Upgrade();
+        float upgradedRange = Tower.Instance.EffectiveFireRange;
+        yield return null;
+        Assert.That(button.gameObject.activeSelf, Is.True);
+        Assert.That(button.GetComponentInChildren<TMPro.TextMeshProUGUI>().text, Does.Contain("Boss Wave 5"));
+        GameManager.isInit = true;
+        button.onClick.Invoke();
+        GameManager.isInit = false;
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(999990), "Spawning must keep the balance after purchases.");
+        Assert.That(Tower.Instance.EffectiveFireRange, Is.EqualTo(upgradedRange));
+        Assert.That(spawner.instantiatedEnemies.Single().enemyType, Is.EqualTo(Enemy.eEnemyType.Boss));
+        Assert.That(Utils.IsOutOfView(spawner.instantiatedEnemies.Single().transform.position), Is.True);
+        var hullBounds = spawner.instantiatedEnemies.Single().GetComponent<SpriteRenderer>().bounds;
+        var viewportMin = Camera.main.WorldToViewportPoint(hullBounds.min);
+        var viewportMax = Camera.main.WorldToViewportPoint(hullBounds.max);
+        Assert.That(viewportMin.y > 1f || viewportMax.y < 0f, Is.True, "The entire boss must spawn outside the camera.");
+        Assert.That(spawner.currentWaveIndex, Is.EqualTo(5));
+        Assert.That(SaveGameManager.Instance.HasWaveCheckpoint, Is.True);
+        Assert.That(JsonUtility.FromJson<SaveGame>(File.ReadAllText(testSavePath)).material, Is.EqualTo(999990));
+        EnemySpawner.RemoveAllEnemies();
+        spawner.UpdateNormal();
+        Assert.That(typeof(EnemySpawner).GetField("waveIsRunning", BindingFlags.Instance | BindingFlags.NonPublic)
+            .GetValue(spawner), Is.False, "Test mode must stay idle after the boss is defeated.");
+        Assert.That(File.ReadAllText(normalSavePath), Is.EqualTo(originalSave));
+        var nextBossButton = UIManager.Instance.stationUI.GetComponentInParent<Canvas>().rootCanvas
+            .GetComponentsInChildren<Button>(true).Single(b => b.name == "Next Boss Button");
+        int balanceBeforeSelection = ResourceManager.Instance.curMaterials;
+        GameManager.isInit = true;
+        foreach (int wave in new[] { 10, 15, 20, 25 })
+        {
+            nextBossButton.onClick.Invoke();
+            Assert.That(button.GetComponentInChildren<TMPro.TextMeshProUGUI>().text, Does.Contain($"Boss Wave {wave}"));
+            Assert.That(spawner.instantiatedEnemies, Is.Empty, "Selecting must not spawn a boss.");
+        }
+        var previousBossButton = UIManager.Instance.stationUI.GetComponentInParent<Canvas>().rootCanvas
+            .GetComponentsInChildren<Button>(true).Single(b => b.name == "Previous Boss Button");
+        foreach (int wave in new[] { 20, 15, 10, 5, 5 })
+        {
+            previousBossButton.onClick.Invoke();
+            Assert.That(button.GetComponentInChildren<TMPro.TextMeshProUGUI>().text, Does.Contain($"Boss Wave {wave}"));
+            Assert.That(spawner.instantiatedEnemies, Is.Empty);
+        }
+        for (int i = 0; i < 4; i++) nextBossButton.onClick.Invoke();
+        button.onClick.Invoke();
+        GameManager.isInit = false;
+        Assert.That(spawner.currentWaveIndex, Is.EqualTo(25));
+        Assert.That(spawner.instantiatedEnemies, Has.Count.EqualTo(2));
+        Assert.That(spawner.instantiatedEnemies.All(e => e.enemyType == Enemy.eEnemyType.Boss && Utils.IsOutOfView(e.transform.position)), Is.True);
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(balanceBeforeSelection));
+        controls.enableBossTesting = false;
+        yield return null;
+        Assert.That(button.gameObject.activeSelf, Is.False);
+        Assert.That(nextBossButton.gameObject.activeSelf, Is.False);
+        Assert.That(previousBossButton.gameObject.activeSelf, Is.False);
+        controls.SelectNextBoss();
+        Assert.That(button.GetComponentInChildren<TMPro.TextMeshProUGUI>().text, Does.Contain("Boss Wave 25"));
+    }
+
+    [Test]
+    public void DisabledBossTestingCannotGrantMaterialsOrReplaceWave()
+    {
+        var spawner = EnemySpawner.Instance;
+        var controls = spawner.GetComponent<BossTestControls>();
+        controls.enableBossTesting = false;
+        GameManager.isInit = true;
+        int money = ResourceManager.Instance.curMaterials;
+        int wave = spawner.currentWaveIndex;
+        controls.StartBossTest();
+        spawner.StartBossTest(25, 1000000);
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(money));
+        Assert.That(spawner.currentWaveIndex, Is.EqualTo(wave));
+        Assert.That(spawner.instantiatedEnemies, Is.Empty);
+        GameManager.isInit = false;
+    }
+
+    [UnityTest]
+    public IEnumerator BossTestUpgradeSlidersSetLevelsBothWaysAndStayOutOfNormalPlay()
+    {
+        var controls = EnemySpawner.Instance.GetComponent<BossTestControls>();
+        var damage = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.Damage);
+        var fabricator = StationModule.GetModuleByType(StationModule.eModuleType.AmmoFabricator);
+        fabricator.isBuilt = true;
+        fabricator.gameObject.SetActive(true);
+        UIManager.Instance.Show(true);
+        var container = (Transform)typeof(UpgradeUI).GetField("contentContainer", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(UpgradeUI.Instance);
+        UpgradeUI.Instance.Show(fabricator.upgradeSet);
+        Assert.That(container.GetComponentsInChildren<Slider>(true), Is.Empty);
+        GameManager.isInit = true;
+        controls.SetUpgradeLevel(damage, 4);
+        Assert.That(damage.level, Is.Zero);
+        controls.StartBossTest();
+        string normalSave = File.ReadAllText(Path.Combine(saveDirectory, "savegame.json"));
+        UpgradeUI.Instance.Refresh();
+        yield return null;
+        int balance = ResourceManager.Instance.curMaterials;
+        Assert.That(UIManager.Instance.stationUI.GetComponentInParent<Canvas>().rootCanvas
+            .GetComponentsInChildren<Button>(true).Any(button => button.name == "Boss Upgrade Button"), Is.False);
+        GameManager.isInit = false;
+        foreach (var module in StationModule.allModules.Where(module => module.upgradeSet != null))
+        {
+            module.isBuilt = true;
+            module.gameObject.SetActive(true);
+            UpgradeUI.Instance.Show(module.upgradeSet);
+            foreach (var upgrade in module.upgradeSet.upgradeAttributes)
+            {
+                var view = container.GetComponentsInChildren<UpgradeButtonView>()
+                    .Single(view => view.upgradeName == upgrade.upgradeName);
+                var slider = view.GetComponentInChildren<Slider>();
+                Assert.That(slider, Is.Not.Null);
+                Assert.That(slider.direction, Is.EqualTo(Slider.Direction.BottomToTop));
+                Assert.That(slider.maxValue, Is.EqualTo(upgrade.maxLevel));
+                GameManager.isInit = true;
+                slider.value = upgrade.maxLevel;
+                Assert.That(upgrade.level, Is.EqualTo(upgrade.maxLevel));
+                slider.value = 1;
+                Assert.That(upgrade.level, Is.EqualTo(Mathf.Min(1, upgrade.maxLevel)));
+                slider.value = 0;
+                Assert.That(upgrade.level, Is.Zero);
+                Assert.That(upgrade.currentValue, Is.EqualTo(upgrade.CalculateValue(0)));
+                Assert.That(upgrade.cost, Is.EqualTo(upgrade.CalculateCost(0)));
+                GameManager.isInit = false;
+            }
+            UpgradeUI.Instance.Hide();
+            UpgradeUI.Instance.Show(module.upgradeSet);
+            Assert.That(container.GetComponentsInChildren<Slider>(), Has.Length.EqualTo(module.upgradeSet.upgradeAttributes.Count));
+        }
+        UpgradeUI.Instance.Show(fabricator.upgradeSet);
+        var damageView = container.GetComponentsInChildren<UpgradeButtonView>().Single(view => view.upgradeName == damage.upgradeName);
+        var damageSlider = damageView.GetComponentInChildren<Slider>();
+        GameManager.isInit = true;
+        damageSlider.value = 4;
+        Assert.That(Tower.Instance.damage, Is.EqualTo(Mathf.RoundToInt(damage.currentValue)));
+        Assert.That(damageView.valueText.text, Does.Contain(Tower.Instance.damage.ToString()));
+        Assert.That(ResourceManager.Instance.curMaterials, Is.EqualTo(balance));
+        GameManager.isInit = false;
+        yield return null;
+        Assert.That(File.ReadAllText(Path.Combine(saveDirectory, "savegame.json")), Is.EqualTo(normalSave));
+        controls.enableBossTesting = false;
+        GameManager.isInit = true;
+        controls.SetUpgradeLevel(damage, 2);
+        Assert.That(damage.level, Is.EqualTo(4));
+        GameManager.isInit = false;
+        yield return null;
+        Assert.That(damageSlider.gameObject.activeSelf, Is.False);
+        Assert.That(damageView.GetComponent<LayoutElement>().preferredWidth, Is.EqualTo(116f));
+    }
+
+    [Test]
+    public void CarrierHoldingPositionsKeepEveryHullInsideViewAndSwarmsGrowEachBossWave()
+    {
+        for (int wave = 5; wave <= 40; wave += 5)
+        foreach (bool top in new[] { true, false })
+        {
+            var enemy = CreateCarrier(wave, top);
+            var carrier = enemy.GetComponent<BossCarrier>();
+            enemy.transform.position = Tower.Instance.transform.position + Vector3.up * ((top ? 1f : -1f) * carrier.HoldDistance);
+            foreach (float angle in new[] { 0f, 45f, 90f, 135f, 180f })
+            {
+                enemy.transform.rotation = Quaternion.Euler(0f, 0f, angle);
+                Bounds hull = enemy.GetComponent<SpriteRenderer>().bounds;
+                Assert.That(Camera.main.WorldToViewportPoint(hull.min).y, Is.GreaterThan(0.04f));
+                Assert.That(Camera.main.WorldToViewportPoint(hull.max).y, Is.LessThan(0.96f));
+            }
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            typeof(BossCarrier).GetField("launchCountdown", flags).SetValue(carrier, 0f);
+            carrier.Tick();
+            var swarms = (System.Collections.Generic.List<Enemy>)typeof(BossCarrier).GetField("swarms", flags).GetValue(carrier);
+            Assert.That(swarms.Count, Is.EqualTo(1), "Only the first ship should spawn immediately.");
+            Assert.That(typeof(BossCarrier).GetField("currentSwarmGroupSize", flags).GetValue(carrier), Is.EqualTo(3 + (wave / 5 - 1) * 3));
+        }
+    }
+
+    [Test]
+    public void BossTestCanSelectPairAndReplaceRunningEnemies()
+    {
+        var spawner = EnemySpawner.Instance;
+        spawner.ResetScript();
+        var previous = spawner.SpawnCarrierSwarm(Vector2.up * 3f, 5);
+        GameManager.isInit = true;
+        spawner.StartBossTest(25, 1000000);
+        Assert.That(spawner.instantiatedEnemies, Is.Empty);
+        spawner.StartBossTest(25, 1000000);
+        GameManager.isInit = false;
+        Assert.That(spawner.instantiatedEnemies, Has.Count.EqualTo(2));
+        Assert.That(spawner.instantiatedEnemies.Contains(previous), Is.False);
+        Assert.That(spawner.instantiatedEnemies.All(e => e.enemyType == Enemy.eEnemyType.Boss), Is.True);
+        Assert.That(spawner.instantiatedEnemies[0].transform.position.y, Is.GreaterThan(0f));
+        Assert.That(spawner.instantiatedEnemies[1].transform.position.y, Is.LessThan(0f));
+        Assert.That(spawner.currentWaveIndex, Is.EqualTo(25));
+        spawner.ResetScript();
+        Assert.That(typeof(EnemySpawner).GetField("bossTestActive", BindingFlags.Instance | BindingFlags.NonPublic)
+            .GetValue(spawner), Is.False);
+    }
+
+    [Test]
+    public void CarriersUseFixedImageCycleAndProgressiveHoldDistances()
+    {
+        Camera.main.orthographicSize = 10f;
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var range = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.FireRange);
+        float baseline = Tower.Instance.initialFireRange;
+        float maximum = range.CalculateValue(range.maxLevel);
+        var fractions = new[] { 0.05f, 0.2f, 0.5f, 0.9f, 1f, 1f, 1f, 1f, 1f };
+        for (int encounter = 1; encounter <= fractions.Length; encounter++)
+        {
+            var enemy = CreateCarrier(encounter * 5);
+            var carrier = enemy.GetComponent<BossCarrier>();
+            var variants = (Sprite[])typeof(EnemyVisualVariant).GetField("variants", flags)
+                .GetValue(enemy.GetComponent<EnemyVisualVariant>());
+            Assert.That(enemy.GetComponent<SpriteRenderer>().sprite, Is.EqualTo(variants[(encounter - 1) % 4]));
+            Assert.That(carrier.HoldDistance, Is.EqualTo(Mathf.Lerp(baseline, maximum, fractions[encounter - 1])).Within(0.001f));
+            Assert.That(carrier.ShieldPoints > 0, Is.EqualTo(encounter > 1));
+            EnemySpawner.RemoveEnemy(enemy, Stats.eDeadBy.None);
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator FirstCarrierAttacksAtHalfHealthAndStartDoesNotRestoreDamage()
+    {
+        var enemy = CreateCarrier(5);
+        var carrier = enemy.GetComponent<BossCarrier>();
+        int half = enemy.maxHP / 2;
+        enemy.TakeDamage(enemy.maxHP - half - 1, Stats.eDeadBy.towerProjectile);
+        Assert.That(carrier.CurrentPhase, Is.EqualTo(BossCarrier.Phase.Approach));
+        enemy.TakeDamage(1, Stats.eDeadBy.towerProjectile);
+        Assert.That(carrier.CurrentPhase, Is.EqualTo(BossCarrier.Phase.Attack));
+        Assert.That(enemy.CurrentHP, Is.EqualTo(half));
+        yield return null;
+        Assert.That(enemy.CurrentHP, Is.EqualTo(half));
+    }
+
+    [Test]
+    public void CarrierShieldAbsorbsDamageAndBreakingItStartsAttackWithOverflowToHealth()
+    {
+        var enemy = CreateCarrier(10);
+        var carrier = enemy.GetComponent<BossCarrier>();
+        int hp = enemy.CurrentHP;
+        int shield = carrier.ShieldPoints;
+        enemy.TakeDamage(shield - 1, Stats.eDeadBy.towerProjectile);
+        Assert.That(carrier.ShieldPoints, Is.EqualTo(1));
+        Assert.That(enemy.CurrentHP, Is.EqualTo(hp));
+        Assert.That(carrier.CurrentPhase, Is.EqualTo(BossCarrier.Phase.Approach));
+        enemy.TakeDamage(4, Stats.eDeadBy.towerProjectile);
+        Assert.That(carrier.ShieldPoints, Is.Zero);
+        Assert.That(enemy.CurrentHP, Is.EqualTo(hp - 3));
+        Assert.That(carrier.CurrentPhase, Is.EqualTo(BossCarrier.Phase.Attack));
+        Assert.That(enemy.transform.Find("Carrier Shield").GetComponent<LineRenderer>().enabled, Is.False);
+    }
+
+    IEnumerator WaitForCarrierLaunch(BossCarrier carrier)
+    {
+        var field = typeof(BossCarrier).GetField("launchingSwarm", BindingFlags.Instance | BindingFlags.NonPublic);
+        float deadline = Time.time + 6f;
+        while ((bool)field.GetValue(carrier) && Time.time < deadline) yield return null;
+        Assert.That((bool)field.GetValue(carrier), Is.False, "The staggered launch must complete.");
+    }
+
+    [UnityTest]
+    public IEnumerator CarrierSwarmCompletionIsIndependentAndKeepsRemainingShield()
+    {
+        var top = CreateCarrier(25);
+        var bottom = CreateCarrier(25, false);
+        var topCarrier = top.GetComponent<BossCarrier>();
+        var bottomCarrier = bottom.GetComponent<BossCarrier>();
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        foreach (var carrier in new[] { topCarrier, bottomCarrier })
+        {
+            float side = carrier == topCarrier ? 1f : -1f;
+            carrier.transform.position = Tower.Instance.transform.position + Vector3.up * (side * carrier.HoldDistance);
+            typeof(BossCarrier).GetField("groupsRemaining", flags).SetValue(carrier, 2);
+            typeof(BossCarrier).GetField("launchCountdown", flags).SetValue(carrier, 0f);
+            carrier.Tick();
+        }
+        yield return WaitForCarrierLaunch(topCarrier);
+        yield return WaitForCarrierLaunch(bottomCarrier);
+        Assert.That(EnemySpawner.Instance.instantiatedEnemies.Count(e => e.enemyType == Enemy.eEnemyType.Swarm), Is.EqualTo(30));
+        var topSwarms = (System.Collections.Generic.List<Enemy>)typeof(BossCarrier).GetField("swarms", flags).GetValue(topCarrier);
+        foreach (var swarm in topSwarms.ToArray()) EnemySpawner.RemoveEnemy(swarm, Stats.eDeadBy.None);
+        topCarrier.Tick();
+        Assert.That(topCarrier.CurrentPhase, Is.EqualTo(BossCarrier.Phase.Launching), "An empty gap before the last launch must not end the phase.");
+        typeof(BossCarrier).GetField("launchCountdown", flags).SetValue(topCarrier, 0f);
+        topCarrier.Tick();
+        yield return WaitForCarrierLaunch(topCarrier);
+        foreach (var swarm in topSwarms.ToArray()) EnemySpawner.RemoveEnemy(swarm, Stats.eDeadBy.None);
+        topCarrier.Tick();
+        Assert.That(topCarrier.CurrentPhase, Is.EqualTo(BossCarrier.Phase.Attack));
+        Assert.That(topCarrier.ShieldPoints, Is.GreaterThan(0));
+        Assert.That(bottomCarrier.CurrentPhase, Is.EqualTo(BossCarrier.Phase.Launching));
+
+        top.transform.position = Tower.Instance.transform.position + Vector3.up *
+            Mathf.Min(top.fireRange, Tower.Instance.EffectiveFireRange * 0.96f);
+        top.transform.rotation = Quaternion.Euler(0f, 0f, 180f);
+        typeof(BossCarrier).GetField("fireCountdown", flags).SetValue(topCarrier, 0f);
+        int shots = ProjectileManager.Instance.allProjectiles.Count;
+        topCarrier.Tick();
+        Assert.That(ProjectileManager.Instance.allProjectiles.Count, Is.EqualTo(shots + 1));
+        Assert.That(ProjectileManager.Instance.allProjectiles.Last().CompareTag("EnemyProjectile"), Is.True);
+        GameManager.gameOver = true;
+        bottomCarrier.Tick();
+        Assert.That(bottomCarrier.CurrentPhase, Is.EqualTo(BossCarrier.Phase.Launching));
+        EnemySpawner.Instance.ResetScript();
+        yield return null;
+        Assert.That(top == null && bottom == null, Is.True);
+        Assert.That(EnemySpawner.Instance.instantiatedEnemies, Is.Empty);
+    }
+
+    [Test]
+    public void CarrierBarsStayOutsideShipOnItsSpawnSideDuringRotation()
+    {
+        foreach (int wave in new[] { 5, 10, 25 })
+        foreach (bool top in new[] { true, false })
+        {
+            var enemy = CreateCarrier(wave, top);
+            enemy.transform.position = Vector3.up * (top ? 3f : -3f);
+            foreach (float rotation in new[] { 0f, 45f, 90f, 180f })
+            {
+                enemy.transform.rotation = Quaternion.Euler(0f, 0f, rotation);
+                typeof(BossCarrier).GetMethod("RefreshVisuals", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(enemy.GetComponent<BossCarrier>(), null);
+                var bounds = enemy.GetComponent<SpriteRenderer>().bounds;
+                var hp = enemy.transform.Find("Carrier HP").GetComponent<LineRenderer>();
+                var shield = enemy.transform.Find("Carrier Shield Points").GetComponent<LineRenderer>();
+                if (top)
+                {
+                    Assert.That(hp.GetPosition(0).y, Is.GreaterThan(bounds.max.y));
+                    Assert.That(shield.GetPosition(0).y, Is.GreaterThan(hp.GetPosition(0).y));
+                }
+                else
+                {
+                    Assert.That(hp.GetPosition(0).y, Is.LessThan(bounds.min.y));
+                    Assert.That(shield.GetPosition(0).y, Is.LessThan(hp.GetPosition(0).y));
+                }
+            }
+            EnemySpawner.RemoveEnemy(enemy, Stats.eDeadBy.None);
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator FirstCarrierLaunchesThreeGroupsUnlessHalfHealthInterruptsIt()
+    {
+        var enemy = CreateCarrier(5);
+        var carrier = enemy.GetComponent<BossCarrier>();
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        enemy.transform.position = Tower.Instance.transform.position + Vector3.up * carrier.HoldDistance;
+        yield return null;
+        for (int group = 0; group < 3; group++)
+        {
+            float elapsed = 0f;
+            float duration = group == 0 ? 1.7f : 3.1f;
+            while (elapsed < duration)
+            {
+                carrier.Tick();
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            Assert.That(EnemySpawner.Instance.instantiatedEnemies.Count(e => e.enemyType == Enemy.eEnemyType.Swarm),
+                Is.EqualTo((group + 1) * 3));
+            Assert.That(carrier.CurrentPhase, Is.EqualTo(BossCarrier.Phase.Launching));
+        }
+        Assert.That(typeof(BossCarrier).GetField("groupsRemaining", flags).GetValue(carrier), Is.EqualTo(0));
+        EnemySpawner.RemoveAllEnemies();
+        var interrupted = CreateCarrier(5);
+        var interruptedCarrier = interrupted.GetComponent<BossCarrier>();
+        interrupted.transform.position = Tower.Instance.transform.position + Vector3.up * interruptedCarrier.HoldDistance;
+        typeof(BossCarrier).GetField("launchCountdown", flags).SetValue(interruptedCarrier, 0f);
+        interruptedCarrier.Tick();
+        Assert.That(EnemySpawner.Instance.instantiatedEnemies.Count(e => e.enemyType == Enemy.eEnemyType.Swarm), Is.EqualTo(1));
+        interrupted.TakeDamage(interrupted.maxHP / 2 + 1, Stats.eDeadBy.towerProjectile);
+        yield return new WaitForSeconds(0.5f);
+        Assert.That(EnemySpawner.Instance.instantiatedEnemies.Count(e => e.enemyType == Enemy.eEnemyType.Swarm), Is.EqualTo(1), "Changing phase must cancel ships still waiting to spawn.");
+        Assert.That(interruptedCarrier.CurrentPhase, Is.EqualTo(BossCarrier.Phase.Attack));
+        Assert.That(typeof(BossCarrier).GetField("groupsRemaining", flags).GetValue(interruptedCarrier), Is.EqualTo(0));
+    }
+
+    [Test]
+    public void MaximumRangeCanTargetCarrierAtHundredPercentDistance()
+    {
+        var enemy = CreateCarrier(25);
+        var tower = Tower.Instance;
+        StationModule.GetModuleByType(StationModule.eModuleType.Radar).isBuilt = true;
+        tower.fireRange = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.FireRange).CalculateValue(16);
+        enemy.transform.position = tower.transform.position + Vector3.up * enemy.GetComponent<BossCarrier>().HoldDistance;
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        typeof(Tower).GetMethod("FindTarget", flags).Invoke(tower, null);
+        Assert.That(typeof(Tower).GetField("currentTarget", flags).GetValue(tower), Is.EqualTo(enemy.transform));
+    }
+
+    [UnityTest]
+    public IEnumerator CarrierMovementTurnsLateBrakesAndStartsAttackGently()
+    {
+        var enemy = CreateCarrier(5);
+        var carrier = enemy.GetComponent<BossCarrier>();
+        enemy.transform.rotation = Quaternion.Euler(0f, 0f, 180f);
+        float elapsed = 0f;
+        while (elapsed < 1f)
+        {
+            carrier.Tick();
+            Assert.That(Quaternion.Angle(enemy.transform.rotation, Quaternion.Euler(0f, 0f, 180f)), Is.LessThan(0.01f));
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        enemy.transform.position = Tower.Instance.transform.position + Vector3.up * (carrier.HoldDistance + 0.6f);
+        elapsed = 0f;
+        while (elapsed < 1.3f)
+        {
+            Quaternion before = enemy.transform.rotation;
+            carrier.Tick();
+            Assert.That(Quaternion.Angle(before, enemy.transform.rotation), Is.LessThanOrEqualTo(30f * Time.deltaTime + 0.02f));
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        Assert.That(Quaternion.Angle(enemy.transform.rotation, Quaternion.Euler(0f, 0f, 180f)), Is.InRange(5f, 60f));
+        elapsed = 0f;
+        while (elapsed < 3f)
+        {
+            carrier.Tick();
+            Assert.That(enemy.transform.position.y, Is.GreaterThanOrEqualTo(carrier.HoldDistance - 0.001f));
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        var velocity = (Vector3)typeof(BossCarrier).GetField("movementVelocity", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(carrier);
+        Assert.That(velocity.magnitude, Is.LessThan(0.1f));
+        Assert.That(enemy.transform.position.y - carrier.HoldDistance, Is.LessThan(0.1f));
+
+        var attacker = CreateCarrier(25);
+        var attackCarrier = attacker.GetComponent<BossCarrier>();
+        attacker.transform.position = Tower.Instance.transform.position + Vector3.up * attackCarrier.HoldDistance;
+        attacker.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
+        attacker.TakeDamage(attackCarrier.ShieldPoints, Stats.eDeadBy.towerProjectile);
+        Vector3 attackStart = attacker.transform.position;
+        elapsed = 0f;
+        while (elapsed < 0.6f)
+        {
+            attackCarrier.Tick();
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        Assert.That(attacker.transform.eulerAngles.z, Is.InRange(90.1f, 115f));
+        Assert.That(Vector3.Distance(attackStart, attacker.transform.position), Is.LessThan(attacker.speed * 0.6f * 0.5f));
+    }
+
+    [UnityTest]
+    public IEnumerator CarrierSwarmsFanOutAroundHullThenHeadToCoreOnBothSides()
+    {
+        Camera.main.orthographicSize = 10f;
+        foreach (bool top in new[] { true, false })
+        {
+            EnemySpawner.RemoveAllEnemies();
+            var enemy = CreateCarrier(25, top);
+            var carrier = enemy.GetComponent<BossCarrier>();
+            float side = top ? 1f : -1f;
+            enemy.transform.position = Tower.Instance.transform.position + Vector3.up * (side * carrier.HoldDistance);
+            enemy.transform.rotation = Quaternion.Euler(0f, 0f, top ? 90f : -90f);
+            typeof(BossCarrier).GetField("launchCountdown", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(carrier, 0f);
+            carrier.Tick();
+            Assert.That(EnemySpawner.Instance.instantiatedEnemies.Count(e => e.enemyType == Enemy.eEnemyType.Swarm), Is.EqualTo(1));
+            yield return WaitForCarrierLaunch(carrier);
+            var swarms = EnemySpawner.Instance.instantiatedEnemies.Where(e => e.enemyType == Enemy.eEnemyType.Swarm).ToArray();
+            Assert.That(swarms, Has.Length.EqualTo(15));
+            Vector3 center = enemy.GetComponent<SpriteRenderer>().bounds.center;
+            foreach (var swarm in swarms)
+            {
+                Assert.That(Vector3.Distance(swarm.transform.position, center), Is.LessThan(0.3f));
+                Assert.That(swarm.GetComponent<CarrierSwarmFlight>(), Is.Not.Null);
+                foreach (var collider in swarm.GetComponents<Collider2D>()) collider.enabled = false;
+            }
+            yield return null;
+            float elapsed = 0f;
+            while (elapsed < 1.1f)
+            {
+                foreach (var swarm in swarms) swarm.UpdateNormal();
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            Assert.That(swarms.All(swarm => (swarm.transform.position.y - center.y) * side > 0.1f), Is.True);
+            Assert.That(swarms.Any(swarm => swarm.transform.position.x < center.x - 0.4f), Is.True);
+            Assert.That(swarms.Any(swarm => swarm.transform.position.x > center.x + 0.4f), Is.True);
+            while (elapsed < 5.3f)
+            {
+                foreach (var swarm in swarms) swarm.UpdateNormal();
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            Assert.That(swarms.All(swarm => (swarm.transform.position.y - center.y) * side < -0.5f), Is.True);
+            Assert.That(swarms.Any(swarm => swarm.transform.position.x < center.x - 0.5f), Is.True);
+            Assert.That(swarms.Any(swarm => swarm.transform.position.x > center.x + 0.5f), Is.True);
+            Vector3[] before = swarms.Select(swarm => swarm.transform.position).ToArray();
+            foreach (var swarm in swarms) swarm.UpdateNormal();
+            for (int i = 0; i < swarms.Length; i++)
+                Assert.That(Vector3.Distance(swarms[i].transform.position, Tower.Instance.transform.position),
+                    Is.LessThan(Vector3.Distance(before[i], Tower.Instance.transform.position)));
+        }
+    }
+
+    [Test]
+    public void BossWavesSpawnCarriersLastAndPairsFromOppositeSides()
+    {
+        var spawner = EnemySpawner.Instance;
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        typeof(EnemySpawner).GetField("timeBetweenWaves", flags).SetValue(spawner, 0f);
+        typeof(EnemySpawner).GetField("timeAfterBossWave", flags).SetValue(spawner, 0f);
+        typeof(EnemySpawner).GetField("bossArrivalDelay", flags).SetValue(spawner, 0f);
+        foreach (int wave in new[] { 4, 5, 10, 15, 20, 21, 25, 30 })
+        {
+            spawner.currentWaveIndex = wave - 1;
+            var routine = (IEnumerator)typeof(EnemySpawner).GetMethod("SpawnWave", flags).Invoke(spawner, null);
+            while (routine.MoveNext()) { }
+            var enemies = spawner.instantiatedEnemies;
+            int expected = wave % 5 == 0 ? (wave >= 25 ? 2 : 1) : 0;
+            Assert.That(enemies.Count(e => e.enemyType == Enemy.eEnemyType.Boss), Is.EqualTo(expected));
+            Assert.That(enemies.Skip(enemies.Count - expected).All(e => e.enemyType == Enemy.eEnemyType.Boss), Is.True);
+            if (expected == 2)
+            {
+                Assert.That(enemies[enemies.Count - 2].transform.position.y, Is.GreaterThan(Camera.main.transform.position.y));
+                Assert.That(enemies.Last().transform.position.y, Is.LessThan(Camera.main.transform.position.y));
+            }
+            EnemySpawner.RemoveAllEnemies();
+        }
+    }
+
+    [Test]
+    public void AttackingCarriersStayClearOfStationAndItsShield()
+    {
+        foreach (var module in StationModule.allModules)
+        {
+            module.isBuilt = true;
+            module.gameObject.SetActive(true);
+            module.RefreshCollider();
+        }
+        Shield.Instance.OnModuleBuilt();
+        foreach (int wave in new[] { 5, 10, 15, 20, 25, 40 })
+        foreach (bool top in new[] { true, false })
+        {
+            var enemy = CreateCarrier(wave, top);
+            var carrier = enemy.GetComponent<BossCarrier>();
+            if (wave == 5) enemy.TakeDamage(enemy.maxHP / 2 + 1, Stats.eDeadBy.towerProjectile);
+            else enemy.TakeDamage(carrier.ShieldPoints, Stats.eDeadBy.towerProjectile);
+            enemy.transform.position = Tower.Instance.transform.position + Vector3.up *
+                ((top ? 1f : -1f) * Mathf.Min(enemy.fireRange, Tower.Instance.EffectiveFireRange * 0.96f));
+            Physics2D.SyncTransforms();
+            var hull = enemy.GetComponent<Collider2D>();
+            Assert.That(hull.Distance(Shield.Instance.GetComponent<Collider2D>()).isOverlapped, Is.False, $"Shield contact in wave {wave}");
+            foreach (var module in StationModule.allModules)
+                Assert.That(hull.Distance(module.GetComponent<Collider2D>()).isOverlapped, Is.False, $"Contact with {module.moduleType} in wave {wave}");
+            EnemySpawner.RemoveEnemy(enemy, Stats.eDeadBy.None);
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator WavesWaitFiveSecondsAndTenAfterBossBeforeCheckpointAndSpawning()
+    {
+        var spawner = EnemySpawner.Instance;
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        Assert.That(typeof(EnemySpawner).GetField("timeBetweenWaves", flags).GetValue(spawner), Is.EqualTo(5f));
+        Assert.That(typeof(EnemySpawner).GetField("timeAfterBossWave", flags).GetValue(spawner), Is.EqualTo(10f));
+        foreach (int waveIndex in new[] { 0, 10, 24 })
+        {
+            spawner.ResetScript();
+            SaveGameManager.Instance.ClearWaveCheckpoint();
+            spawner.currentWaveIndex = waveIndex;
+            spawner.UpdateNormal();
+            float pause = waveIndex > 0 && waveIndex % 5 == 0 ? 10f : 5f;
+            yield return new WaitForSeconds(pause - 1f);
+            Assert.That(spawner.instantiatedEnemies, Is.Empty);
+            Assert.That(SaveGameManager.Instance.HasWaveCheckpoint, Is.False);
+            yield return new WaitForSeconds(1.2f);
+            Assert.That(spawner.instantiatedEnemies, Is.Not.Empty);
+            Assert.That(SaveGameManager.Instance.HasWaveCheckpoint, Is.True);
+        }
+        spawner.ResetScript();
+    }
+
+    [UnityTest]
+    public IEnumerator CarrierArrivalHasEightSecondGapWithoutCompletingWaveEarly()
+    {
+        var spawner = EnemySpawner.Instance;
+        spawner.ResetScript();
+        var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+        var waves = (System.Collections.Generic.List<EnemyWave>)typeof(EnemySpawner).GetField("waves", flags).GetValue(spawner);
+        var original = waves[4];
+        try
+        {
+            waves[4] = new EnemyWave
+            {
+                enemies = new System.Collections.Generic.List<SpawnInstruction>
+                {
+                    new SpawnInstruction { type = Enemy.eEnemyType.Normal, amount = Vector2Int.one,
+                        delayBetweenSpawns = Vector2.zero, swarmGroupSize = Vector2Int.one }
+                },
+                delayBetweenSpawnsTypes = Vector2.zero
+            };
+            typeof(EnemySpawner).GetField("timeBetweenWaves", flags).SetValue(spawner, 0f);
+            Assert.That(typeof(EnemySpawner).GetField("bossArrivalDelay", flags).GetValue(spawner), Is.EqualTo(8f));
+            spawner.currentWaveIndex = 4;
+            spawner.UpdateNormal();
+            yield return new WaitForSeconds(0.5f);
+            Assert.That(spawner.instantiatedEnemies.Count, Is.EqualTo(1));
+            EnemySpawner.RemoveAllEnemies();
+            spawner.UpdateNormal();
+            yield return new WaitForSeconds(6.5f);
+            Assert.That(spawner.instantiatedEnemies, Is.Empty);
+            Assert.That(spawner.currentWaveIndex, Is.EqualTo(4));
+            Assert.That(Stats.Instance.wavesCompleted, Is.Zero);
+            Assert.That(SaveGameManager.Instance.HasWaveCheckpoint, Is.True);
+            yield return new WaitForSeconds(1.5f);
+            Assert.That(spawner.instantiatedEnemies.Single().enemyType, Is.EqualTo(Enemy.eEnemyType.Boss));
+            Assert.That(spawner.currentWaveIndex, Is.EqualTo(5));
+        }
+        finally
+        {
+            waves[4] = original;
+            spawner.StopAllCoroutines();
+            spawner.ResetScript();
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator CarrierTuningUsesSlowRotationMoreSwarmsRewardsAndRedLasers()
+    {
+        var enemy = CreateCarrier(5);
+        var carrier = enemy.GetComponent<BossCarrier>();
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        Assert.That(enemy.maxHP, Is.EqualTo(84));
+        Assert.That(enemy.speed, Is.EqualTo(0.36f));
+        Assert.That(typeof(Enemy).GetField("materialReward", flags).GetValue(enemy), Is.EqualTo(15));
+        Assert.That(typeof(BossCarrier).GetField("groupsRemaining", flags).GetValue(carrier), Is.EqualTo(3));
+        var halo = enemy.transform.Find("Carrier Red Halo").GetComponent<MeshFilter>().sharedMesh;
+        Assert.That(halo.colors.Any(color => color.r > 0.9f && color.a > 0.2f), Is.True);
+        Assert.That(halo.colors.Skip(halo.vertexCount - 48).All(color => color.a == 0f), Is.True);
+        yield return null;
+        enemy.transform.rotation = Quaternion.Euler(0f, 0f, 180f);
+        carrier.Tick();
+        Assert.That(Quaternion.Angle(Quaternion.Euler(0f, 0f, 180f), enemy.transform.rotation),
+            Is.LessThan(0.01f), "The boss must keep facing the core until it is close to the holding position.");
+        enemy.Fire();
+        var laser = ProjectileManager.Instance.allProjectiles.Last();
+        Assert.That(laser.speed, Is.EqualTo(5f));
+        Assert.That(laser.transform.localScale.x, Is.EqualTo(0.12f));
+        Assert.That(laser.GetComponent<SpriteRenderer>().color, Is.EqualTo(new Color(1f, 0.04f, 0.04f, 1f)));
+        Assert.That(laser.CompareTag("EnemyProjectile"), Is.True);
+        if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null)
+        {
+            enemy.transform.position = new Vector3(0f, 3f, 0f);
+            enemy.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
+            typeof(BossCarrier).GetMethod("RefreshVisuals", flags).Invoke(carrier, null);
+            var shielded = CreateCarrier(10, false);
+            shielded.transform.position = new Vector3(0f, -3f, 0f);
+            shielded.transform.rotation = Quaternion.Euler(0f, 0f, -90f);
+            typeof(BossCarrier).GetMethod("RefreshVisuals", flags).Invoke(shielded.GetComponent<BossCarrier>(), null);
+            laser.transform.position = new Vector3(1.5f, 1.5f, 0f);
+            laser.transform.rotation = Quaternion.identity;
+            var camera = Camera.main;
+            var previousTarget = camera.targetTexture;
+            var previousActive = RenderTexture.active;
+            var target = new RenderTexture(720, 1280, 24);
+            var preview = new Texture2D(720, 1280, TextureFormat.RGB24, false);
+            try
+            {
+                camera.targetTexture = target;
+                camera.Render();
+                RenderTexture.active = target;
+                preview.ReadPixels(new Rect(0, 0, 720, 1280), 0, 0);
+                preview.Apply();
+                Directory.CreateDirectory("Logs");
+                File.WriteAllBytes("Logs/BossAtmospherePreview.png", preview.EncodeToPNG());
+            }
+            finally
+            {
+                camera.targetTexture = previousTarget;
+                RenderTexture.active = previousActive;
+                UnityEngine.Object.Destroy(target);
+                UnityEngine.Object.Destroy(preview);
+            }
         }
     }
 
@@ -1633,7 +2362,7 @@ public class GameFlowTests
         loadedSpawner.UpdateNormal();
         var completedWaveSave = JsonUtility.FromJson<SaveGame>(
             File.ReadAllText(Path.Combine(saveDirectory, "savegame.json")));
-        Assert.That(completedWaveSave.material, Is.EqualTo(55));
+        Assert.That(completedWaveSave.material, Is.EqualTo(55 + 21));
         Assert.That(completedWaveSave.currentWaveIndex, Is.EqualTo(3));
     }
 
@@ -1644,12 +2373,8 @@ public class GameFlowTests
         spawner.ResetScript();
         var delay = typeof(EnemySpawner).GetField("timeBetweenWaves",
             BindingFlags.Instance | BindingFlags.NonPublic);
-        var earlyDelay = typeof(EnemySpawner).GetField("earlyWaveDelay",
-            BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.That(delay, Is.Not.Null);
-        Assert.That(earlyDelay, Is.Not.Null);
         delay.SetValue(spawner, 0f);
-        earlyDelay.SetValue(spawner, 0f);
         spawner.currentWaveIndex = 2;
         Stats.Instance.wavesCompleted = 1;
         ResourceManager.Instance.curMaterials = 80;
@@ -1666,7 +2391,7 @@ public class GameFlowTests
         Assert.That(checkpoint.currentWaveIndex, Is.EqualTo(2));
         Assert.That(checkpoint.stats.enemiesSpawned, Is.Zero);
         Assert.That(checkpoint.stats.wavesCompleted, Is.EqualTo(1));
-        Assert.That(Stats.Instance.wavesCompleted, Is.EqualTo(2));
+        Assert.That(Stats.Instance.wavesCompleted, Is.EqualTo(1));
         spawner.ResetScript();
 
         yield return ReloadMainScene();
@@ -1675,10 +2400,9 @@ public class GameFlowTests
         spawner.ResetScript();
         spawner.currentWaveIndex = 2;
         delay.SetValue(spawner, 0f);
-        earlyDelay.SetValue(spawner, 0f);
         spawner.UpdateNormal();
         yield return null;
-        Assert.That(Stats.Instance.wavesCompleted, Is.EqualTo(2));
+        Assert.That(Stats.Instance.wavesCompleted, Is.EqualTo(1));
         spawner.ResetScript();
     }
 

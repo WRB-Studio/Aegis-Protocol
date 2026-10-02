@@ -15,6 +15,7 @@ public class SaveGameManager : MonoBehaviour
     bool isLoading;
     SaveGame waveCheckpoint;
     Coroutine pendingSave;
+    bool usingBossTestSaves;
     public bool HasWaveCheckpoint => waveCheckpoint != null;
     public bool LoadedExistingSave { get; private set; }
 
@@ -27,10 +28,11 @@ public class SaveGameManager : MonoBehaviour
     {
         get
         {
+            string directory = Application.persistentDataPath;
 #if UNITY_EDITOR
-            if (!string.IsNullOrEmpty(SaveDirectoryOverride)) return SaveDirectoryOverride;
+            if (!string.IsNullOrEmpty(SaveDirectoryOverride)) directory = SaveDirectoryOverride;
 #endif
-            return Application.persistentDataPath;
+            return usingBossTestSaves ? Path.Combine(directory, "BossTests") : directory;
         }
     }
 
@@ -103,6 +105,13 @@ public class SaveGameManager : MonoBehaviour
     public void ClearWaveCheckpoint()
     {
         waveCheckpoint = null;
+    }
+
+    public void BeginBossTestSession()
+    {
+        if (!usingBossTestSaves) Save();
+        usingBossTestSaves = true;
+        ClearWaveCheckpoint();
     }
 
     public void Load()

@@ -30,8 +30,13 @@ public class UpgradeUI : MonoBehaviour, IResettable
 
     // Runtime UI cache
     readonly Dictionary<eUpgradeName, ButtonRefs> uiByUpgrade = new();
+    readonly Dictionary<UpgradeButtonView, ButtonRefs> refsByView = new();
     UpgradeButtonView[] preparedButtons;
     bool layoutRebuildPending;
+    bool testSlidersVisible;
+    BossTestControls TestControls => EnemySpawner.Instance ? EnemySpawner.Instance.GetComponent<BossTestControls>() : null;
+    bool ShowTestSliders => TestControls && TestControls.enableBossTesting &&
+        EnemySpawner.Instance.IsBossTestActive && !GameManager.gameOver;
     bool IsCommandSet => currentUpgradeSet && currentUpgradeSet.moduleType == StationModule.eModuleType.CommandUnit;
     static readonly Color CommandCyan = new Color32(148, 236, 244, 255);
 
@@ -58,6 +63,9 @@ public class UpgradeUI : MonoBehaviour, IResettable
 
     void Update()
     {
+        if (currentUpgradeSet && testSlidersVisible != ShowTestSliders) RefreshAll(true);
+        foreach (var ui in uiByUpgrade.Values)
+            if (ui.testSlider) ui.testSlider.interactable = GameManager.isInit && Time.timeScale > 0f;
         if (!IsCommandSet || !panel.activeInHierarchy) return;
         float glowAlpha = 0.12f + 0.08f * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 3f));
         foreach (var entry in uiByUpgrade)
@@ -139,6 +147,8 @@ public class UpgradeUI : MonoBehaviour, IResettable
 
     void RefreshAll(bool holdSelection)
     {
+        bool changedTestLayout = testSlidersVisible != ShowTestSliders;
+        testSlidersVisible = ShowTestSliders;
         // refresh button content + state
         foreach (var upgrade in currentUpgradeSet.upgradeAttributes)
         {
@@ -146,6 +156,7 @@ public class UpgradeUI : MonoBehaviour, IResettable
                 continue;
 
             UpdateButtonUI(ui, upgrade);
+            RefreshTestSlider(ui, upgrade);
             bool selected = holdSelection && currentSelectedUpgrade == upgrade.upgradeName;
             bool affordable = upgrade.level < upgrade.maxLevel &&
                 Mathf.RoundToInt(upgrade.cost) <= ResourceManager.Instance.curMaterials;
@@ -165,6 +176,8 @@ public class UpgradeUI : MonoBehaviour, IResettable
                 ui.glow.enabled = selected;
             }
         }
+
+        if (changedTestLayout || testSlidersVisible) LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)contentContainer);
 
         if (currentSelectedUpgrade != eUpgradeName.None)
         {
@@ -331,8 +344,10 @@ public class UpgradeUI : MonoBehaviour, IResettable
 
     ButtonRefs BuildRefs(UpgradeButtonView view)
     {
-        return new ButtonRefs
+        if (refsByView.TryGetValue(view, out var cached)) return cached;
+        var refs = new ButtonRefs
         {
+            view = view,
             button = view.button,
             infoText = view.valueText,
             costText = view.priceText,
@@ -340,6 +355,71 @@ public class UpgradeUI : MonoBehaviour, IResettable
             marker = view.marker,
             glow = view.selectionGlow,
         };
+        refsByView.Add(view, refs);
+        return refs;
+    }
+
+    void RefreshTestSlider(ButtonRefs ui, UpgradeAttribute upgrade)
+    {
+        var layout = ui.view.GetComponent<LayoutElement>();
+        if (!ui.testSlider && testSlidersVisible)
+        {
+            ui.normalWidth = layout.preferredWidth;
+            ui.normalMinWidth = layout.minWidth;
+            ui.normalButtonPosition = ((RectTransform)ui.button.transform).anchoredPosition;
+            var root = CreateSliderRect("Test Level Slider", ui.view.transform, new Vector2(24f, 136f));
+            root.anchorMin = root.anchorMax = new Vector2(1f, 0.5f);
+            root.anchoredPosition = new Vector2(-16f, 10f);
+            var hitArea = root.gameObject.AddComponent<Image>();
+            hitArea.color = Color.clear;
+            var track = CreateSliderRect("Track", root, new Vector2(6f, 136f)).gameObject.AddComponent<Image>();
+            track.color = new Color32(47, 65, 69, 255);
+            track.raycastTarget = false;
+            var fill = CreateSliderRect("Fill", root, new Vector2(6f, 0f)).gameObject.AddComponent<Image>();
+            fill.color = CommandCyan;
+            fill.raycastTarget = false;
+            var handle = CreateSliderRect("Handle", root, new Vector2(22f, 14f)).gameObject.AddComponent<Image>();
+            handle.color = Color.white;
+            ui.testSlider = root.gameObject.AddComponent<Slider>();
+            ui.testSlider.direction = Slider.Direction.BottomToTop;
+            ui.testSlider.wholeNumbers = true;
+            ui.testSlider.fillRect = fill.rectTransform;
+            ui.testSlider.handleRect = handle.rectTransform;
+            ui.testSlider.targetGraphic = handle;
+            var textRect = CreateSliderRect("Level", root, new Vector2(44f, 24f));
+            textRect.anchoredPosition = new Vector2(0f, -86f);
+            ui.testLevel = textRect.gameObject.AddComponent<TextMeshProUGUI>();
+            ui.testLevel.font = ui.infoText.font;
+            ui.testLevel.fontSize = 14f;
+            ui.testLevel.alignment = TextAlignmentOptions.Center;
+            ui.testLevel.color = Color.white;
+            ui.testLevel.raycastTarget = false;
+            ui.testSlider.onValueChanged.AddListener(value => OnTestLevelChanged(ui.view, value));
+        }
+        if (!ui.testSlider) return;
+        ui.testSlider.gameObject.SetActive(testSlidersVisible);
+        layout.preferredWidth = testSlidersVisible ? ui.normalWidth + 40f : ui.normalWidth;
+        layout.minWidth = testSlidersVisible ? ui.normalMinWidth + 40f : ui.normalMinWidth;
+        ((RectTransform)ui.button.transform).anchoredPosition = ui.normalButtonPosition + (testSlidersVisible ? Vector2.left * 20f : Vector2.zero);
+        ui.testSlider.minValue = 0;
+        ui.testSlider.maxValue = upgrade.maxLevel;
+        ui.testSlider.SetValueWithoutNotify(upgrade.level);
+        ui.testLevel.text = upgrade.level.ToString();
+    }
+
+    static RectTransform CreateSliderRect(string name, Transform parent, Vector2 size)
+    {
+        var rect = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
+        rect.SetParent(parent, false);
+        rect.sizeDelta = size;
+        return rect;
+    }
+
+    void OnTestLevelChanged(UpgradeButtonView view, float value)
+    {
+        if (!currentUpgradeSet || !view.gameObject.activeInHierarchy || view.moduleType != currentUpgradeSet.moduleType) return;
+        var upgrade = currentUpgradeSet.upgradeAttributes.Find(item => item.upgradeName == view.upgradeName);
+        TestControls?.SetUpgradeLevel(upgrade, Mathf.RoundToInt(value));
     }
 
     string GetValueWithUnit(UpgradeAttribute upgrade, float value)
@@ -418,6 +498,11 @@ public class UpgradeUI : MonoBehaviour, IResettable
 
     class ButtonRefs
     {
+        public UpgradeButtonView view;
+        public Slider testSlider;
+        public TextMeshProUGUI testLevel;
+        public float normalWidth, normalMinWidth;
+        public Vector2 normalButtonPosition;
         public Button button;
         public TextMeshProUGUI infoText;
         public TextMeshProUGUI costText;

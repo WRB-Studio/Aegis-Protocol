@@ -131,7 +131,7 @@ public class Tower : MonoBehaviour, IResettable
             var enemy = enemies[i];
             if (!enemy) continue;
             float dist = Vector3.Distance(transform.position, enemy.transform.position);
-            if (dist >= fireRange || Utils.IsOutOfView(enemy.transform.position)) continue;
+            if (dist > fireRange + 0.001f || Utils.IsOutOfView(enemy.transform.position)) continue;
             int rank = priority == TargetPriority.ArtilleryFirst
                 ? (enemy.enemyType == Enemy.eEnemyType.Ranged ? 1 : 0)
                 : priority == TargetPriority.Strongest ? enemy.maxHP : 0;

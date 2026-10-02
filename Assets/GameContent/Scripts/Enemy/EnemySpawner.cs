@@ -11,9 +11,9 @@ public class EnemySpawner : MonoBehaviour, IResettable
     [SerializeField] bool enableSpawning = true;
     [SerializeField] bool proceduralWave = true;
     [SerializeField] List<GameObject> enemyPrefabs = new List<GameObject>();
-    [SerializeField] float timeBetweenWaves = 2f;
-    [SerializeField] float firstWaveDelay = 5f;
-    [SerializeField] float earlyWaveDelay = 5f;
+    [SerializeField] float timeBetweenWaves = 5f;
+    [SerializeField] float timeAfterBossWave = 10f;
+    [SerializeField] float bossArrivalDelay = 8f;
     [SerializeField] Transform backgroundGrid;
     [SerializeField] Shader gridDistortionShader;
     public int currentWaveIndex = 0;
@@ -30,6 +30,8 @@ public class EnemySpawner : MonoBehaviour, IResettable
     public List<Enemy> instantiatedEnemies = new List<Enemy>();
 
     bool waveIsRunning;
+    bool bossTestActive;
+    public bool IsBossTestActive => bossTestActive;
     public int DisplayWave => Mathf.Max(1, currentWaveIndex +
         ((waveIsRunning || instantiatedEnemies.Count == 0) ? 1 : 0));
     Transform spawnParent;
@@ -39,6 +41,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
     // --- INIT SNAPSHOT ---
     bool initenableSpawning, initproceduralWave, initwaveIsRunning;
     float inittimeBetweenWaves, initswarmSpawnRadius;
+    float inittimeAfterBossWave, initbossArrivalDelay;
     int initcurrentWaveIndex;
 
 
@@ -50,6 +53,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
     {
         currentWaveIndex = 0;
         waveIsRunning = false;
+        bossTestActive = false;
 
         var p = GameObject.Find("EnemyParent");
         spawnParent = p ? p.transform : transform;
@@ -90,7 +94,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
     void StartNextWaveIfReady()
     {
-        if (waveIsRunning || instantiatedEnemies.Count > 0 || !enableSpawning) return;
+        if (waveIsRunning || instantiatedEnemies.Count > 0 || !enableSpawning || bossTestActive) return;
 
         StartCoroutine(SpawnWave());
     }
@@ -99,8 +103,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
     {
         waveIsRunning = true;
 
-        float delay = currentWaveIndex == 0 ? firstWaveDelay :
-            currentWaveIndex < 10 ? earlyWaveDelay : timeBetweenWaves;
+        float delay = currentWaveIndex > 0 && currentWaveIndex % 5 == 0 ? timeAfterBossWave : timeBetweenWaves;
         if (delay > 0f)
         {
             const float fadeInDuration = 2f;
@@ -149,10 +152,17 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
         foreach (var instr in wave.enemies)
         {
+            // Bosses are always appended after the regular wave, including authored waves.
+            if (instr.type == Enemy.eEnemyType.Boss) continue;
             int amount = Random.Range(instr.amount.x, instr.amount.y + 1);
 
             for (int i = 0; i < amount; i++)
             {
+                if (GameManager.gameOver)
+                {
+                    waveIsRunning = false;
+                    yield break;
+                }
                 if (!prefabByType.TryGetValue(instr.type, out var prefab) || !prefab)
                 {
                     Debug.LogWarning($"Missing enemy prefab for type {instr.type}");
@@ -176,10 +186,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
                     PlaceOutsideView(enemy, view, basePos.x, fromTop, offset, groupRadius, stripOffset);
                     enemy.InitWithLevel(currentWaveIndex);
 
-                    instantiatedEnemies.Add(enemy);
-                    Stats.Instance.enemiesSpawned++;
-                    MatchReporter.Event("enemy_spawned", enemy.GetInstanceID().ToString(), enemy.enemyType.ToString(),
-                        enemy.maxHP, enemy.speed, $"damage={enemy.damage}; fireRate={enemy.fireRate}; fireRange={enemy.fireRange}", enemy.transform.position);
+                    RegisterEnemy(enemy);
                 }
 
                 yield return new WaitForSeconds(Random.Range(instr.delayBetweenSpawns.x, instr.delayBetweenSpawns.y));
@@ -188,8 +195,78 @@ public class EnemySpawner : MonoBehaviour, IResettable
             yield return new WaitForSeconds(Random.Range(wave.delayBetweenSpawnsTypes.x, wave.delayBetweenSpawnsTypes.y));
         }
 
+        int waveNumber = currentWaveIndex + 1;
+        if (GameManager.gameOver)
+        {
+            waveIsRunning = false;
+            yield break;
+        }
+        if (waveNumber % 5 == 0 && prefabByType.ContainsKey(Enemy.eEnemyType.Boss))
+        {
+            float elapsed = 0f;
+            while (elapsed < bossArrivalDelay)
+            {
+                yield return null;
+                if (GameManager.gameOver)
+                {
+                    waveIsRunning = false;
+                    yield break;
+                }
+                elapsed += Time.deltaTime;
+            }
+            SpawnBosses(waveNumber);
+        }
+
         currentWaveIndex++;
         waveIsRunning = false;
+    }
+
+    void SpawnBosses(int waveNumber)
+    {
+        var bossPrefab = prefabByType[Enemy.eEnemyType.Boss];
+        int bossCount = waveNumber >= 25 ? 2 : 1;
+        for (int i = 0; i < bossCount; i++)
+        {
+            Bounds view = GetCameraBounds(Camera.main);
+            bool fromTop = bossCount == 1 ? Random.value < 0.5f : i == 0;
+            var boss = Instantiate(bossPrefab, view.center, Quaternion.identity, spawnParent).GetComponent<Enemy>();
+            PlaceOutsideView(boss, view, Tower.Instance.transform.position.x, fromTop, Vector2.zero, 0f, 0f);
+            boss.InitWithLevel(waveNumber - 1);
+            RegisterEnemy(boss);
+        }
+    }
+
+    public void StartBossTest(int waveNumber, int materials)
+    {
+        var controls = GetComponent<BossTestControls>();
+        if (!controls || !controls.enableBossTesting || !GameManager.isInit || GameManager.gameOver ||
+            Time.timeScale <= 0f || !Camera.main || !Camera.main.orthographic ||
+            !prefabByType.ContainsKey(Enemy.eEnemyType.Boss)) return;
+
+        SaveGameManager.Instance.BeginBossTestSession();
+        StopAllCoroutines();
+        waveWarning?.Hide();
+        RemoveAllEnemies();
+        ProjectileManager.Instance.RemoveAllProjectiles();
+        currentWaveIndex = Mathf.Max(5, Mathf.CeilToInt(waveNumber / 5f) * 5) - 1;
+        if (!bossTestActive)
+        {
+            bossTestActive = true;
+            waveIsRunning = false;
+            ResourceManager.Instance.curMaterials = Mathf.Max(ResourceManager.Instance.curMaterials, materials);
+            SaveGameManager.Instance.Save();
+            ResourceManager.Instance.RefreshUI();
+            return;
+        }
+        bossTestActive = true;
+        waveIsRunning = true;
+        if (UIManager.Instance.stationUI.activeSelf) UIManager.Instance.Show(false);
+        SaveGameManager.Instance.CaptureWaveCheckpoint();
+        MatchReporter.Current?.BeginWave(currentWaveIndex + 1, false);
+        SpawnBosses(currentWaveIndex + 1);
+        currentWaveIndex++;
+        waveIsRunning = false;
+        ResourceManager.Instance.RefreshUI();
     }
 
     IEnumerator FadeOutWarning(float initialVisibility)
@@ -218,6 +295,23 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
             prefabByType[e.enemyType] = p;
         }
+    }
+
+    void RegisterEnemy(Enemy enemy)
+    {
+        instantiatedEnemies.Add(enemy);
+        Stats.Instance.enemiesSpawned++;
+        MatchReporter.Event("enemy_spawned", enemy.GetInstanceID().ToString(), enemy.enemyType.ToString(),
+            enemy.maxHP, enemy.speed, $"damage={enemy.damage}; fireRate={enemy.fireRate}; fireRange={enemy.fireRange}", enemy.transform.position);
+    }
+
+    public Enemy SpawnCarrierSwarm(Vector2 position, int waveNumber)
+    {
+        if (GameManager.gameOver || !prefabByType.TryGetValue(Enemy.eEnemyType.Swarm, out var prefab)) return null;
+        var enemy = Instantiate(prefab, position, Quaternion.identity, spawnParent).GetComponent<Enemy>();
+        enemy.InitWithLevel(waveNumber - 1);
+        RegisterEnemy(enemy);
+        return enemy;
     }
 
     public static void RemoveEnemy(Enemy enemy, Stats.eDeadBy deadBy, float delay = 0)
@@ -298,8 +392,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
     EnemyWave GenerateProceduralWave(int waveIndex)
     {
         int remaining = Mathf.Clamp(2 + waveIndex * 2, 2, 50);
-        bool bossWave = waveIndex >= 19 && (waveIndex + 1) % 10 == 0;
-        if (bossWave) remaining--;
+        if ((waveIndex + 1) % 5 == 0) remaining -= waveIndex >= 24 ? 2 : 1;
 
         var wave = new EnemyWave
         {
@@ -323,9 +416,13 @@ public class EnemySpawner : MonoBehaviour, IResettable
             remaining -= amount * groupSize;
         }
 
-        if (bossWave)
-            wave.enemies.Add(new SpawnInstruction { type = Enemy.eEnemyType.Boss, amount = Vector2Int.one,
-                delayBetweenSpawns = Vector2.zero, swarmGroupSize = Vector2Int.one });
+        if ((waveIndex + 1) % 5 == 0)
+        {
+            int count = waveIndex >= 24 ? 2 : 1;
+            wave.enemies.Add(new SpawnInstruction { type = Enemy.eEnemyType.Boss,
+                amount = new Vector2Int(count, count), delayBetweenSpawns = Vector2.zero,
+                swarmGroupSize = Vector2Int.one });
+        }
 
         return wave;
     }
@@ -348,6 +445,8 @@ public class EnemySpawner : MonoBehaviour, IResettable
         initenableSpawning = enableSpawning;
         initproceduralWave = proceduralWave;
         inittimeBetweenWaves = timeBetweenWaves;
+        inittimeAfterBossWave = timeAfterBossWave;
+        initbossArrivalDelay = bossArrivalDelay;
         initcurrentWaveIndex = currentWaveIndex;
         initswarmSpawnRadius = swarmSpawnRadius;
         initwaveIsRunning = waveIsRunning;
@@ -355,6 +454,7 @@ public class EnemySpawner : MonoBehaviour, IResettable
 
     public void ResetScript()
     {
+        bossTestActive = false;
         StopAllCoroutines();
         waveWarning?.Hide();
         RemoveAllEnemies();
@@ -363,6 +463,8 @@ public class EnemySpawner : MonoBehaviour, IResettable
         enableSpawning = initenableSpawning;
         proceduralWave = initproceduralWave;
         timeBetweenWaves = inittimeBetweenWaves;
+        timeAfterBossWave = inittimeAfterBossWave;
+        bossArrivalDelay = initbossArrivalDelay;
         currentWaveIndex = initcurrentWaveIndex;
         swarmSpawnRadius = initswarmSpawnRadius;
         waveIsRunning = initwaveIsRunning;
