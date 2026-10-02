@@ -1,8 +1,8 @@
 [CmdletBinding()]
 param(
-    [string]$KeystorePath = 'G:\Meine Ablage\GameDev\WRB.Studio\Keystore\user.keystore',
-    [string]$KeyAlias = 'aegis protocol',
-    [string]$ServiceAccountJsonPath = 'G:\Meine Ablage\GameDev\WRB.Studio\Secrets\wrb-studio-play-releases-36ea7f9dfc77.json'
+    [Parameter(Mandatory)][string]$KeystorePath,
+    [Parameter(Mandatory)][string]$KeyAlias,
+    [Parameter(Mandatory)][string]$ServiceAccountJsonPath
 )
 
 . (Join-Path $PSScriptRoot 'ReleaseCommon.ps1')

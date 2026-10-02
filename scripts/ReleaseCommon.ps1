@@ -2,7 +2,16 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $script:ProjectRoot = Split-Path -Parent $PSScriptRoot
-$script:ReleaseConfigPath = Join-Path $env:LOCALAPPDATA 'WRBStudio\AegisProtocol\release-secrets.xml'
+$script:ReleaseProject = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release.config.json') -Raw | ConvertFrom-Json
+foreach ($field in @('PackageName', 'ArtifactName', 'SecretsKey')) {
+    if (-not $script:ReleaseProject.PSObject.Properties[$field] -or
+        [string]::IsNullOrWhiteSpace($script:ReleaseProject.$field)) { throw "Missing release configuration field: $field" }
+}
+if ($script:ReleaseProject.PackageName -notmatch '^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$') { throw 'Invalid Android package name.' }
+foreach ($field in @('ArtifactName', 'SecretsKey')) {
+    if ($script:ReleaseProject.$field -notmatch '^[A-Za-z0-9][A-Za-z0-9_-]*$') { throw "Invalid release configuration field: $field" }
+}
+$script:ReleaseConfigPath = Join-Path $env:LOCALAPPDATA "WRBStudio\$($script:ReleaseProject.SecretsKey)\release-secrets.xml"
 
 function ConvertFrom-SecureStringPlainText {
     param([Parameter(Mandatory)][Security.SecureString]$Value)
@@ -63,7 +72,46 @@ function Get-ProjectVersion {
     return [PSCustomObject]@{ Version = $version; VersionCode = [int]$versionCode }
 }
 
-function Invoke-AegisAndroidBuild {
+function Resolve-ReleaseVersionCode {
+    param([int]$HighestPlayVersion, [int]$RequestedVersion = 0, [int]$ProjectVersion = 1)
+    if ($HighestPlayVersion -eq [int]::MaxValue) { throw 'Android version codes are exhausted.' }
+    if ($RequestedVersion -gt 0) {
+        if ($RequestedVersion -le $HighestPlayVersion) { throw "Versioncode must be greater than $HighestPlayVersion." }
+        return $RequestedVersion
+    }
+    return [Math]::Max($ProjectVersion, $HighestPlayVersion + 1)
+}
+
+function Resolve-Fastlane {
+    $command = Get-Command fastlane, fastlane.bat -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($command) { return $command.Source }
+    $candidate = Get-ChildItem -Path 'C:\Ruby*\bin\fastlane.bat' -File -ErrorAction SilentlyContinue |
+        Select-Object -First 1 -ExpandProperty FullName
+    if (-not $candidate) { throw 'fastlane is missing. Install fastlane and restart PowerShell.' }
+    return $candidate
+}
+
+function Get-HighestPlayVersionCode {
+    $config = Get-ReleaseConfig
+    if (-not (Test-Path -LiteralPath $config.ServiceAccountJsonPath -PathType Leaf)) { throw 'Google Play service-account file is missing.' }
+    $ruby = Get-Command ruby -ErrorAction SilentlyContinue
+    $rubyPath = if ($ruby) { $ruby.Source } else { Join-Path (Split-Path -Parent (Resolve-Fastlane)) 'ruby.exe' }
+    $oldKey = $env:UNITY_RELEASE_PLAY_KEY
+    $oldPackage = $env:UNITY_RELEASE_PACKAGE_NAME
+    try {
+        $env:UNITY_RELEASE_PLAY_KEY = $config.ServiceAccountJsonPath
+        $env:UNITY_RELEASE_PACKAGE_NAME = $script:ReleaseProject.PackageName
+        $result = & $rubyPath (Join-Path $PSScriptRoot 'GetPlayVersionCodes.rb')
+        if ($LASTEXITCODE -ne 0) { throw 'Could not query Google Play version codes. No build or upload was started.' }
+        return [int](($result -join "`n" | ConvertFrom-Json).HighestVersionCode)
+    }
+    finally {
+        $env:UNITY_RELEASE_PLAY_KEY = $oldKey
+        $env:UNITY_RELEASE_PACKAGE_NAME = $oldPackage
+    }
+}
+
+function Invoke-UnityAndroidBuild {
     param(
         [Parameter(Mandatory)][ValidateSet('apk', 'aab')][string]$Format,
         [string]$UnityPath,
@@ -71,7 +119,7 @@ function Invoke-AegisAndroidBuild {
     )
 
     $config = Get-ReleaseConfig
-    foreach ($path in @($config.KeystorePath, $config.ServiceAccountJsonPath)) {
+    foreach ($path in @($config.KeystorePath)) {
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
             throw "Required release file is missing: $path"
         }
@@ -80,23 +128,27 @@ function Invoke-AegisAndroidBuild {
     $unity = Resolve-UnityEditor -UnityPath $UnityPath
     $extension = if ($Format -eq 'apk') { 'apk' } else { 'aab' }
     $artifactDirectory = Join-Path $script:ProjectRoot 'Builds\Android'
-    $outputPath = Join-Path $artifactDirectory "AegisProtocol.$extension"
+    $outputPath = Join-Path $artifactDirectory "$($script:ReleaseProject.ArtifactName).$extension"
     $logPath = Join-Path $artifactDirectory "unity-$Format.log"
+    $receiptPath = Join-Path $artifactDirectory "build-$Format.json"
     $unityLockFile = Join-Path $script:ProjectRoot 'Temp\UnityLockfile'
     if (Test-Path -LiteralPath $unityLockFile) {
-        throw 'Aegis Protocol is currently open in Unity. Close that Unity Editor window before starting an automated build.'
+        throw 'This project is currently open in Unity. Save and close its Editor before starting an automated build.'
     }
     New-Item -ItemType Directory -Force -Path $artifactDirectory | Out-Null
+    if (Test-Path -LiteralPath $receiptPath) { Remove-Item -LiteralPath $receiptPath }
 
     $previousEnvironment = @{}
     $environmentValues = @{
-        AEGIS_BUILD_OUTPUT = $outputPath
-        AEGIS_BUILD_FORMAT = $Format
-        AEGIS_KEYSTORE_PATH = $config.KeystorePath
-        AEGIS_KEYSTORE_PASSWORD = ConvertFrom-SecureStringPlainText $config.KeystorePassword
-        AEGIS_KEY_ALIAS = $config.KeyAlias
-        AEGIS_KEY_ALIAS_PASSWORD = ConvertFrom-SecureStringPlainText $config.KeyAliasPassword
-        AEGIS_VERSION_CODE = if ($VersionCode) { $VersionCode.ToString() } else { '' }
+        UNITY_RELEASE_BUILD_OUTPUT = $outputPath
+        UNITY_RELEASE_BUILD_RESULT = $receiptPath
+        UNITY_RELEASE_PACKAGE_NAME = $script:ReleaseProject.PackageName
+        UNITY_RELEASE_BUILD_FORMAT = $Format
+        UNITY_RELEASE_KEYSTORE_PATH = $config.KeystorePath
+        UNITY_RELEASE_KEYSTORE_PASSWORD = ConvertFrom-SecureStringPlainText $config.KeystorePassword
+        UNITY_RELEASE_KEY_ALIAS = $config.KeyAlias
+        UNITY_RELEASE_KEY_ALIAS_PASSWORD = ConvertFrom-SecureStringPlainText $config.KeyAliasPassword
+        UNITY_RELEASE_VERSION_CODE = if ($VersionCode) { $VersionCode.ToString() } else { '' }
     }
 
     try {
@@ -107,13 +159,17 @@ function Invoke-AegisAndroidBuild {
 
         $process = Start-Process -FilePath $unity -ArgumentList @(
             '-batchmode', '-nographics', '-quit',
-            '-projectPath', $script:ProjectRoot,
-            '-executeMethod', 'WRBStudio.AegisProtocol.Editor.AegisAndroidBuild.BuildFromEnvironment',
-            '-logFile', $logPath
-        ) -Wait -PassThru
-        if ($process.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $outputPath)) {
+            '-projectPath', ('"' + $script:ProjectRoot + '"'),
+            '-executeMethod', 'WRBStudio.UnityRelease.Editor.UnityAndroidBuild.BuildFromEnvironment',
+            '-logFile', ('"' + $logPath + '"')
+        ) -WindowStyle Hidden -Wait -PassThru
+        if ($process.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $outputPath) -or -not (Test-Path -LiteralPath $receiptPath)) {
             throw "Unity build failed. See $logPath"
         }
+        $receipt = Get-Content -LiteralPath $receiptPath -Raw | ConvertFrom-Json
+        if ($receipt.packageName -ne $script:ReleaseProject.PackageName -or
+            ($VersionCode -and $receipt.versionCode -ne $VersionCode) -or
+            $receipt.outputPath -ne $outputPath) { throw 'Build receipt does not match the requested release.' }
     }
     finally {
         foreach ($name in $environmentValues.Keys) {
@@ -121,5 +177,11 @@ function Invoke-AegisAndroidBuild {
         }
     }
 
-    return [PSCustomObject]@{ ArtifactPath = $outputPath; Version = Get-ProjectVersion }
+    return [PSCustomObject]@{ ArtifactPath = $outputPath; Version = [PSCustomObject]@{ Version = $receipt.versionName; VersionCode = $receipt.versionCode } }
+}
+
+# Compatibility for existing local commands.
+function Invoke-AegisAndroidBuild {
+    param([ValidateSet('apk', 'aab')][string]$Format, [string]$UnityPath, [int]$VersionCode)
+    Invoke-UnityAndroidBuild -Format $Format -UnityPath $UnityPath -VersionCode $VersionCode
 }

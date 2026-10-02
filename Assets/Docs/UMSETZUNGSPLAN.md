@@ -37,6 +37,8 @@ Grundlage: [Projektanalyse](PROJEKTANALYSE.md).
 
 ## Umgesetzt
 
+- [x] Android-Release-Workflow für andere Unity-Projekte verallgemeinert: JSON-Projektkonfiguration, getrennte verschlüsselte Zugangsdaten, automatische Play-Versioncodes über alle Tracks, generischer Unity-Buildhelfer und frischer Build-Nachweis vor dem Upload. Anleitung unter `scripts/README.md`; übertragbare ZIP-Vorlage ohne Zugangsdaten. Mit Aegis-Prüflauf und lokalem signiertem AAB (Versioncode 6, kein weiterer Upload) verifiziert.
+
 - [x] Gelegentliche antippbare Sternschnuppen: erste nach 18–25 aktiven Echtzeit-Sekunden, danach 35–55 Sekunden Abstand nach dem vorherigen Flug. Cyanfarbener Lichtkern mit Schweif und weichen Fades, 7 Sekunden Flugzeit, große Tippfläche. Zufällige Start- und Zielpunkte an allen vier Bildschirmseiten; horizontale, vertikale und diagonale Bahnen durch den spielbaren Bereich statt kurzer Eckpassagen. Treffer erzeugt 8–12 Basis-Material als manuellen Drop zur Basis; übliche Sammel-Effizienz und Einkommensanzeige gelten. Kein Auto-Sammeln der Sternschnuppe, keine Mehrfachbelohnung, Pause stoppt sie; Replay und Game-over räumen sie auf. Prefab und Werte am ResourceManager vorbereitet.
 
 - [x] Spawn-Flächen durch kamerabasierte Streifen oben/unten ersetzt: Displayformat wird berücksichtigt, vollständige Schiffsgröße und Schwarmversatz halten Gegner außerhalb des Bildes. Einzelgegner ohne zusätzlichen Gruppenversatz; direkt zur Basis ausgerichtet. Abstand und Streifentiefe am EnemySpawner einstellbar, Vorschau über Scene-Gizmos. Zwei PlayMode-Tests prüfen alle Designs auf vier Displayformaten und den tatsächlichen Wellenstart.

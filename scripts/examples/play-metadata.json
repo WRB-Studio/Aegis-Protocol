@@ -1,0 +1,19 @@
+{
+  "packageName": "com.example.game",
+  "listings": [
+    {
+      "language": "de-DE",
+      "title": "Example Game",
+      "shortDescription": "Ein kleines Spiel für zwischendurch.",
+      "fullDescription": "Hier steht die freigegebene deutsche Beschreibung des Spiels.",
+      "releaseNotes": "Neue Figuren und ein überarbeitetes Spielfeld."
+    },
+    {
+      "language": "en-US",
+      "title": "Example Game",
+      "shortDescription": "A little game for a quick break.",
+      "fullDescription": "Place the approved English game description here.",
+      "releaseNotes": "New characters and a refreshed playfield."
+    }
+  ]
+}

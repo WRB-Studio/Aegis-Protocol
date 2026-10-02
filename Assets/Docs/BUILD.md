@@ -1,5 +1,9 @@
 # Build und Tests
 
+Für automatisierte signierte APK-/AAB-Builds und Google-Play-Uploads siehe [Unity Android Release](../../scripts/README.md). Die projektbezogenen Werte stehen in `scripts/release.config.json`; Zugangsdaten bleiben außerhalb des Repositorys. Der nächste freie Play-Versioncode wird automatisch ermittelt. Ein Upload erfordert einen passenden Nachweis aus dem aktuellen Build; Production zusätzlich `-ConfirmProduction`.
+
+Uploader-Vorlagenstand vom 02.10.2026: `df31626`. Store-Texte und Versionshinweise lassen sich optional über `scripts/Submit-PlayMetadata.ps1` oder zusammen mit einem AAB übertragen; Schema siehe `scripts/examples/play-metadata.json`. Ohne Metadaten bleiben vorhandene Texte erhalten. Release-Entwürfe und verzögerte Einreichung werden unterstützt. Lokale Release-/Metadatenprüfungen bestanden; die Play-Zugangsprüfung ergab Versioncode 5 als höchsten vorhandenen Code und 6 als nächsten freien Code. Bei dieser Aktualisierung wurde kein Build oder Release hochgeladen.
+
 Unity `6000.3.15f1` mit **Android Build Support**, Android SDK/NDK und OpenJDK verwenden. Die Startszene ist `Assets/Scenes/MainScene.unity` und steht bereits in den Build Settings.
 
 1. Projekt in Unity Hub öffnen und `MainScene` laden.

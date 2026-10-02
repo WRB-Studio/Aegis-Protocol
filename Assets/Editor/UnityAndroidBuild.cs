@@ -5,19 +5,25 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace WRBStudio.AegisProtocol.Editor
+namespace WRBStudio.UnityRelease.Editor
 {
-    public static class AegisAndroidBuild
+    public static class UnityAndroidBuild
     {
+        [Serializable]
+        class BuildReceipt
+        {
+            public string packageName, versionName, outputPath;
+            public int versionCode;
+        }
         public static void BuildFromEnvironment()
         {
-            var outputPath = RequireEnvironmentVariable("AEGIS_BUILD_OUTPUT");
-            var format = RequireEnvironmentVariable("AEGIS_BUILD_FORMAT");
+            var outputPath = RequireEnvironmentVariable("UNITY_RELEASE_BUILD_OUTPUT");
+            var format = RequireEnvironmentVariable("UNITY_RELEASE_BUILD_FORMAT");
             var isBundle = string.Equals(format, "aab", StringComparison.OrdinalIgnoreCase);
 
             if (!isBundle && !string.Equals(format, "apk", StringComparison.OrdinalIgnoreCase))
             {
-                throw new ArgumentException("AEGIS_BUILD_FORMAT must be 'apk' or 'aab'.");
+                throw new ArgumentException("UNITY_RELEASE_BUILD_FORMAT must be 'apk' or 'aab'.");
             }
 
             var originalKeystoreName = PlayerSettings.Android.keystoreName;
@@ -30,19 +36,22 @@ namespace WRBStudio.AegisProtocol.Editor
 
             try
             {
+                string packageName = RequireEnvironmentVariable("UNITY_RELEASE_PACKAGE_NAME");
+                if (PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android) != packageName)
+                    throw new InvalidOperationException("Android package name does not match release.config.json.");
                 PlayerSettings.Android.useCustomKeystore = true;
-                PlayerSettings.Android.keystoreName = RequireEnvironmentVariable("AEGIS_KEYSTORE_PATH");
-                PlayerSettings.Android.keystorePass = RequireEnvironmentVariable("AEGIS_KEYSTORE_PASSWORD");
-                PlayerSettings.Android.keyaliasName = RequireEnvironmentVariable("AEGIS_KEY_ALIAS");
-                PlayerSettings.Android.keyaliasPass = RequireEnvironmentVariable("AEGIS_KEY_ALIAS_PASSWORD");
+                PlayerSettings.Android.keystoreName = RequireEnvironmentVariable("UNITY_RELEASE_KEYSTORE_PATH");
+                PlayerSettings.Android.keystorePass = RequireEnvironmentVariable("UNITY_RELEASE_KEYSTORE_PASSWORD");
+                PlayerSettings.Android.keyaliasName = RequireEnvironmentVariable("UNITY_RELEASE_KEY_ALIAS");
+                PlayerSettings.Android.keyaliasPass = RequireEnvironmentVariable("UNITY_RELEASE_KEY_ALIAS_PASSWORD");
                 EditorUserBuildSettings.buildAppBundle = isBundle;
 
-                var requestedVersionCode = Environment.GetEnvironmentVariable("AEGIS_VERSION_CODE");
+                var requestedVersionCode = Environment.GetEnvironmentVariable("UNITY_RELEASE_VERSION_CODE");
                 if (!string.IsNullOrWhiteSpace(requestedVersionCode))
                 {
                     if (!int.TryParse(requestedVersionCode, out var versionCode) || versionCode < 1)
                     {
-                        throw new ArgumentException("AEGIS_VERSION_CODE must be a positive integer.");
+                        throw new ArgumentException("UNITY_RELEASE_VERSION_CODE must be a positive integer.");
                     }
 
                     PlayerSettings.Android.bundleVersionCode = versionCode;
@@ -62,6 +71,13 @@ namespace WRBStudio.AegisProtocol.Editor
                 }
 
                 Debug.Log($"Android {format.ToUpperInvariant()} created: {outputPath}");
+                File.WriteAllText(RequireEnvironmentVariable("UNITY_RELEASE_BUILD_RESULT"), JsonUtility.ToJson(new BuildReceipt
+                {
+                    packageName = packageName,
+                    versionName = PlayerSettings.bundleVersion,
+                    versionCode = PlayerSettings.Android.bundleVersionCode,
+                    outputPath = outputPath
+                }, true));
             }
             finally
             {

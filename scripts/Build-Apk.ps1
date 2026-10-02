@@ -5,4 +5,4 @@ param(
 )
 
 . (Join-Path $PSScriptRoot 'ReleaseCommon.ps1')
-Invoke-AegisAndroidBuild -Format apk -UnityPath $UnityPath -VersionCode $VersionCode
+Invoke-UnityAndroidBuild -Format apk -UnityPath $UnityPath -VersionCode $VersionCode
