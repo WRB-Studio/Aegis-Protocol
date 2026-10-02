@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <g fill="none" stroke="#fff" stroke-width="22" stroke-linecap="square" stroke-linejoin="miter">
+    <g transform="translate(18 -12) scale(.7)"><path d="M256 96L296 164V296L256 332L216 296V164Z" fill="#fff" stroke="none"/><path d="M210 178L102 268V330L210 284M302 178L410 268V330L302 284"/></g><path d="M310 254L336 288L392 274L374 322L422 352L366 366L362 420L322 384L276 414L280 360L230 336L282 314Z" fill="#fff" stroke="none"/>
+  </g>
+</svg>

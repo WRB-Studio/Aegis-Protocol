@@ -19,7 +19,7 @@ public class UpgradeUiChecks : ScriptableObject, ICallbacks
     public static void Run()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling ||
-            File.Exists("Temp/UpgradeUiSetup.request"))
+            File.Exists("Temp/UpgradeUiSetup.request") || File.Exists("Temp/UiSymbolSetup.request"))
         {
             EditorApplication.delayCall += Run;
             return;
