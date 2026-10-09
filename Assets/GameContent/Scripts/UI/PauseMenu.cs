@@ -15,6 +15,8 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] Sprite musicOffIcon;
     [SerializeField] Sprite effectsOnIcon;
     [SerializeField] Sprite effectsOffIcon;
+    [SerializeField] Button privacyPolicyButton;
+    const string PrivacyPolicyUrl = "https://www.freeprivacypolicy.com/live/686cb10e-b576-4646-916b-9ee178e1fa7e";
 
     public void Init()
     {
@@ -23,6 +25,7 @@ public class PauseMenu : MonoBehaviour
         musicButton.onClick.AddListener(ToggleMusic);
         effectsButton.onClick.AddListener(ToggleEffects);
         exitButton.onClick.AddListener(ExitGame);
+        privacyPolicyButton.onClick.AddListener(OpenPrivacyPolicy);
         RefreshAudioIcons();
         overlay.SetActive(false);
     }
@@ -50,6 +53,11 @@ public class PauseMenu : MonoBehaviour
             UIManager.Instance.Show(false);
         overlay.SetActive(paused);
         TimeController.Instance.SetPaused(paused);
+    }
+
+    void OpenPrivacyPolicy()
+    {
+        Application.OpenURL(PrivacyPolicyUrl);
     }
 
     void ToggleMusic()
