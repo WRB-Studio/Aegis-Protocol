@@ -579,7 +579,7 @@ public class GameFlowTests
             carrier.Tick();
             var swarms = (System.Collections.Generic.List<Enemy>)typeof(BossCarrier).GetField("swarms", flags).GetValue(carrier);
             Assert.That(swarms.Count, Is.EqualTo(1), "Only the first ship should spawn immediately.");
-            Assert.That(typeof(BossCarrier).GetField("currentSwarmGroupSize", flags).GetValue(carrier), Is.EqualTo(3 + (wave / 5 - 1) * 3));
+            Assert.That(typeof(BossCarrier).GetField("currentSwarmGroupSize", flags).GetValue(carrier), Is.EqualTo(Mathf.Max(4, 3 + (wave / 5 - 1) * 3)));
         }
     }
 
@@ -663,7 +663,7 @@ public class GameFlowTests
     IEnumerator WaitForCarrierLaunch(BossCarrier carrier)
     {
         var field = typeof(BossCarrier).GetField("launchingSwarm", BindingFlags.Instance | BindingFlags.NonPublic);
-        float deadline = Time.time + 6f;
+        float deadline = Time.time + 12f;
         while ((bool)field.GetValue(carrier) && Time.time < deadline) yield return null;
         Assert.That((bool)field.GetValue(carrier), Is.False, "The staggered launch must complete.");
     }
@@ -798,8 +798,9 @@ public class GameFlowTests
                 elapsed += Time.deltaTime;
                 yield return null;
             }
+            yield return WaitForCarrierLaunch(carrier);
             Assert.That(EnemySpawner.Instance.instantiatedEnemies.Count(e => e.enemyType == Enemy.eEnemyType.Swarm),
-                Is.EqualTo((group + 1) * 3));
+                Is.EqualTo((group + 1) * 4));
             Assert.That(carrier.CurrentPhase, Is.EqualTo(BossCarrier.Phase.Launching));
         }
         Assert.That(typeof(BossCarrier).GetField("groupsRemaining", flags).GetValue(carrier), Is.EqualTo(0));
@@ -1065,7 +1066,7 @@ public class GameFlowTests
         var enemy = CreateCarrier(5);
         var carrier = enemy.GetComponent<BossCarrier>();
         var flags = BindingFlags.Instance | BindingFlags.NonPublic;
-        Assert.That(enemy.maxHP, Is.EqualTo(84));
+        Assert.That(enemy.maxHP, Is.EqualTo(105));
         Assert.That(enemy.speed, Is.EqualTo(0.36f));
         Assert.That(typeof(Enemy).GetField("materialReward", flags).GetValue(enemy), Is.EqualTo(15));
         Assert.That(typeof(BossCarrier).GetField("groupsRemaining", flags).GetValue(carrier), Is.EqualTo(3));

@@ -105,7 +105,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyType: 6
-  maxHP: 60
+  maxHP: 75
   speed: 0.36
   damage: 1
   fireRange: 2.4

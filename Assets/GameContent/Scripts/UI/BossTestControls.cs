@@ -97,7 +97,7 @@ public sealed class BossTestControls : MonoBehaviour
         var rect = (RectTransform)buttonObject.transform;
         rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0f);
         rect.pivot = new Vector2(0.5f, 0f);
-        rect.anchoredPosition = new Vector2(x, 24f);
+        rect.anchoredPosition = new Vector2(x, 128f);
         rect.sizeDelta = new Vector2(width, 72f);
         buttonObject.GetComponent<Image>().color = new Color(0.3f, 0.055f, 0.055f, 0.95f);
         var button = buttonObject.GetComponent<Button>();

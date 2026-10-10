@@ -53,7 +53,7 @@ public sealed class BossCarrier : MonoBehaviour
         side = transform.position.y >= tower.transform.position.y ? 1f : -1f;
         LimitHoldDistanceToView();
         groupsRemaining = firstSwarmGroups + Mathf.Min(encounter - 1, 4);
-        currentSwarmGroupSize = swarmGroupSize + (encounter - 1) * 3;
+        currentSwarmGroupSize = Mathf.Max(4, swarmGroupSize + (encounter - 1) * 3);
         launchCountdown = 1f;
         maxShieldPoints = firstBoss ? 0 : Mathf.Max(1, Mathf.RoundToInt(enemy.maxHP * shieldHealthRatio));
         ShieldPoints = maxShieldPoints;
@@ -134,7 +134,7 @@ public sealed class BossCarrier : MonoBehaviour
         int group = groupsLaunched++;
         for (int i = 0; i < currentSwarmGroupSize; i++)
         {
-            if (i > 0) yield return new WaitForSeconds(Random.Range(0.08f, 0.2f));
+            if (i > 0) yield return new WaitForSeconds(Random.Range(0.06f, 0.5f));
             if (CurrentPhase != Phase.Launching || GameManager.gameOver) break;
             Bounds hull = ship.bounds;
             Vector2 offset = Random.insideUnitCircle;
@@ -187,7 +187,7 @@ public sealed class BossCarrier : MonoBehaviour
         shieldVisual = CreateShieldSprite("Carrier Shield", ship.sortingOrder - 1);
         shieldHitVisual = CreateShieldSprite("Carrier Shield Hit", ship.sortingOrder + 1);
         healthBar = CreateLine("Carrier HP", 0.07f, new Color(1f, 0.35f, 0.25f));
-        shieldBar = CreateLine("Carrier Shield Points", 0.06f, new Color(1f, 0.3f, 0.2f));
+        shieldBar = CreateLine("Carrier Shield Points", 0.06f, new Color(0.2f, 0.85f, 1f));
     }
 
     SpriteRenderer CreateShieldSprite(string name, int sortingOrder)
