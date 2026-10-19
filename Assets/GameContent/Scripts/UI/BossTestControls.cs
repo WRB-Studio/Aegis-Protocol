@@ -5,13 +5,20 @@ using UnityEngine.UI;
 [RequireComponent(typeof(EnemySpawner))]
 public sealed class BossTestControls : MonoBehaviour
 {
-    [Tooltip("Disable this before making a release build.")]
+    [Tooltip("Enable boss test controls in the Editor only. Always disabled in player builds.")]
     public bool enableBossTesting;
     [SerializeField, Min(5)] int bossTestWave = 5;
     [SerializeField, Min(1)] int testMaterials = 1000000;
 
     Button testButton, nextBossButton, previousBossButton;
     TextMeshProUGUI label;
+
+    void Awake()
+    {
+#if !UNITY_EDITOR
+        enableBossTesting = false;
+#endif
+    }
 
     void Update()
     {

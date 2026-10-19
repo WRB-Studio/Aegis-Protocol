@@ -3728,7 +3728,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f9d2047d6d74ef18f059d098a90cd45, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enableBossTesting: 1
+  enableBossTesting: 0
   bossTestWave: 5
   testMaterials: 1000000
 --- !u!1 &367822790

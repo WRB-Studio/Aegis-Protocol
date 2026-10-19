@@ -384,7 +384,8 @@ public class GameFlowTests
         string normalSavePath = Path.Combine(saveDirectory, "savegame.json");
         string originalSave = File.ReadAllText(normalSavePath);
         var controls = spawner.GetComponent<BossTestControls>();
-        Assert.That(controls.enableBossTesting, Is.True);
+        Assert.That(controls.enableBossTesting, Is.False, "Boss testing must be disabled in the game scene by default.");
+        controls.enableBossTesting = true;
         GameManager.isInit = true;
         yield return null;
         var button = UIManager.Instance.stationUI.GetComponentInParent<Canvas>().rootCanvas
@@ -490,6 +491,7 @@ public class GameFlowTests
     public IEnumerator BossTestUpgradeSlidersSetLevelsBothWaysAndStayOutOfNormalPlay()
     {
         var controls = EnemySpawner.Instance.GetComponent<BossTestControls>();
+        controls.enableBossTesting = true;
         var damage = UpgradeAttribute.GetUpgradeByName(UpgradeAttribute.eUpgradeName.Damage);
         var fabricator = StationModule.GetModuleByType(StationModule.eModuleType.AmmoFabricator);
         fabricator.isBuilt = true;
@@ -587,6 +589,7 @@ public class GameFlowTests
     public void BossTestCanSelectPairAndReplaceRunningEnemies()
     {
         var spawner = EnemySpawner.Instance;
+        spawner.GetComponent<BossTestControls>().enableBossTesting = true;
         spawner.ResetScript();
         var previous = spawner.SpawnCarrierSwarm(Vector2.up * 3f, 5);
         GameManager.isInit = true;
